@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "NXJikkyo"
+version = "0.1.0"
+description = "NXJikkyo: Nico Nico Jikkyo Alternatives"
+package-mode = false
+
+[tool.taskipy.tasks]
+serve  = "cd ../ && docker compose build && docker compose run --rm --service-ports nxjikkyo"
+dev    = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ nxjikkyo --reload"
+aerich = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ --entrypoint=/code/server/.venv/bin/aerich nxjikkyo"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+aerich = "^0.7.2"
+aiomysql = "^0.2.0"
+cryptography = "^42.0.5"
+email-validator = "^2.1.1"
+fastapi = "^0.109.1"
+httpx = "^0.25.2"
+httpx-oauth = "^0.13.3"
+passlib = {version = "^1.7.4", extras = ["bcrypt"]}
+pillow = "^10.3.0"
+pydantic = "^2.5.2"
+pydantic-settings = "^2.2.1"
+python-jose = "^3.3.0"
+python-multipart = "^0.0.9"
+rich = "^13.7.0"
+taskipy = "^1.12.2"
+tortoise-orm = "^0.20.0"
+typer = "^0.9.0"
+uvicorn = {version = "^0.24.0.post1", extras = ["standard"]}
+uvloop = {version = "^0.19.0", platform = "linux"}
+websockets = "^12.0"
+
+[tool.poetry.group.dev.dependencies]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.aerich]
+tortoise_orm = "app.constants.DATABASE_CONFIG"
+location = "./app/migrations/"
+src_folder = "./"
