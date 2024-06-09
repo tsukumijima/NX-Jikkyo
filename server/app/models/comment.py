@@ -109,7 +109,6 @@ class ThreadResponse(BaseModel):
     スレッド情報のレスポンスの Pydantic モデル
     """
     id: int
-    channel_id: int
     start_at: datetime
     end_at: datetime
     duration: int

@@ -1,10 +1,12 @@
 
 import tortoise.contrib.fastapi
 import tortoise.log
+from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi_restful.tasks import repeat_every
 from pathlib import Path
 
 from app import logging
@@ -14,8 +16,7 @@ from app.constants import (
     DATABASE_CONFIG,
     VERSION,
 )
-from app.logging import logger
-from app.models.comment import Channel
+from app.models.comment import Channel, Thread
 from app.routers import (
     comment,
 )
@@ -111,8 +112,8 @@ async def ExceptionHandler(request: Request, exc: Exception):
 # Tortoise ORM の初期化
 ## Tortoise ORM が利用するロガーを Uvicorn のロガーに差し替える
 ## ref: https://github.com/tortoise/tortoise-orm/issues/529
-tortoise.log.logger = logger
-tortoise.log.db_client_logger = logger
+tortoise.log.logger = logging.logger
+tortoise.log.db_client_logger = logging.logger
 ## Tortoise ORM を FastAPI に登録する
 ## ref: https://tortoise-orm.readthedocs.io/en/latest/contrib/fastapi.html
 tortoise.contrib.fastapi.register_tortoise(
@@ -121,7 +122,6 @@ tortoise.contrib.fastapi.register_tortoise(
     generate_schemas = True,
     add_exception_handlers = True,
 )
-
 
 # 初回のみマスタデータのチャンネル情報を登録
 @app.on_event('startup')
@@ -170,3 +170,55 @@ async def RegisterMasterChannels():
                 description = 'NXJikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
         logging.info('Master channels have been registered.')
+
+# 1時間に1回、明日分の全実況チャンネルのスレッド予定が DB に登録されているかを確認し、もしなければ登録する
+# スレッドは同じ実況チャンネル内では絶対に開催時間が被ってはならないし、基本開催時間は 04:00 〜 翌朝 04:00 の 24 時間
+## wait_first を指定していないので起動時にも実行される
+@app.on_event('startup')
+@repeat_every(seconds=60 * 60, logger=logging.logger)
+async def AddThreads():
+
+    # 今日と明日用のスレッドが登録されているかを確認し、もしなければ登録する
+    channels = await Channel.all()
+    for channel in channels:
+
+        # 今日の日付を取得
+        today = datetime.now().date()
+        start_time_today = datetime.combine(today, datetime.min.time()) + timedelta(hours=4)
+        end_time_today = start_time_today + timedelta(hours=24)
+
+        # 今日用のスレッドが既に存在するか確認
+        existing_thread_today = await Thread.filter(channel=channel, start_at=start_time_today).first()
+        if not existing_thread_today:
+
+            # 今日用のスレッドを作成
+            await Thread.create(
+                channel = channel,
+                start_at = start_time_today,
+                end_at = end_time_today,
+                duration = int((end_time_today - start_time_today).total_seconds()),
+                title = f'{channel.name}【NXJikkyo】{today.strftime("%Y年%m月%d日")}',
+                description = 'NXJikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+            )
+            logging.info(f'Thread for {channel.name} on {today.strftime("%Y-%m-%d")} has been registered.')
+
+        # 明日の日付を取得
+        tomorrow = today + timedelta(days=1)
+        start_time_tomorrow = datetime.combine(tomorrow, datetime.min.time()) + timedelta(hours=4)
+        end_time_tomorrow = start_time_tomorrow + timedelta(hours=24)
+
+        # 明日用のスレッドが既に存在するか確認
+        existing_thread_tomorrow = await Thread.filter(channel=channel, start_at=start_time_tomorrow).first()
+        if not existing_thread_tomorrow:
+
+            # 明日用のスレッドを作成
+            await Thread.create(
+                channel = channel,
+                start_at = start_time_tomorrow,
+                end_at = end_time_tomorrow,
+                duration = int((end_time_tomorrow - start_time_tomorrow).total_seconds()),
+                title = f'{channel.name}【NXJikkyo】{tomorrow.strftime("%Y年%m月%d日")}',
+                description = 'NXJikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+            )
+            logging.info(f'Thread for {channel.name} on {tomorrow.strftime("%Y-%m-%d")} has been registered.')
+

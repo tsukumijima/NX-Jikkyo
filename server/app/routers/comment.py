@@ -41,7 +41,6 @@ async def ChannelsAPI():
             description = channel.description,
             threads = [ThreadResponse(
                 id = thread.id,
-                channel_id = thread.channel_id,
                 start_at = thread.start_at,
                 end_at = thread.end_at,
                 duration = thread.duration,
@@ -140,7 +139,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
                         # 「部屋名」
                         'name': 'アリーナ',
                         # 「メッセージサーバーのスレッド ID」
-                        'threadId': active_thread.id,
+                        'threadId': str(active_thread.id),
                         # 「(互換性確保のためのダミー値, 現在常に `true`)」
                         'isFirst': True,
                         # 「(互換性確保のためのダミー文字列)」
