@@ -94,6 +94,8 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
     try:
         # 最後に視聴統計情報を送信した時刻を取得
         last_statistics_time = time.time()
+        # 最後にサーバー時刻を送信した時刻を取得
+        last_server_time_time = time.time()
         # 最後に ping を送信した時刻を取得
         last_ping_time = time.time()
         while True:
@@ -245,7 +247,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
                         },
                     })
 
-            # 60 秒に 1 回最新の視聴統計情報を送信
+            # 60 秒に 1 回最新の視聴統計情報を送信 (互換性のため)
             if time.time() - last_statistics_time > 60:
                 await websocket.send_json({
                     'type': 'statistics',
@@ -257,6 +259,16 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
                     },
                 })
                 last_statistics_time = time.time()
+
+            # 45 秒に 1 回サーバー時刻を送信 (互換性のため)
+            if time.time() - last_server_time_time > 45:
+                await websocket.send_json({
+                    'type': 'serverTime',
+                    'data': {
+                        'serverTime': datetime.now().isoformat(),
+                    },
+                })
+                last_server_time_time = time.time()
 
             # 30 秒に 1 回 ping を送信 (互換性のため)
             if time.time() - last_ping_time > 30:
