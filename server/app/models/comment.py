@@ -25,6 +25,8 @@ class Channel(TortoiseModel):
     name = fields.CharField(255)
     # チャンネルの説明
     description = fields.TextField()
+    # スレッド一覧
+    threads: fields.ReverseRelation[Thread]
 
 
 class Thread(TortoiseModel):
@@ -40,6 +42,9 @@ class Thread(TortoiseModel):
 
     # ID は自動でインクリメントされる
     id = fields.IntField(pk=True)
+    # スレッドが開催されているチャンネル ID
+    channel = fields.ForeignKeyField('models.Channel', related_name='threads')
+    channel_id: int
     # スレッド開始日時
     start_at = fields.DatetimeField(auto_now_add=True)
     # スレッド終了日時
@@ -65,6 +70,7 @@ class Comment(TortoiseModel):
     id = fields.IntField(pk=True)
     # コメントのスレッド ID
     thread = fields.ForeignKeyField('models.Thread', related_name='comments')
+    thread_id: int
     # コメント番号（コメ番）
     # ex: 46712
     no = fields.IntField()
@@ -73,8 +79,9 @@ class Comment(TortoiseModel):
     vpos = fields.IntField()
     # コメント投稿日時
     # ex: 1717426821.46713 (UNIX タイムスタンプ換算)
+    # 実際にニコ生互換のレスポンスで返す際は数値の date と小数点以下の date_usec に分割される
     date = fields.DatetimeField(auto_now=True)
-    # コメントのコマンド（184, red naka big など）
+    # コメントのコマンド（184, red naka big など / 歴史的経緯で mail というフィールドながらコマンドが入る）
     # ex: 184 white naka medium
     mail = fields.CharField(255, default='')
     # ユーザー ID（コマンドに 184 が指定されている場合は匿名化される）
@@ -95,29 +102,16 @@ class ChannelResponse(BaseModel):
     id: str
     name: str
     description: str
+    threads: list[ThreadResponse]
 
 class ThreadResponse(BaseModel):
     """
     スレッド情報のレスポンスの Pydantic モデル
     """
     id: int
+    channel_id: int
     start_at: datetime
     end_at: datetime
     duration: int
     title: str
     description: str
-
-class CommentResponse(BaseModel):
-    """
-    ニコニコ実況互換のコメント情報のレスポンスの Pydantic モデル
-    """
-    thread: str  # あえてニコニコ互換のために str でスレッド ID を返す
-    no: int
-    vpos: int
-    date: int  # UNIX タイムスタンプ (小数点を除く)
-    date_usec: int  # UNIX タイムスタンプ (小数点以下のみを含む)
-    mail: str
-    user_id: str
-    premium: bool
-    anonymity: bool
-    content: str
