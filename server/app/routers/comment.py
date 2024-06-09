@@ -53,25 +53,35 @@ async def ChannelsAPI():
     return response
 
 
+# 実況チャンネルごとの累計来場者数カウント
+## 本家ニコ生は statistics メッセージで来場者数 (リアルタイムではなく番組累計) を送っている
+## NXJikkyo ではその挙動に合わせる
+__viewer_counts: dict[str, int] = {}
+
+
 @router.websocket('/channels/{channel_id}/ws/watch')
 async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Request):
+    """ ニコ生の視聴セッション Web Socket 互換 API """
 
     # 接続開始時刻を取得
     connected_at = time.time()
 
-    # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得し、アクティブなスレッドを取得
+    # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得
     try:
-        channel_id = int(channel_id.replace('jk', ''))  # type: ignore
+        channel_id_int = int(channel_id.replace('jk', ''))
     except ValueError:
+        logging.error(f'WatchSessionAPI [{channel_id}]: Invalid channel ID.')
         await websocket.close(code=4001)
         return
 
+    # 現在アクティブな (開催中の) スレッドを取得
     active_thread = await Thread.filter(
-        channel_id = channel_id,
+        channel_id = channel_id_int,
         start_at__lte = connected_at,
         end_at__gte = connected_at
     ).first()
     if not active_thread:
+        logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
         await websocket.close(code=4404)
         return
 
@@ -83,56 +93,77 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
     await websocket.accept()
 
     try:
-        # 接続完了後、即座に現在のサーバー時刻 (ISO 8601) を返す
-        await websocket.send_json({
-            'type': 'serverTime',
-            'data': {
-                'currentMs': datetime.now().isoformat(),
-            },
-        })
-
+        # 最後に視聴統計情報を送信した時刻を取得
+        last_statistics_time = time.time()
+        # 最後に ping を送信した時刻を取得
         last_ping_time = time.time()
         while True:
             message = await websocket.receive_json()
             message_type = message.get('type')
 
             # 視聴開始リクエスト
+            ## リクエストの中身は無視して処理を進める
             ## 本家ニコ生では stream オブジェクトがオプションとして渡された際に視聴 URL などを送るが、ここでは常にコメントのみとする
+            ## 大元も基本視聴負荷の関係で映像がいらないなら省略してくれという話があった
             if message_type == 'startWatching':
 
-                # 座席取得完了を送信
+                # 視聴カウントをインクリメント
+                __viewer_counts[channel_id] += 1
+
+                # 現在のサーバー時刻 (ISO 8601) を返す
+                await websocket.send_json({
+                    'type': 'serverTime',
+                    'data': {
+                        'currentMs': datetime.now().isoformat(),
+                    },
+                })
+
+                # 座席取得が完了した旨を送信
                 await websocket.send_json({
                     'type': 'seat',
                     'data': {
-                        # 座席を維持するために送信する keepSeat メッセージ (クライアントメッセージ)の送信間隔時間（秒）
+                        # 「座席を維持するために送信する keepSeat メッセージ (クライアントメッセージ) の送信間隔時間（秒）」
                         'keepIntervalSec': 30,
                     },
                 })
 
-                # コメントの部屋情報を送信
-                ## レスポンスはすべて本家ニコ生互換
+                # コメント部屋情報を送信
                 await websocket.send_json({
                     'type': 'room',
                     'data': {
                         'messageServer': {
-                            # メッセージサーバーのURI (WebSocket)
+                            # 「メッセージサーバーの URI (WebSocket)」
                             'uri': f'wss://{request.url.hostname}/api/v1/channels/{channel_id}/ws/comment',
-                            # メッセージサーバの種類 (現在常に `niwavided`)
+                            # 「メッセージサーバの種類 (現在常に `niwavided`)」
                             'type': 'niwavided',
                         },
-                        # 部屋名
+                        # 「部屋名」
                         'name': 'アリーナ',
-                        # メッセージサーバーのスレッドID
+                        # 「メッセージサーバーのスレッド ID」
                         'threadId': active_thread.id,
-                        # (互換性確保のためのダミー値, 現在常に `true`)
+                        # 「(互換性確保のためのダミー値, 現在常に `true`)」
                         'isFirst': True,
-                        # (互換性確保のためのダミー文字列)
+                        # 「(互換性確保のためのダミー文字列)」
                         'waybackkey': 'DUMMY_TOKEN',
-                        # メッセージサーバーから受信するコメント（chatメッセージ）にyourpostフラグを付けるためのキー。threadメッセージのthreadkeyパラメータに設定する
-                        ## NXJikkyo ではコメントの user_id に入れられる client_id をセットする
+                        # 「メッセージサーバーから受信するコメント（chatメッセージ）に yourpost フラグを付けるためのキー。
+                        # thread メッセージの threadkey パラメータに設定する」
+                        ## NXJikkyo ではコメントの user_id に入れられる watch_session_client_id をセットする
                         'yourPostKey': watch_session_client_id,
-                        # vposを計算する基準(vpos:0)となる時刻。 (ISO8601形式)
+                        # 「vpos を計算する基準 (vpos:0) となる時刻。(ISO8601 形式)」
+                        ## 確か本家ニコ生では番組開始時刻が vpos (相対的なコメント時刻) に入っていたはず (忘れた…)
+                        ## NXJikkyo でも本家ニコ生同様に番組開始時刻を ISO 8601 形式で入れている
                         'vposBaseTime': active_thread.start_at.isoformat(),
+                    },
+                })
+
+                # 視聴の統計情報を送信
+                await websocket.send_json({
+                    'type': 'statistics',
+                    'data': {
+                        'viewers': __viewer_counts[channel_id],
+                        'comments': await Comment.filter(thread=active_thread).count(),
+                        'adPoints': 0,  # NXJikkyo では常に 0 を返す
+                        'giftPoints': 0,  # NXJikkyo では常に 0 を返す
                     },
                 })
 
@@ -169,8 +200,12 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
                         comment_commands.append(message['data']['font'])
 
                     # コメ番を算出
+                    ## コメントがまだない場合は 1 から始まる
                     last_comment = await Comment.filter(thread=active_thread).order_by('-no').first()
-                    comment_no = last_comment.no + 1 if last_comment else 1  # コメントがまだない場合は 1 から始まる
+                    if last_comment:
+                        comment_no = last_comment.no + 1
+                    else:
+                        comment_no = 1
 
                     # コメントを DB に登録
                     comment = await Comment.create(
@@ -189,26 +224,40 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
                         'type': 'postCommentResult',
                         'data': {
                             'chat': {
-                                # コマンド。 `184`, `white`, `naka`, `medium` など
+                                # 「コマンド。 `184`, `white`, `naka`, `medium` など」
                                 'mail': comment.mail,
-                                # 匿名コメントかどうか。匿名のとき `1`、非匿名のとき `0`
+                                # 「匿名コメントかどうか。匿名のとき `1`、非匿名のとき `0`」
                                 'anonymity': 1 if comment.anonymity else 0,
-                                # コメント本文
+                                # 「コメント本文」
                                 'content': comment.content,
-                                # コメントを薄く表示するかどうか (常に False)
+                                # 「コメントを薄く表示するかどうか」
+                                ## NXJikkyo では常に False を返す
                                 'restricted': False,
                             },
                         },
                     })
                     logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} posted a comment.')
                 except Exception as e:
-                    logging.error(f'WatchSessionAPI [{channel_id}]: INVALID_MESSAGE: {e}')
+                    logging.error(f'WatchSessionAPI [{channel_id}]: Invalid message: {e}')
                     await websocket.send_json({
                         'type': 'error',
                         'data': {
                             'message': 'INVALID_MESSAGE',
                         },
                     })
+
+            # 60 秒に 1 回最新の視聴統計情報を送信
+            if time.time() - last_statistics_time > 60:
+                await websocket.send_json({
+                    'type': 'statistics',
+                    'data': {
+                        'viewers': __viewer_counts[channel_id],
+                        'comments': await Comment.filter(thread=active_thread).count(),
+                        'adPoints': 0,  # NXJikkyo では常に 0 を返す
+                        'giftPoints': 0,  # NXJikkyo では常に 0 を返す
+                    },
+                })
+                last_statistics_time = time.time()
 
             # 30 秒に 1 回 ping を送信 (互換性のため)
             if time.time() - last_ping_time > 30:
@@ -244,9 +293,10 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
 
 @router.websocket('/channels/{channel_id}/ws/comment')
 async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
+    """ ニコ生のコメントセッション Web Socket 互換 API """
 
     # コメントセッションはあくまで WebSocket でリクエストされたスレッド ID に基づいて送るので、
-    # チャンネル ID はログ以外では使わない
+    # チャンネル ID はログ出力以外では使わない
 
     # クライアントごとにユニークな ID を割り当てる
     comment_session_client_id = str(uuid.uuid4())
@@ -255,69 +305,130 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
     # 接続を受け入れる
     await websocket.accept()
 
+    async def SendComment(active_thread: Thread, thread_key: str, comment: Comment):
+        """
+        受信コメントをクライアント側に送信する
+        ref: https://qiita.com/pasta04/items/33da06cf3c21e34fc4d1
+        """
+        response = {
+            'chat': {
+                'thread': active_thread.id,
+                'no': comment.no,
+                'vpos': comment.vpos,
+                'date': int(comment.date.timestamp()),
+                'date_usec': int((comment.date.timestamp() - int(comment.date.timestamp())) * 1_000_000),
+                'mail': comment.mail,
+                'user_id': comment.user_id,
+                'premium': 1 if comment.premium else 0,
+                'anonymity': 1 if comment.anonymity else 0,
+                'content': comment.content,
+            },
+        }
+        # 数値を返すフィールドは 0 の場合に省略される本家ニコ生の謎仕様に合わせる
+        if response['chat']['premium'] == 0:
+            del response['chat']['premium']
+        if response['chat']['anonymity'] == 0:
+            del response['chat']['anonymity']
+        # スレッドキーとユーザー ID が一致する場合のみ yourpost フラグを設定
+        if thread_key == comment.user_id:
+            response['chat']['yourpost'] = 1
+        # コメントを送信
+        await websocket.send_json(response)
+
     try:
 
-        # "thread" コマンドが降ってくるまで待機
+        ## 本家ニコ生では以下のような謎構造のメッセージ (thread コマンド) をコメントセッション (コメントサーバー) に送ることでコメント受信が始まる
+        ## NXJikkyo でもこの挙動をなんとなく再現する (詳細な仕様は本家が死んでるのでわかりません！生放送と過去ログでも微妙に違う…)
+        # [
+        #     {ping: {content: 'rs:0'}},
+        #     {ping: {content: 'ps:0'}},
+        #     {
+        #         thread: {
+        #             version: '20061206',  // 設定必須
+        #             thread: 'THREAD_ID',  // スレッド ID
+        #             threadkey: 'THREAD_KEY',  // スレッドキー
+        #             user_id: '',  // ユーザー ID（設定不要らしい）
+        #             res_from: -50,  // 最初にコメントを 50 個送信する
+        #         }
+        #     },
+        #     {ping: {content: 'pf:0'}},
+        #     {ping: {content: 'rf:0'}},
+        # ]
         thread_id: int | None = None
+        thread_key: str | None = None
         res_from: int | None = None
-        messages = await websocket.receive_json()
-        for message in messages:
-            if 'thread' in message:
-                # スレッド ID
-                thread_id = int(message['thread']['thread'])
-                # 初回にクライアントに送信する最新コメントの数
-                res_from = int(message['thread']['res_from'])
-                break
+        when: int | None = None
 
-        if not thread_id or not res_from:
-            await websocket.close(code=4001)
-            return
-
-        # 当該スレッドの情報を取得
-        active_thread = await Thread.filter(id=thread_id).first()
-        if not active_thread:
-            await websocket.close(code=4404)
-            return
-
-        async def SendComment(comment: Comment):
-            """ コメントを送信する """
-            nonlocal active_thread
-            await websocket.send_json({
-                'chat': {
-                    'thread': active_thread.id,
-                    'no': comment.no,
-                    'vpos': comment.vpos,
-                    'date': int(comment.date.timestamp()),
-                    'date_usec': int((comment.date.timestamp() - int(comment.date.timestamp())) * 1_000_000),
-                    'mail': comment.mail,
-                    'user_id': comment.user_id,
-                    'premium': 1 if comment.premium else 0,
-                    'anonymity': 1 if comment.anonymity else 0,
-                    'content': comment.content,
-                },
-            })
-
-        # 初回接続時は最新 res_from 件のコメントを送信
-        comments = await Comment.filter(thread=active_thread).order_by('-date').limit(abs(res_from))  # res_from を正の値に変換
-        for comment in comments:
-            await SendComment(comment)
-
-        # 新着コメントがあれば随時送信
-        sent_comment_ids = set()
-        last_comment_id = 0
+        # thread コマンドが降ってくるまで待機
         while True:
-            comments = await Comment.filter(thread=active_thread, id__gt=last_comment_id).order_by('id')
-            for comment in comments:
-                if comment.id not in sent_comment_ids:
-                    await SendComment(comment)
-                    sent_comment_ids.add(comment.id)
-                    last_comment_id = comment.id
+            messages = await websocket.receive_json()
+            for message in messages:
+                if 'thread' in message:
+                    try:
+                        # スレッド ID
+                        thread_id = int(message['thread']['thread'])
+                        # スレッドキー
+                        ## 視聴セッション側の yourPostKey と同一
+                        ## NXJikkyo ではコメントの user_id に入れられる watch_session_client_id がセットされている
+                        thread_key = message['thread']['threadkey']
+                        # 初回にクライアントに送信する最新コメントの数
+                        ## res_from が正の値になることはない (はず)
+                        res_from = int(message['thread']['res_from'])
+                        if res_from >= 0:
+                            logging.error(f'CommentSessionAPI [{channel_id}]: Invalid res_from: {res_from}')
+                            await websocket.close(code=4001)
+                            return
+                        # when: 取得するコメントの投稿日時の下限を示す UNIX タイムスタンプ (過去ログ取得時のみ設定される)
+                        ## 例えば when が 2024-01-01 00:00:00 の場合、2023-12-31 23:59:59 までに投稿されたコメントから
+                        ## res_from 件分だけコメント投稿時刻順に後ろから遡ってコメントを取得する
+                        if 'when' in message['thread']:
+                            when = int(message['thread']['when'])
+                        break
+                    except Exception as e:
+                        logging.error(f'CommentSessionAPI [{channel_id}]: invalid message: {e}')
+                        await websocket.close(code=4001)
+                        return
 
-            # スレッドの開催終了時刻を過ぎたら接続を切断する
-            if datetime.now() > active_thread.end_at:
-                logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
-                await websocket.close(code=1011)
-                break
+            if not thread_id or not thread_key or not res_from:
+                logging.error(f'CommentSessionAPI [{channel_id}]: Invalid thread or thread_key or res_from.')
+                await websocket.close(code=4001)
+                return
+
+            # ここまできたらスレッド ID と res_from が取得できているので、当該スレッドの情報を取得
+            active_thread = await Thread.filter(id=thread_id).first()
+            if not active_thread:
+                logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
+                await websocket.close(code=4404)
+                return
+
+            # 初回接続時のみ常に当該スレッドの最新 res_from 件のコメントを取得して送信
+            ## when が設定されている場合のみ when より前のコメントを取得して送信
+            if when is not None:
+                comments = await Comment.filter(thread=active_thread, date__lt=when).order_by('id').limit(abs(res_from))  # res_from を正の値に変換
+            else:
+                comments = await Comment.filter(thread=active_thread).order_by('id').limit(abs(res_from))  # res_from を正の値に変換
+            await websocket.send_json({'ping': {'content': 'rs:0'}})
+            await websocket.send_json({'ping': {'content': 'ps:0'}})
+            for comment in comments:
+                await SendComment(active_thread, thread_key, comment)
+            await websocket.send_json({'ping': {'content': 'pf:0'}})
+            await websocket.send_json({'ping': {'content': 'rf:0'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
+
+            # スレッドが放送中の場合のみ、当該スレッドの新着コメントがあれば随時取得して送信
+            ## 過去ログの場合はすでに放送が終わっているのでここの処理は行われず、再度 thread コマンドによる追加取得を待ち受ける
+            if active_thread.start_at < datetime.now() < active_thread.end_at:
+                last_comment_id = 0
+                while True:
+                    comments = await Comment.filter(thread=active_thread, id__gt=last_comment_id).order_by('id')
+                    for comment in comments:
+                        await SendComment(active_thread, thread_key, comment)
+                        last_comment_id = comment.id
+
+                    # スレッドの開催終了時刻を過ぎたら接続を切断する
+                    if datetime.now() > active_thread.end_at:
+                        logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
+                        await websocket.close(code=1011)
+                        break
 
     except WebSocketDisconnect:
         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
