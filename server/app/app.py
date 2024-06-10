@@ -19,7 +19,7 @@ from app.constants import (
 )
 from app.models.comment import Channel, Thread
 from app.routers import (
-    comment,
+    comments,
 )
 
 
@@ -34,7 +34,7 @@ app = FastAPI(
 )
 
 # ルーターを登録
-app.include_router(comment.router)
+app.include_router(comments.router)
 
 # CORS の設定
 ## 開発環境では全てのオリジンからのリクエストを許可
