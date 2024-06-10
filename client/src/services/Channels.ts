@@ -140,7 +140,34 @@ class Channels {
                 network_id: -1,
                 service_id: -1,
                 transport_stream_id: -1,
-                remocon_id: -1,
+                remocon_id: (() => {
+                    if (channel.id.length <= 4) {
+                        return parseInt(channel.id.replaceAll('jk', ''));
+                    } else {
+                        switch (channel.id) {
+                            case 'jk101':
+                                return 1;
+                            case 'jk141':
+                                return 4;
+                            case 'jk151':
+                                return 5;
+                            case 'jk161':
+                                return 6;
+                            case 'jk171':
+                                return 7;
+                            case 'jk181':
+                                return 8;
+                            case 'jk191':
+                                return 9;
+                            case 'jk211':
+                                return 11;
+                            case 'jk222':
+                                return 12;
+                            default:
+                                return -1;
+                        }
+                    }
+                })(),
                 channel_number: channel.id.length <= 4 ? ('00' + channel.id.replaceAll('jk', '')).slice(-2) + '1' : channel.id.replaceAll('jk', ''),
                 type: channel.id.length <= 4 ? 'GR' : 'BS',
                 name: channel.name,
