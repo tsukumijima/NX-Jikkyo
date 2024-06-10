@@ -16,7 +16,7 @@
                     </v-btn> -->
                     <v-btn variant="flat" class="settings-navigation__button" to="/settings/jikkyo">
                         <Icon icon="bi:chat-left-text-fill" width="26px" style="padding: 0 2px;" />
-                        <span class="ml-4">実況</span>
+                        <span class="ml-4">コメント/実況</span>
                     </v-btn>
                     <v-btn variant="flat" class="settings-navigation__button settings-navigation__button--version"
                         :class="{'settings-navigation__button--version-highlight': versionStore.is_update_available}"

@@ -4,9 +4,19 @@
             <nav class="navigation">
                 <div class="navigation-scroll">
                     <router-link v-ripple class="navigation__link" active-class="navigation__link--active" to="/"
-                        :class="{'navigation__link--active': $route.path.startsWith('/')}">
+                        :class="{'navigation__link--active': $route.path == '/'}">
                         <Icon class="navigation__link-icon" icon="fluent:tv-20-regular" width="26px" />
                         <span class="navigation__link-text">テレビ実況</span>
+                    </router-link>
+                    <a v-ripple class="navigation__link" active-class="navigation__link--active"
+                        href="https://jikkyo.tsukumijima.net" target="_blank">
+                        <Icon class="navigation__link-icon" icon="fluent:slide-text-multiple-20-regular" width="26px" />
+                        <span class="navigation__link-text">過去ログ API</span>
+                    </a>
+                    <router-link v-ripple class="navigation__link" active-class="navigation__link--active" to="/about/"
+                        :class="{'navigation__link--active': $route.path.startsWith('/about')}">
+                        <Icon class="navigation__link-icon" icon="fluent:info-16-regular" width="26px" />
+                        <span class="navigation__link-text">About</span>
                     </router-link>
                     <v-spacer></v-spacer>
                     <router-link v-ripple class="navigation__link" active-class="navigation__link--active" to="/settings/"
@@ -14,7 +24,8 @@
                         <Icon class="navigation__link-icon" icon="fluent:settings-20-regular" width="26px" />
                         <span class="navigation__link-text">設定</span>
                     </router-link>
-                    <a v-ripple class="navigation__link" active-class="navigation__link--active" href="https://github.com/tsukumijima/NX-Jikkyo"
+                    <a v-ripple class="navigation__link" active-class="navigation__link--active"
+                        href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank"
                         :class="{
                             'navigation__link--develop-version': versionStore.is_client_develop_version,
                             'navigation__link--highlight': versionStore.is_update_available,

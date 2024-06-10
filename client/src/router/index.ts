@@ -17,13 +17,18 @@ const router = createRouter({
     routes: [
         {
             path: '/',
-            name: 'TV Home',
+            name: 'Home',
             component: () => import('@/views/TV/Home.vue'),
         },
         {
             path: '/watch/:display_channel_id',
-            name: 'TV Watch',
+            name: 'Watch',
             component: () => import('@/views/TV/Watch.vue'),
+        },
+        {
+            path: '/about/',
+            name: 'About',
+            component: () => import('@/views/About.vue'),
         },
         {
             path: '/settings/',
@@ -44,26 +49,26 @@ const router = createRouter({
             name: 'Settings General',
             component: () => import('@/views/Settings/General.vue'),
         },
-        {
-            path: '/settings/account',
-            name: 'Settings Account',
-            component: () => import('@/views/Settings/Account.vue'),
-        },
+        // {
+        //     path: '/settings/account',
+        //     name: 'Settings Account',
+        //     component: () => import('@/views/Settings/Account.vue'),
+        // },
         {
             path: '/settings/jikkyo',
             name: 'Settings Jikkyo',
             component: () => import('@/views/Settings/Jikkyo.vue'),
         },
-        {
-            path: '/login/',
-            name: 'Login',
-            component: () => import('@/views/Login.vue'),
-        },
-        {
-            path: '/register/',
-            name: 'Register',
-            component: () => import('@/views/Register.vue'),
-        },
+        // {
+        //     path: '/login/',
+        //     name: 'Login',
+        //     component: () => import('@/views/Login.vue'),
+        // },
+        // {
+        //     path: '/register/',
+        //     name: 'Register',
+        //     component: () => import('@/views/Register.vue'),
+        // },
         {
             path: '/:pathMatch(.*)*',
             name: 'NotFound',

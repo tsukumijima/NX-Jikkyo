@@ -549,10 +549,6 @@ class PlayerController {
 
         // DPlayer に動画再生系のイベントハンドラーを登録する
         // this.setupVideoPlaybackHandler();
-        // NX-Jikkyo では動画自体は再生しないので強制的にバッファリング表示を止める
-        player_store.background_url = PlayerUtils.generatePlayerBackgroundURL();
-        player_store.is_background_display = true;
-        player_store.is_video_buffering = false;
 
         // DPlayer のフルスクリーン関係のメソッドを無理やり上書きし、NX-Jikkyo の UI と統合する
         this.setupFullscreenHandler();
@@ -681,6 +677,11 @@ class PlayerController {
         // これにより各 PlayerManager での実際の処理が開始される
         // 同期処理すると時間が掛かるので、並行して実行する
         await Promise.all(this.player_managers.map((player_manager) => player_manager.init()));
+
+        // NX-Jikkyo では動画自体は再生しないので強制的にバッファリング表示を止める
+        player_store.background_url = PlayerUtils.generatePlayerBackgroundURL();
+        player_store.is_background_display = true;
+        player_store.is_video_buffering = false;
 
         console.log('\u001b[31m[PlayerController] Initialized.');
     }

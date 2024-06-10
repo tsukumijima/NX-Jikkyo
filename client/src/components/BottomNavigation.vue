@@ -1,9 +1,19 @@
 <template>
     <v-bottom-navigation class="bottom-navigation-container elevation-12" color="primary" grow active>
         <v-btn class="bottom-navigation-button" to="/"
-            :class="{'v-btn--active': $route.path.startsWith('/')}">
+            :class="{'v-btn--active': $route.path == '/'}">
             <Icon icon="fluent:tv-20-regular" width="30px" />
             <span class="mt-1">テレビ実況</span>
+        </v-btn>
+        <v-btn class="bottom-navigation-button"
+            href="https://jikkyo.tsukumijima.net" target="_blank">
+            <Icon icon="fluent:slide-text-multiple-20-regular" width="26px" />
+            <span class="mt-1">過去ログ API</span>
+        </v-btn>
+        <v-btn class="bottom-navigation-button" to="/about/"
+            :class="{'v-btn--active': $route.path.startsWith('/about')}">
+            <Icon icon="fluent:info-16-regular" width="26px" />
+            <span class="mt-1">About</span>
         </v-btn>
         <v-btn class="bottom-navigation-button" to="/settings/"
             :class="{'v-btn--active': $route.path.startsWith('/settings')}">

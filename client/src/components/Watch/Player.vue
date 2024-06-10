@@ -176,6 +176,11 @@ export default defineComponent({
                 @include smartphone-vertical {
                     right: 11px !important;
                 }
+                .dplayer-subtitle-icon {
+                    // for NX-Jikkyo
+                    width: 0 !important;
+                    padding: 0 !important;
+                }
             }
             .dplayer-icon {
                 @include tablet-vertical {
@@ -312,6 +317,10 @@ export default defineComponent({
             height: calc(100% - 60px) !important;
         }
         .dplayer-setting-origin-panel {
+            .dplayer-setting-item.dplayer-setting-quality, .dplayer-setting-item.dplayer-setting-audio {
+                // for NX-Jikkyo
+                display: none !important;
+            }
             .dplayer-setting-item.dplayer-setting-keyboard-shortcut {
                 // Document Picture-in-Picture ウインドウでは非表示
                 @media all and (display-mode: picture-in-picture) {

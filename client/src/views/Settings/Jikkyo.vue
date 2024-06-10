@@ -6,7 +6,7 @@
                 <Icon icon="fluent:arrow-left-12-filled" width="25px" />
             </a>
             <Icon icon="bi:chat-left-text-fill" width="19px" />
-            <span class="ml-3">実況</span>
+            <span class="ml-3">コメント/実況</span>
         </h2>
         <div class="settings__content" :class="{'settings__content--loading': is_loading}">
             <div class="settings__item mt-7">
