@@ -497,10 +497,13 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
             await websocket.send_json({'ping': {'content': 'pf:0'}})
             await websocket.send_json({'ping': {'content': 'rf:0'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
 
+            # 最後に取得したコメントの ID
+            ## 初回送信で最後に送信したコメントの ID を初期値とする
+            last_comment_id = comments[-1].id
+
             # スレッドが放送中の場合のみ、当該スレッドの新着コメントがあれば随時取得して送信
             ## 過去ログの場合はすでに放送が終わっているのでここの処理は行われず、再度 thread コマンドによる追加取得を待ち受ける
             if active_thread.start_at < datetime.now(ZoneInfo('Asia/Tokyo')) < active_thread.end_at:
-                last_comment_id = 0
                 while True:
                     comments = await Comment.filter(thread=active_thread, id__gt=last_comment_id).order_by('id')
                     for comment in comments:
