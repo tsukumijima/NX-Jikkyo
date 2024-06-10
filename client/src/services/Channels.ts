@@ -89,6 +89,9 @@ export interface INXJikkyoThread {
     duration: number;
     title: string;
     description: string;
+    jikkyo_force: number | null;
+    viewers: number;
+    comments: number;
 }
 
 
@@ -171,12 +174,12 @@ class Channels {
                 channel_number: channel.id.length <= 4 ? ('00' + channel.id.replaceAll('jk', '')).slice(-2) + '1' : channel.id.replaceAll('jk', ''),
                 type: channel.id.length <= 4 ? 'GR' : 'BS',
                 name: channel.name,
-                jikkyo_force: null,
+                jikkyo_force: channel.threads[0].jikkyo_force,
                 is_display: true,
                 is_subchannel: false,
                 is_radiochannel: false,
                 is_watchable: true,
-                viewer_count: 0,
+                viewer_count: channel.threads[0].comments, // 敢えて累計視聴者数の代わりに累計コメント数を入れている
                 program_present: (() => {
                     const program: IProgram = {
                         id: channel.threads[0].id.toString(),

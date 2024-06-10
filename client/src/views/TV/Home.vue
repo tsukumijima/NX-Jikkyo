@@ -41,6 +41,11 @@
                                                 <span class="ml-1">{{channel.jikkyo_force ?? '--'}}</span>
                                                 <span style="margin-left: 3px;"> コメ/分</span>
                                             </div>
+                                            <div class="channel__broadcaster-status-viewers ml-4">
+                                                <Icon icon="bi:chat-left-text-fill" height="11px" />
+                                                <span class="ml-1">累計コメント数:</span>
+                                                <span class="ml-1">{{channel.viewer_count}}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
