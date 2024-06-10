@@ -557,9 +557,12 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
             # 初回接続時のみ常に当該スレッドの最新 res_from 件のコメントを取得して送信
             ## when が設定されている場合のみ when より前のコメントを取得して送信
             if when is not None:
-                comments = await Comment.filter(thread=active_thread, date__lt=when).order_by('id').limit(abs(res_from))  # res_from を正の値に変換
+                comments = await Comment.filter(thread=active_thread, date__lt=when).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
             else:
-                comments = await Comment.filter(thread=active_thread).order_by('id').limit(abs(res_from))  # res_from を正の値に変換
+                comments = await Comment.filter(thread=active_thread).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
+
+            # コメントを新しい順に取得したので、古い順に並べ替える
+            comments.reverse()
 
             # 取得したコメントの最後のコメ番を取得 (なければ -1)
             last_comment_no = comments[-1].no if len(comments) > 0 else -1
