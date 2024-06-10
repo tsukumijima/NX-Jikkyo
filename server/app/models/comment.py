@@ -114,3 +114,4 @@ class ThreadResponse(BaseModel):
     duration: int
     title: str
     description: str
+    jikkyo_force: int | None

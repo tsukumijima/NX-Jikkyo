@@ -3,7 +3,7 @@ import hashlib
 import time
 import traceback
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import (
     APIRouter,
     Path,
@@ -54,18 +54,30 @@ async def ChannelsAPI():
     # チャンネルごとに
     response: list[ChannelResponse] = []
     for channel in channels:
-        response.append(ChannelResponse(
-            id = f'jk{channel.id}',
-            name = channel.name,
-            description = channel.description,
-            threads = [ThreadResponse(
+        threads: list[ThreadResponse] = []
+        for thread in channel.threads:
+            # 実況チャンネルごとの実況勢い
+            ## スレッド開催中のみ直近 60 秒間のコメント数をそのまま勢いカウントとして入れる (旧ニコニコ実況や namami と同じロジック)
+            jikkyo_force: int | None = None
+            if thread.start_at < datetime.now(ZoneInfo('Asia/Tokyo')) < thread.end_at:
+                jikkyo_force = await Comment.filter(
+                    thread = thread,
+                    date__gte = datetime.now(ZoneInfo('Asia/Tokyo')) - timedelta(seconds=60),
+                ).count()
+            threads.append(ThreadResponse(
                 id = thread.id,
                 start_at = thread.start_at,
                 end_at = thread.end_at,
                 duration = thread.duration,
                 title = thread.title,
                 description = thread.description,
-            ) for thread in channel.threads],
+                jikkyo_force = jikkyo_force,
+            ))
+        response.append(ChannelResponse(
+            id = f'jk{channel.id}',
+            name = channel.name,
+            description = channel.description,
+            threads = threads,
         ))
 
     return response
