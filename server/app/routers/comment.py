@@ -209,13 +209,20 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     },
                 })
 
+                # リクエスト元の URL を組み立てる
+                ## scheme はそのままだと多段プロキシの場合に ws:// になってしまうので、
+                ## X-Forwarded-Proto ヘッダから scheme を取得してから URI を組み立てる
+                ## X-Forwarded-Proto が https 固定の場合も考慮して wss に変換している
+                scheme = websocket.headers.get('X-Forwarded-Proto', websocket.url.scheme).replace('https', 'wss')
+                uri = f'{scheme}://{websocket.url.netloc}/api/v1/channels/{channel_id}/ws/comment'
+
                 # コメント部屋情報を送信
                 await websocket.send_json({
                     'type': 'room',
                     'data': {
                         'messageServer': {
                             # 「メッセージサーバーの URI (WebSocket)」
-                            'uri': f'{websocket.url.scheme}://{websocket.url.netloc}/api/v1/channels/{channel_id}/ws/comment',
+                            'uri': uri,
                             # 「メッセージサーバの種類 (現在常に `niwavided`)」
                             'type': 'niwavided',
                         },
