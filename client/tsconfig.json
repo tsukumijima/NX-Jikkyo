@@ -1,0 +1,55 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",  // Bundler にしないと package.json の exports フィールドが考慮されない (web-bml で必要)
+        "useDefineForClassFields": true,
+        "incremental": true,  // 差分ビルドを有効化 (差分情報は .tsbuildinfo に保存される)
+        "sourceMap": true,  // ソースマップを出力
+        "removeComments": false,  // ビルド後にコメントを残す
+        "resolveJsonModule": true,  // JSON ファイルを import できるようにする
+        "importHelpers": true,  // tslib から polyfill を import する
+        "esModuleInterop": true,  // CommonJS モジュールとの相互運用性を有効化
+        "forceConsistentCasingInFileNames": true,  // ファイル名の大文字小文字に一貫性がないときにエラーにする
+        // 以下は型チェックの設定
+        "strict": true,  // 厳密な型チェックを有効化
+        "skipLibCheck": true,  // ライブラリ (d.ts) の型チェックをしない (Vue.js で確か必要なはず)
+        "noImplicitAny": false,  // 特に依存している web-bml が型がないモジュールをインポートしてたりして解消が面倒なので無効化
+        "noImplicitThis": true,  // Volar で this の補完を有効にする
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "useUnknownInCatchVariables": true,
+        "lib": [
+            "ESNext",
+            "DOM",
+            "DOM.Iterable",
+            "ScriptHost",
+            "WebWorker",
+        ],
+        "types": [
+            "network-information-types",
+            "offscreencanvas",
+            "resize-observer-browser",
+            "vite-plugin-pwa/client",
+            "w3c-screen-orientation",
+            "wicg-mediasession",
+        ],
+        "paths": {
+            "@/*": [
+                "src/*",
+            ]
+        },
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.d.ts",
+        "src/**/*.tsx",
+        "src/**/*.vue",
+    ],
+    "exclude": [
+        "node_modules",
+    ]
+}
