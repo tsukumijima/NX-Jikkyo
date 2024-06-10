@@ -3,7 +3,7 @@ import hashlib
 import time
 import traceback
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from fastapi import (
     APIRouter,
     Path,
@@ -14,13 +14,13 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
-from typing import Annotated
+from tortoise import connections
+from typing import Annotated, cast
 from zoneinfo import ZoneInfo
 
 from app import logging
 from app.constants import LOGO_DIR, VERSION
 from app.models.comment import (
-    Channel,
     ChannelResponse,
     Comment,
     Thread,
@@ -49,36 +49,68 @@ __viewer_counts: dict[str, int] = {}
 async def ChannelsAPI():
 
     # ID 昇順、スレッドは新しい順でチャンネルを取得
-    channels = await Channel.all().prefetch_related('threads').order_by('threads__start_at').order_by('id')
+    connection = connections.get('default')
+    channels = await connection.execute_query_dict(
+        '''
+        SELECT
+            c.id,
+            c.name,
+            c.description,
+            t.id AS thread_id,
+            t.start_at,
+            t.end_at,
+            t.duration,
+            t.title,
+            t.description AS thread_description,
+            COUNT(com.id) AS comments_count,
+            SUM(CASE WHEN com.date >= NOW() - INTERVAL 60 SECOND THEN 1 ELSE 0 END) AS jikkyo_force
+        FROM channels c
+        LEFT JOIN threads t ON c.id = t.channel_id
+        LEFT JOIN comments com ON t.id = com.thread_id
+        GROUP BY c.id, c.name, c.description, t.id, t.start_at, t.end_at, t.duration, t.title, t.description
+        ORDER BY c.id ASC, t.start_at ASC
+        '''
+    )
 
     # チャンネルごとに
     response: list[ChannelResponse] = []
-    for channel in channels:
-        threads: list[ThreadResponse] = []
-        for thread in channel.threads:
-            # 実況チャンネルごとの実況勢い
-            ## スレッド開催中のみ直近 60 秒間のコメント数をそのまま勢いカウントとして入れる (旧ニコニコ実況や namami と同じロジック)
-            jikkyo_force: int | None = None
-            if thread.start_at < datetime.now(ZoneInfo('Asia/Tokyo')) < thread.end_at:
-                jikkyo_force = await Comment.filter(
-                    thread = thread,
-                    date__gte = datetime.now(ZoneInfo('Asia/Tokyo')) - timedelta(seconds=60),
-                ).count()
-            threads.append(ThreadResponse(
-                id = thread.id,
-                start_at = thread.start_at,
-                end_at = thread.end_at,
-                duration = thread.duration,
-                title = thread.title,
-                description = thread.description,
-                jikkyo_force = jikkyo_force,
-                viewers = __viewer_counts.get(f'jk{channel.id}', 0),
-                comments = await Comment.filter(thread=thread).count(),
-            ))
+    current_channel_id: int | None = None
+    current_channel_name: str | None = None
+    current_channel_description: str | None = None
+    threads: list[ThreadResponse] = []
+    for row in channels:
+        if current_channel_id != row['id']:
+            if current_channel_id is not None:
+                response.append(ChannelResponse(
+                    id = f'jk{current_channel_id}',
+                    name = cast(str, current_channel_name),
+                    description = cast(str, current_channel_description),
+                    threads = threads,
+                ))
+            current_channel_id = cast(int, row['id'])
+            current_channel_name = cast(str, row['name'])
+            current_channel_description = cast(str, row['description'])
+            threads = []
+
+        thread = ThreadResponse(
+            id = cast(int, row['thread_id']),
+            start_at = row['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo')),
+            end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo')),
+            duration = cast(int, row['duration']),
+            title = cast(str, row['title']),
+            description = cast(str, row['thread_description']),
+            jikkyo_force = cast(int, row['jikkyo_force']),
+            viewers = __viewer_counts.get(f'jk{current_channel_id}', 0),
+            comments = cast(int, row['comments_count']),
+        )
+
+        threads.append(thread)
+
+    if current_channel_id is not None:
         response.append(ChannelResponse(
-            id = f'jk{channel.id}',
-            name = channel.name,
-            description = channel.description,
+            id = f'jk{current_channel_id}',
+            name = cast(str, current_channel_name),
+            description = cast(str, current_channel_description),
             threads = threads,
         ))
 
