@@ -62,9 +62,6 @@ __viewer_counts: dict[str, int] = {}
 async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
     """ ニコ生の視聴セッション Web Socket 互換 API """
 
-    # 接続開始時刻を取得
-    connected_at = time.time()
-
     # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得
     try:
         channel_id_int = int(channel_id.replace('jk', ''))
@@ -74,10 +71,11 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         return
 
     # 現在アクティブな (開催中の) スレッドを取得
+    now = datetime.now()
     active_thread = await Thread.filter(
         channel_id = channel_id_int,
-        start_at__lte = connected_at,
-        end_at__gte = connected_at
+        start_at__lte = now,
+        end_at__gte = now
     ).first()
     if not active_thread:
         logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
