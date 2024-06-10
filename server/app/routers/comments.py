@@ -1,4 +1,5 @@
 
+import asyncio
 import hashlib
 import time
 import traceback
@@ -577,6 +578,9 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
                         await websocket.close(code=1011)
                         break
+
+                    # 少し待機してから次のループへ
+                    await asyncio.sleep(0.1)
 
     except WebSocketDisconnect:
         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
