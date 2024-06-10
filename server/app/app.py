@@ -28,10 +28,9 @@ app = FastAPI(
     title = 'NX-Jikkyo',
     description = 'NX-Jikkyo: Nico Nico Jikkyo Alternatives',
     version = VERSION,
-    # 開発時のみ Swagger UI と ReDoc を有効化
-    openapi_url = '/api/v1/openapi.json' if CONFIG.ENVIRONMENT == 'Develop' else None,
-    docs_url = '/api/v1/docs' if CONFIG.ENVIRONMENT == 'Develop' else None,
-    redoc_url = '/api/v1/redoc' if CONFIG.ENVIRONMENT == 'Develop' else None,
+    openapi_url = '/api/v1/openapi.json',
+    docs_url = '/api/v1/docs',
+    redoc_url = '/api/v1/redoc',
 )
 
 # ルーターを登録
