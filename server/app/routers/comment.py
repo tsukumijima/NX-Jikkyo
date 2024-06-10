@@ -1,10 +1,22 @@
 
+import hashlib
 import time
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Path,
+    Request,
+    Response,
+    status,
+    WebSocket,
+    WebSocketDisconnect,
+)
+from fastapi.responses import FileResponse
+from typing import Annotated
 
 from app import logging
+from app.constants import LOGO_DIR, VERSION
 from app.models.comment import (
     Channel,
     ChannelResponse,
@@ -50,6 +62,60 @@ async def ChannelsAPI():
         ))
 
     return response
+
+
+@router.get(
+    '/channels/{channel_id}/logo',
+    summary = 'チャンネルロゴ API',
+    response_class = Response,
+    responses = {
+        status.HTTP_200_OK: {
+            'description': 'チャンネルロゴ。',
+            'content': {'image/png': {}},
+        }
+    }
+)
+async def ChannelLogoAPI(
+    request: Request,
+    channel_id: Annotated[str, Path(description='チャンネル ID 。ex: jk101')],
+):
+    """
+    指定されたチャンネルに紐づくロゴを取得する。
+    """
+
+    def GetETag(logo_data: bytes) -> str:
+        """ ロゴデータのバイナリから ETag を生成する """
+        return hashlib.sha256(logo_data).hexdigest()
+
+    # HTTP レスポンスヘッダーの Cache-Control の設定
+    ## 1ヶ月キャッシュする
+    CACHE_CONTROL = 'public, no-transform, immutable, max-age=2592000'
+
+    # ***** 同梱のロゴを利用（存在する場合）*****
+
+    # 同梱されているロゴがあれば取得する (ない場合は None が返る)
+    logo_path = LOGO_DIR / f'{channel_id}.png'
+    if logo_path.exists():
+
+        # リクエストに If-None-Match ヘッダが存在し、ETag が一致する場合は 304 を返す
+        ## ETag はロゴファイルのパスとバージョン情報のハッシュから生成する
+        etag = GetETag(f'{logo_path}{VERSION}'.encode())
+        if request.headers.get('If-None-Match') == etag:
+            return Response(status_code=304)
+
+        # ロゴデータを返す
+        return FileResponse(logo_path, headers={
+            'Cache-Control': CACHE_CONTROL,
+            'ETag': etag,
+        })
+
+    # ***** デフォルトのロゴ画像を利用 *****
+
+    # 同梱のロゴファイルも Mirakurun や EDCB からのロゴもない場合は、デフォルトのロゴ画像を返す
+    return FileResponse(LOGO_DIR / 'default.png', headers={
+        'Cache-Control': CACHE_CONTROL,
+        'ETag': GetETag('default'.encode()),
+    })
 
 
 # 実況チャンネルごとの累計来場者数カウント

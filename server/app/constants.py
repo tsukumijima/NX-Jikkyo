@@ -20,6 +20,11 @@ CLIENT_DIR = BASE_DIR.parent / 'client/dist'
 # データディレクトリ
 DATA_DIR = BASE_DIR / 'data'
 
+# スタティックディレクトリ
+STATIC_DIR = BASE_DIR / 'static'
+## ロゴファイルがあるディレクトリ
+LOGO_DIR = STATIC_DIR / 'logos'
+
 # ログディレクトリ
 LOGS_DIR = BASE_DIR / 'logs'
 ## NXJikkyo のサーバーログのパス
