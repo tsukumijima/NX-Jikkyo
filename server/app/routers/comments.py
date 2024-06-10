@@ -175,7 +175,9 @@ def ChannelLogoAPI(
 
 @router.websocket('/channels/{channel_id}/ws/watch')
 async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
-    """ ニコ生の視聴セッション Web Socket 互換 API """
+    """
+    ニコ生の視聴セッション Web Socket 互換 API
+    """
 
     # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得
     try:
@@ -432,7 +434,12 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
 
 @router.websocket('/channels/{channel_id}/ws/comment')
 async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
-    """ ニコ生のコメントセッション Web Socket 互換 API """
+    """
+    ニコ生のコメントセッション Web Socket 互換 API の実装
+    視聴セッション側と違い明確なドキュメントがないため、本家が動いてない以上手探りで実装するほかない…
+    ref: https://qiita.com/pasta04/items/33da06cf3c21e34fc4d1
+    ref: https://github.com/xpadev-net/niconicomments/blob/develop/src/%40types/format.legacy.ts
+    """
 
     # コメントセッションはあくまで WebSocket でリクエストされたスレッド ID に基づいて送るので、
     # チャンネル ID はログ出力以外では使わない
@@ -445,10 +452,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
     await websocket.accept()
 
     async def SendComment(active_thread: Thread, thread_key: str, comment: Comment):
-        """
-        受信コメントをクライアント側に送信する
-        ref: https://qiita.com/pasta04/items/33da06cf3c21e34fc4d1
-        """
+        """ 受信コメントをクライアント側に送信する """
         response = {
             'chat': {
                 'thread': active_thread.id,
@@ -497,6 +501,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
         thread_key: str | None = None
         res_from: int | None = None
         when: int | None = None
+        command_count: int = 0
 
         # thread コマンドが降ってくるまで待機
         while True:
@@ -513,7 +518,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         # 初回にクライアントに送信する最新コメントの数
                         ## res_from が正の値になることはない (はず)
                         res_from = int(message['thread']['res_from'])
-                        if res_from >= 0:
+                        if res_from > 0:  # 1 以上の res_from には非対応 (本家ニコ生では正の値が来た場合コメ番換算で取得するらしい？)
                             logging.error(f'CommentSessionAPI [{channel_id}]: Invalid res_from: {res_from}')
                             await websocket.close(code=4001)
                             return
@@ -548,12 +553,33 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                 comments = await Comment.filter(thread=active_thread, date__lt=when).order_by('id').limit(abs(res_from))  # res_from を正の値に変換
             else:
                 comments = await Comment.filter(thread=active_thread).order_by('id').limit(abs(res_from))  # res_from を正の値に変換
-            await websocket.send_json({'ping': {'content': 'rs:0'}})
-            await websocket.send_json({'ping': {'content': 'ps:0'}})
+
+            # 取得したコメントの最後のコメ番を取得 (なければ -1)
+            last_comment_no = comments[-1].no if len(comments) > 0 else -1
+
+            # スレッド情報を送る
+            ## この辺フォーマットがよくわからないので合ってるか微妙…
+            await websocket.send_json({
+                'thread': {
+                    "resultcode": 0,  # 成功
+                    "thread": thread_id,
+                    "last_res": last_comment_no,
+                    "ticket": "0x12345678",  # よくわからん値だが固定
+                    "revision": 1,  # よくわからん値だが固定
+                    "server_time": int(time.time()),
+                },
+            })
+
+            # この rs,ps,pf,rf の謎コマンドに挟んで送るのが重要
+            ## : の後の数字は何回か送るごとに5ずつ増えるらしい…？
+            ## ref: https://qiita.com/kumaS-kumachan/items/706123c9a4a5aff5517c
+            await websocket.send_json({'ping': {'content': f'rs:{command_count}'}})
+            await websocket.send_json({'ping': {'content': f'ps:{command_count}'}})
             for comment in comments:
                 await SendComment(active_thread, thread_key, comment)
-            await websocket.send_json({'ping': {'content': 'pf:0'}})
-            await websocket.send_json({'ping': {'content': 'rf:0'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
+            await websocket.send_json({'ping': {'content': f'pf:{command_count}'}})
+            await websocket.send_json({'ping': {'content': f'rf:{command_count}'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
+            command_count += 5  # 新着コメントを全て送ったので、次送信要求が来た場合は5増やす
 
             # 最後に取得したコメントの ID
             ## 初回送信で最後に送信したコメントの ID を初期値とする
