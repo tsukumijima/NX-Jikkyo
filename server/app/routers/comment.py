@@ -72,6 +72,8 @@ async def ChannelsAPI():
                 title = thread.title,
                 description = thread.description,
                 jikkyo_force = jikkyo_force,
+                viewers = __viewer_counts.get(f'jk{channel.id}', 0),
+                comments = await Comment.filter(thread=thread).count(),
             ))
         response.append(ChannelResponse(
             id = f'jk{channel.id}',

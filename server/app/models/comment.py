@@ -115,3 +115,5 @@ class ThreadResponse(BaseModel):
     title: str
     description: str
     jikkyo_force: int | None
+    viewers: int
+    comments: int
