@@ -4,6 +4,7 @@ import hashlib
 import time
 import traceback
 import uuid
+import websockets.exceptions
 from datetime import datetime
 from fastapi import (
     APIRouter,
@@ -419,6 +420,12 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
         __viewer_counts[channel_id] -= 1  # 接続を切断したので来場者数を減らす
 
+    except websockets.exceptions.WebSocketException as e:
+        # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
+        logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error.')
+        logging.error(e)
+        __viewer_counts[channel_id] -= 1  # 接続を切断したので来場者数を減らす
+
     except Exception:
         logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
         logging.error(traceback.format_exc())
@@ -609,7 +616,13 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                     await asyncio.sleep(0.1)
 
     except WebSocketDisconnect:
+        # 接続が切れた時の処理
         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
+
+    except websockets.exceptions.WebSocketException as e:
+        # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
+        logging.error(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected by unexpected error.')
+        logging.error(e)
 
     except Exception:
         logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection.')
