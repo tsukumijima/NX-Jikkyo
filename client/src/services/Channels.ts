@@ -181,18 +181,24 @@ class Channels {
                 is_watchable: true,
                 viewer_count: channel.threads[0].comments, // 敢えて累計視聴者数の代わりに累計コメント数を入れている
                 program_present: (() => {
+                    const now = new Date();
+                    const current_thread = channel.threads.find(thread =>
+                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
+                    );
+                    if (!current_thread) return null;
+
                     const program: IProgram = {
-                        id: channel.threads[0].id.toString(),
+                        id: current_thread.id.toString(),
                         channel_id: channel.id,
                         network_id: -1,
                         service_id: -1,
                         event_id: -1,
-                        title: channel.threads[0].title,
-                        description: channel.threads[0].description,
+                        title: current_thread.title,
+                        description: current_thread.description,
                         detail: {},
-                        start_time: channel.threads[0].start_at,
-                        end_time: channel.threads[0].end_at,
-                        duration: channel.threads[0].duration,
+                        start_time: current_thread.start_at,
+                        end_time: current_thread.end_at,
+                        duration: current_thread.duration,
                         is_free: false,
                         genres: [],
                         video_type: '',
@@ -208,18 +214,25 @@ class Channels {
                     return program;
                 })(),
                 program_following: (() => {
+                    const now = new Date();
+                    const current_thread_index = channel.threads.findIndex(thread =>
+                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
+                    );
+                    if (current_thread_index === -1 || current_thread_index + 1 >= channel.threads.length) return null;
+
+                    const next_thread = channel.threads[current_thread_index + 1];
                     const program: IProgram = {
-                        id: channel.threads[1].id.toString(),
+                        id: next_thread.id.toString(),
                         channel_id: channel.id,
                         network_id: -1,
                         service_id: -1,
                         event_id: -1,
-                        title: channel.threads[1].title,
-                        description: channel.threads[1].description,
+                        title: next_thread.title,
+                        description: next_thread.description,
                         detail: {},
-                        start_time: channel.threads[1].start_at,
-                        end_time: channel.threads[1].end_at,
-                        duration: channel.threads[1].duration,
+                        start_time: next_thread.start_at,
+                        end_time: next_thread.end_at,
+                        duration: next_thread.duration,
                         is_free: false,
                         genres: [],
                         video_type: '',
