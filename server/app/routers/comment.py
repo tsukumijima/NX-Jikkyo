@@ -500,7 +500,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
             # 最後に取得したコメントの ID
             ## 初回送信で最後に送信したコメントの ID を初期値とする
             ## 初回取得コメントが存在しない場合、現在当該スレッドに1つもコメントがない状態
-            last_comment_id = comments[-1].id if comments else None
+            last_comment_id = comments[-1].id if comments else 0  # None から 0 に変更
 
             # スレッドが放送中の場合のみ、当該スレッドの新着コメントがあれば随時取得して送信
             ## 過去ログの場合はすでに放送が終わっているのでここの処理は行われず、再度 thread コマンドによる追加取得を待ち受ける
