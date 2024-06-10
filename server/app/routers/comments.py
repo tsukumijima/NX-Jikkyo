@@ -34,9 +34,9 @@ router = APIRouter(
     prefix = '/api/v1',
 )
 
-# 実況チャンネルごとの累計来場者数カウント
+# 実況チャンネルごとの来場者数カウント
 ## 本家ニコ生は statistics メッセージで来場者数 (リアルタイムではなく番組累計) を送っている
-## NX-Jikkyo ではその挙動に合わせる
+## NX-Jikkyo ではリアルタイム来場者数を送るようにしている
 __viewer_counts: dict[str, int] = {}
 
 
@@ -407,11 +407,13 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     },
                 })
                 await websocket.close(code=1011)
+                __viewer_counts[channel_id] -= 1  # 接続を切断したので来場者数を減らす
                 return
 
     except WebSocketDisconnect:
         # 接続が切れた時の処理
         logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
+        __viewer_counts[channel_id] -= 1  # 接続を切断したので来場者数を減らす
 
     except Exception:
         logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
@@ -423,6 +425,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
             },
         })
         await websocket.close(code=1011)
+        __viewer_counts[channel_id] -= 1  # 接続を切断したので来場者数を減らす
 
 
 @router.websocket('/channels/{channel_id}/ws/comment')
