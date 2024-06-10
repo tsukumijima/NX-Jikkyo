@@ -128,12 +128,13 @@ async def ChannelsAPI():
         }
     }
 )
-async def ChannelLogoAPI(
+def ChannelLogoAPI(
     request: Request,
     channel_id: Annotated[str, Path(description='チャンネル ID 。ex: jk101')],
 ):
     """
     指定されたチャンネルに紐づくロゴを取得する。
+    Path.exists() でファイルシステムにアクセスするため、あえて同期関数としている。
     """
 
     def GetETag(logo_data: bytes) -> str:
@@ -560,7 +561,8 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
 
             # スレッドが放送中の場合のみ、当該スレッドの新着コメントがあれば随時取得して送信
             ## 過去ログの場合はすでに放送が終わっているのでここの処理は行われず、再度 thread コマンドによる追加取得を待ち受ける
-            if active_thread.start_at < datetime.now(ZoneInfo('Asia/Tokyo')) < active_thread.end_at:
+            current_time = time.time()
+            if active_thread.start_at.timestamp() < current_time < active_thread.end_at.timestamp():
                 while True:
                     # 最大 50 件まで一度に読み込む
                     ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？
@@ -570,7 +572,8 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         last_comment_id = comment.id
 
                     # スレッドの開催終了時刻を過ぎたら接続を切断する
-                    if datetime.now(ZoneInfo('Asia/Tokyo')) > active_thread.end_at:
+                    current_time = time.time()
+                    if current_time > active_thread.end_at.timestamp():
                         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
                         await websocket.close(code=1011)
                         break
