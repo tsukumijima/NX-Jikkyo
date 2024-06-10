@@ -21,6 +21,10 @@
                     <strong>そこで突貫工事ではありますが、ニコニコ生放送互換のサードパーティーツールが比較的対応しやすい技術仕様で、ニコニコ実況が使えない間のつなぎとしてテレビを実況できる、このサイトを開発しました。</strong>ソースコードは <a class="link" href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank">GitHub</a> で公開しています。<br>
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
+                    <strong>ぜひこのサイトをまだ知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
+                    コメントサーバーの負荷問題は……なんとかします…！
+                </blockquote>
+                <blockquote class="mt-5 text-text-darken-1">
                     勘の良い方はおそらくお気づきの通り、このサイトは私が長年開発している <a class="link" href="https://github.com/tsukumijima/KonomiTV" target="_blank">KonomiTV</a> の大半のソースコードを流用して開発しています。<br>
                     一部 UI が不自然な箇所がありますが、元々 KonomiTV のプレイヤーロジックはそのまま動画再生処理だけを強引に無効化し、コメント再生だけを行わせているためです。
                 </blockquote>

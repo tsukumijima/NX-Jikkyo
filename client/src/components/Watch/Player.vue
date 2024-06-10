@@ -511,7 +511,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             aspect-ratio: 16 / 9;
             transform: translate(-50%, -50%);
             background-blend-mode: overlay;
-            background-color: rgba(14, 14, 18, 0.35);
+            background-color: rgba(14, 14, 18, 0.45);
             background-size: cover;
             background-image: none;
             opacity: 0;
@@ -532,12 +532,12 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
                 width: 100%;
                 transform: translateY(-50%);
                 color: rgb(var(--v-theme-text));
-                opacity: 0.8;
+                opacity: 0.85;
                 font-size: 22px;
                 font-weight: bold;
                 line-height: 1.7;
                 text-align: center;
-                filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.3));
+                filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.4));
 
                 @include smartphone-vertical {
                     font-size: 18px;
@@ -550,6 +550,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
                 height: 45px;
                 right: 56px;
                 bottom: 44px;
+                opacity: 0.85;
                 filter: drop-shadow(0px 0px 5px rgb(var(--v-theme-black)));
 
                 @include tablet-vertical {
