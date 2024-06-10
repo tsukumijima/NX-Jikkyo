@@ -1,6 +1,7 @@
 
 import hashlib
 import time
+import traceback
 import uuid
 from datetime import datetime
 from fastapi import (
@@ -14,6 +15,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from app import logging
 from app.constants import LOGO_DIR, VERSION
@@ -31,6 +33,11 @@ router = APIRouter(
     tags = ['Comments'],
     prefix = '/api/v1',
 )
+
+# 実況チャンネルごとの累計来場者数カウント
+## 本家ニコ生は statistics メッセージで来場者数 (リアルタイムではなく番組累計) を送っている
+## NX-Jikkyo ではその挙動に合わせる
+__viewer_counts: dict[str, int] = {}
 
 
 @router.get(
@@ -118,12 +125,6 @@ async def ChannelLogoAPI(
     })
 
 
-# 実況チャンネルごとの累計来場者数カウント
-## 本家ニコ生は statistics メッセージで来場者数 (リアルタイムではなく番組累計) を送っている
-## NX-Jikkyo ではその挙動に合わせる
-__viewer_counts: dict[str, int] = {}
-
-
 @router.websocket('/channels/{channel_id}/ws/watch')
 async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
     """ ニコ生の視聴セッション Web Socket 互換 API """
@@ -137,7 +138,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         return
 
     # 現在アクティブな (開催中の) スレッドを取得
-    now = datetime.now()
+    now = datetime.now(ZoneInfo('Asia/Tokyo'))
     active_thread = await Thread.filter(
         channel_id = channel_id_int,
         start_at__lte = now,
@@ -173,13 +174,15 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
             if message_type == 'startWatching':
 
                 # 視聴カウントをインクリメント
+                if channel_id not in __viewer_counts:
+                    __viewer_counts[channel_id] = 0
                 __viewer_counts[channel_id] += 1
 
                 # 現在のサーバー時刻 (ISO 8601) を返す
                 await websocket.send_json({
                     'type': 'serverTime',
                     'data': {
-                        'currentMs': datetime.now().isoformat(),
+                        'currentMs': datetime.now(ZoneInfo('Asia/Tokyo')).isoformat(),
                     },
                 })
 
@@ -198,7 +201,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     'data': {
                         'messageServer': {
                             # 「メッセージサーバーの URI (WebSocket)」
-                            'uri': f'wss://{websocket.url.hostname}/api/v1/channels/{channel_id}/ws/comment',
+                            'uri': f'{websocket.url.scheme}://{websocket.url.netloc}/api/v1/channels/{channel_id}/ws/comment',
                             # 「メッセージサーバの種類 (現在常に `niwavided`)」
                             'type': 'niwavided',
                         },
@@ -302,8 +305,10 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         },
                     })
                     logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} posted a comment.')
-                except Exception as e:
-                    logging.error(f'WatchSessionAPI [{channel_id}]: Invalid message: {e}')
+                except Exception:
+                    logging.error(f'WatchSessionAPI [{channel_id}]: Invalid message.')
+                    logging.error(message)
+                    logging.error(traceback.format_exc())
                     await websocket.send_json({
                         'type': 'error',
                         'data': {
@@ -312,7 +317,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     })
 
             # 60 秒に 1 回最新の視聴統計情報を送信 (互換性のため)
-            if time.time() - last_statistics_time > 60:
+            if (time.time() - last_statistics_time) > 60:
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
@@ -325,22 +330,22 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                 last_statistics_time = time.time()
 
             # 45 秒に 1 回サーバー時刻を送信 (互換性のため)
-            if time.time() - last_server_time_time > 45:
+            if (time.time() - last_server_time_time) > 45:
                 await websocket.send_json({
                     'type': 'serverTime',
                     'data': {
-                        'serverTime': datetime.now().isoformat(),
+                        'serverTime': datetime.now(ZoneInfo('Asia/Tokyo')).isoformat(),
                     },
                 })
                 last_server_time_time = time.time()
 
             # 30 秒に 1 回 ping を送信 (互換性のため)
-            if time.time() - last_ping_time > 30:
+            if (time.time() - last_ping_time) > 30:
                 await websocket.send_json({'type': 'ping'})
                 last_ping_time = time.time()
 
             # スレッドの開催終了時刻を過ぎたら接続を切断する
-            if datetime.now() > active_thread.end_at:
+            if datetime.now(ZoneInfo('Asia/Tokyo')) > active_thread.end_at:
                 logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected because the thread ended.')
                 await websocket.send_json({
                     'type': 'disconnect',
@@ -355,8 +360,9 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         # 接続が切れた時の処理
         logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
 
-    except Exception as e:
-        logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection: {e}')
+    except Exception:
+        logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
+        logging.error(traceback.format_exc())
         await websocket.send_json({
             'type': 'disconnect',
             'data': {
@@ -459,8 +465,10 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         if 'when' in message['thread']:
                             when = int(message['thread']['when'])
                         break
-                    except Exception as e:
-                        logging.error(f'CommentSessionAPI [{channel_id}]: invalid message: {e}')
+                    except Exception:
+                        logging.error(f'CommentSessionAPI [{channel_id}]: invalid message.')
+                        logging.error(message)
+                        logging.error(traceback.format_exc())
                         await websocket.close(code=4001)
                         return
 
@@ -491,7 +499,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
 
             # スレッドが放送中の場合のみ、当該スレッドの新着コメントがあれば随時取得して送信
             ## 過去ログの場合はすでに放送が終わっているのでここの処理は行われず、再度 thread コマンドによる追加取得を待ち受ける
-            if active_thread.start_at < datetime.now() < active_thread.end_at:
+            if active_thread.start_at < datetime.now(ZoneInfo('Asia/Tokyo')) < active_thread.end_at:
                 last_comment_id = 0
                 while True:
                     comments = await Comment.filter(thread=active_thread, id__gt=last_comment_id).order_by('id')
@@ -500,7 +508,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         last_comment_id = comment.id
 
                     # スレッドの開催終了時刻を過ぎたら接続を切断する
-                    if datetime.now() > active_thread.end_at:
+                    if datetime.now(ZoneInfo('Asia/Tokyo')) > active_thread.end_at:
                         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
                         await websocket.close(code=1011)
                         break
@@ -508,6 +516,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
     except WebSocketDisconnect:
         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
 
-    except Exception as e:
-        logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection: {e}')
+    except Exception:
+        logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection.')
+        logging.error(traceback.format_exc())
         await websocket.close(code=1011)

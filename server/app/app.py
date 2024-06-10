@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_restful.tasks import repeat_every
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from app import logging
 from app.config import CONFIG
@@ -183,7 +184,7 @@ async def AddThreads():
     for channel in channels:
 
         # 今日の日付を取得
-        today = datetime.now().date()
+        today = datetime.now(ZoneInfo('Asia/Tokyo')).date()
         start_time_today = datetime.combine(today, datetime.min.time()) + timedelta(hours=4)
         end_time_today = start_time_today + timedelta(hours=24)
 
