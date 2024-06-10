@@ -562,7 +562,9 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
             ## 過去ログの場合はすでに放送が終わっているのでここの処理は行われず、再度 thread コマンドによる追加取得を待ち受ける
             if active_thread.start_at < datetime.now(ZoneInfo('Asia/Tokyo')) < active_thread.end_at:
                 while True:
-                    comments = await Comment.filter(thread=active_thread, id__gt=last_comment_id).order_by('id')
+                    # 最大 50 件まで一度に読み込む
+                    ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？
+                    comments = await Comment.filter(thread=active_thread, id__gt=last_comment_id).order_by('id').limit(50)
                     for comment in comments:
                         await SendComment(active_thread, thread_key, comment)
                         last_comment_id = comment.id
