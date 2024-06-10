@@ -2,7 +2,7 @@
 import time
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app import logging
 from app.models.comment import (
@@ -59,7 +59,7 @@ __viewer_counts: dict[str, int] = {}
 
 
 @router.websocket('/channels/{channel_id}/ws/watch')
-async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Request):
+async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
     """ ニコ生の視聴セッション Web Socket 互換 API """
 
     # 接続開始時刻を取得
@@ -134,7 +134,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket, request: Reques
                     'data': {
                         'messageServer': {
                             # 「メッセージサーバーの URI (WebSocket)」
-                            'uri': f'wss://{request.url.hostname}/api/v1/channels/{channel_id}/ws/comment',
+                            'uri': f'wss://{websocket.url.hostname}/api/v1/channels/{channel_id}/ws/comment',
                             # 「メッセージサーバの種類 (現在常に `niwavided`)」
                             'type': 'niwavided',
                         },
