@@ -580,7 +580,7 @@ class LiveCommentManager implements PlayerManager {
                             text: options.data.text,  // コメント本文
                             time: dayjs().format('HH:mm:ss'),  // 現在時刻
                             playback_position: this.player.video.currentTime,  // 現在の再生位置
-                            user_id: `${user_store.user!.niconico_user_id!}`,  // ニコニコユーザー ID
+                            user_id: 'Unknown',  // ユーザー ID
                             my_post: true,  // 自分のコメントであることを示すフラグ
                         }
                     });
