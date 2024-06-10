@@ -120,7 +120,7 @@ async def ChannelLogoAPI(
 
 # 実況チャンネルごとの累計来場者数カウント
 ## 本家ニコ生は statistics メッセージで来場者数 (リアルタイムではなく番組累計) を送っている
-## NXJikkyo ではその挙動に合わせる
+## NX-Jikkyo ではその挙動に合わせる
 __viewer_counts: dict[str, int] = {}
 
 
@@ -212,11 +212,11 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         'waybackkey': 'DUMMY_TOKEN',
                         # 「メッセージサーバーから受信するコメント（chatメッセージ）に yourpost フラグを付けるためのキー。
                         # thread メッセージの threadkey パラメータに設定する」
-                        ## NXJikkyo ではコメントの user_id に入れられる watch_session_client_id をセットする
+                        ## NX-Jikkyo ではコメントの user_id に入れられる watch_session_client_id をセットする
                         'yourPostKey': watch_session_client_id,
                         # 「vpos を計算する基準 (vpos:0) となる時刻。(ISO8601 形式)」
                         ## 確か本家ニコ生では番組開始時刻が vpos (相対的なコメント時刻) に入っていたはず (忘れた…)
-                        ## NXJikkyo でも本家ニコ生同様に番組開始時刻を ISO 8601 形式で入れている
+                        ## NX-Jikkyo でも本家ニコ生同様に番組開始時刻を ISO 8601 形式で入れている
                         'vposBaseTime': active_thread.start_at.isoformat(),
                     },
                 })
@@ -227,8 +227,8 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     'data': {
                         'viewers': __viewer_counts[channel_id],
                         'comments': await Comment.filter(thread=active_thread).count(),
-                        'adPoints': 0,  # NXJikkyo では常に 0 を返す
-                        'giftPoints': 0,  # NXJikkyo では常に 0 を返す
+                        'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
+                        'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
                 })
 
@@ -296,7 +296,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                                 # 「コメント本文」
                                 'content': comment.content,
                                 # 「コメントを薄く表示するかどうか」
-                                ## NXJikkyo では常に False を返す
+                                ## NX-Jikkyo では常に False を返す
                                 'restricted': False,
                             },
                         },
@@ -318,8 +318,8 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     'data': {
                         'viewers': __viewer_counts[channel_id],
                         'comments': await Comment.filter(thread=active_thread).count(),
-                        'adPoints': 0,  # NXJikkyo では常に 0 を返す
-                        'giftPoints': 0,  # NXJikkyo では常に 0 を返す
+                        'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
+                        'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
                 })
                 last_statistics_time = time.time()
@@ -413,7 +413,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
     try:
 
         ## 本家ニコ生では以下のような謎構造のメッセージ (thread コマンド) をコメントセッション (コメントサーバー) に送ることでコメント受信が始まる
-        ## NXJikkyo でもこの挙動をなんとなく再現する (詳細な仕様は本家が死んでるのでわかりません！生放送と過去ログでも微妙に違う…)
+        ## NX-Jikkyo でもこの挙動をなんとなく再現する (詳細な仕様は本家が死んでるのでわかりません！生放送と過去ログでも微妙に違う…)
         # [
         #     {ping: {content: 'rs:0'}},
         #     {ping: {content: 'ps:0'}},
@@ -444,7 +444,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         thread_id = int(message['thread']['thread'])
                         # スレッドキー
                         ## 視聴セッション側の yourPostKey と同一
-                        ## NXJikkyo ではコメントの user_id に入れられる watch_session_client_id がセットされている
+                        ## NX-Jikkyo ではコメントの user_id に入れられる watch_session_client_id がセットされている
                         thread_key = message['thread']['threadkey']
                         # 初回にクライアントに送信する最新コメントの数
                         ## res_from が正の値になることはない (はず)

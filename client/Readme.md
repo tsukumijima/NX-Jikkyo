@@ -1,5 +1,5 @@
 
-# NXJikkyo Client
+# NX-Jikkyo Client
 
 ## Project setup
 

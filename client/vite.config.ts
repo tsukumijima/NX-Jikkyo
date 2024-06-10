@@ -15,7 +15,7 @@ export default defineConfig({
     // ref: https://stackoverflow.com/a/68093777/17124142
     define: {
         'process.env': {},  // これがないと assert がエラーになる
-        'import.meta.env.NXJIKKYO_VERSION': JSON.stringify(process.env.npm_package_version),
+        'import.meta.env.NX_JIKKYO_VERSION': JSON.stringify(process.env.npm_package_version),
     },
     // ビルドの設定
     build: {
@@ -84,8 +84,8 @@ export default defineConfig({
             ],
             // manifest.json の内容
             manifest: {
-                name: 'NXJikkyo',
-                short_name: 'NXJikkyo',
+                name: 'NX-Jikkyo',
+                short_name: 'NX-Jikkyo',
                 start_url: '.',
                 display: 'standalone',
                 theme_color: '#0D0807',

@@ -154,7 +154,7 @@ export default defineComponent({
                     color: rgb(var(--v-theme-text)) !important;
                 }
                 .dplayer-volume {
-                    // for NXJikkyo
+                    // for NX-Jikkyo
                     display: none !important;
                     .dplayer-volume-bar {
                         background: rgb(var(--v-theme-text)) !important;

@@ -14,7 +14,7 @@
                         <Icon class="navigation__link-icon" icon="fluent:settings-20-regular" width="26px" />
                         <span class="navigation__link-text">設定</span>
                     </router-link>
-                    <a v-ripple class="navigation__link" active-class="navigation__link--active" href="https://github.com/tsukumijima/NXJikkyo"
+                    <a v-ripple class="navigation__link" active-class="navigation__link--active" href="https://github.com/tsukumijima/NX-Jikkyo"
                         :class="{
                             'navigation__link--develop-version': versionStore.is_client_develop_version,
                             'navigation__link--highlight': versionStore.is_update_available,

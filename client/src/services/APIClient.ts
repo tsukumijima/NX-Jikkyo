@@ -1,6 +1,6 @@
 
 /**
- * services/ 直下の各クラスは、NXJikkyo サーバーへの API リクエストを抽象化し、
+ * services/ 直下の各クラスは、NX-Jikkyo サーバーへの API リクエストを抽象化し、
  * API レスポンスの受け取りと、エラーが発生した際のエラーハンドリング (エラーメッセージ表示) までを責務として負う
  */
 
@@ -78,9 +78,9 @@ class APIClient {
                 request.headers['Authorization'] = `Bearer ${access_token}`;
             }
 
-            // NXJikkyo クライアントのバージョンを設定
+            // NX-Jikkyo クライアントのバージョンを設定
             // 今のところ使わないが、将来的にクライアントとサーバーを分離することを見据えて念のため
-            request.headers['X-NXJikkyo-Version'] = Utils.version;
+            request.headers['X-NX-Jikkyo-Version'] = Utils.version;
         }
 
         // リクエストのタイムアウト時間を30秒に設定

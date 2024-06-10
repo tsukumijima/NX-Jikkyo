@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "NXJikkyo"
+name = "NX-Jikkyo"
 version = "0.1.0"
-description = "NXJikkyo: Nico Nico Jikkyo Alternatives"
+description = "NX-Jikkyo: Nico Nico Jikkyo Alternatives"
 package-mode = false
 
 [tool.taskipy.tasks]
-serve  = "cd ../ && docker compose build && docker compose run --rm --service-ports nxjikkyo"
-dev    = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ nxjikkyo --reload"
-aerich = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ --entrypoint=/code/server/.venv/bin/aerich nxjikkyo"
+serve  = "cd ../ && docker compose build && docker compose run --rm --service-ports nx-jikkyo"
+dev    = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ nx-jikkyo --reload"
+aerich = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ --entrypoint=/code/server/.venv/bin/aerich nx-jikkyo"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"

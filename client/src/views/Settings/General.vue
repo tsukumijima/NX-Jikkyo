@@ -34,7 +34,7 @@
                 <div class="settings__item-heading">設定をエクスポート</div>
                 <div class="settings__item-label">
                     このデバイス (ブラウザ) に保存されている設定データを、エクスポート (ダウンロード) できます。<br>
-                    ダウンロードした設定データ (NXJikkyo-Settings.json) は、[設定をインポート] からインポートできます。異なるサーバーの NXJikkyo を同じ設定で使いたいときなどに使ってください。<br>
+                    ダウンロードした設定データ (NX-Jikkyo-Settings.json) は、[設定をインポート] からインポートできます。異なるサーバーの NX-Jikkyo を同じ設定で使いたいときなどに使ってください。<br>
                 </div>
             </div>
             <v-btn class="settings__save-button mt-4" variant="flat" @click="exportSettings()">
@@ -48,7 +48,7 @@
                     <strong class="text-error-lighten-1">設定のデバイス間同期がオンのときは、同期が有効なすべてのデバイスに反映されます。</strong>十分ご注意ください。<br>
                 </div>
                 <v-file-input class="settings__item-form" color="primary" variant="outlined" hide-details
-                label="設定データ (NXJikkyo-Settings.json) を選択"
+                label="設定データ (NX-Jikkyo-Settings.json) を選択"
                     :density="is_form_dense ? 'compact' : 'default'"
                     accept="application/json"
                     prepend-icon=""
@@ -123,7 +123,7 @@ export default defineComponent({
                 {title: 'Twitter タブ', value: 'Twitter'},
             ],
 
-            // 選択された設定データ (NXJikkyo-Settings.json) が入る
+            // 選択された設定データ (NX-Jikkyo-Settings.json) が入る
             // 基本1ファイルしか入らない (Vuetify 側の都合で配列になっている)
             import_settings_file: [] as File[],
         };
@@ -139,9 +139,9 @@ export default defineComponent({
             // 設定データを JSON 化して取得
             const settings_json = JSON.stringify(this.settingsStore.settings, null, 4);
 
-            // ダウンロードさせるために一旦 Blob にしてから、NXJikkyo-Settings.json としてダウンロード
+            // ダウンロードさせるために一旦 Blob にしてから、NX-Jikkyo-Settings.json としてダウンロード
             const settings_json_blob = new Blob([settings_json], {type: 'application/json'});
-            Utils.downloadBlobData(settings_json_blob, 'NXJikkyo-Settings.json');
+            Utils.downloadBlobData(settings_json_blob, 'NX-Jikkyo-Settings.json');
             Message.success('設定をエクスポートしました。');
         },
 

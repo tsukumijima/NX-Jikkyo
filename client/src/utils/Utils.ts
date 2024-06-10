@@ -9,7 +9,7 @@ export default class Utils {
 
     // バージョン情報
     // ビルド時の環境変数 (vue.config.js に記載) から取得
-    static readonly version: string = import.meta.env.NXJIKKYO_VERSION;
+    static readonly version: string = import.meta.env.NX_JIKKYO_VERSION;
 
     // バックエンドの API のベース URL
     // Worker からも参照できるように self.location を使う
@@ -32,7 +32,7 @@ export default class Utils {
 
         // LocalStorage の取得結果をそのまま返す
         // LocalStorage.getItem() はキーが存在しなければ（=ログインしていなければ）null を返す
-        return localStorage.getItem('NXJikkyo-AccessToken');
+        return localStorage.getItem('NX-Jikkyo-AccessToken');
     }
 
 
@@ -43,7 +43,7 @@ export default class Utils {
     static saveAccessToken(access_token: string): void {
 
         // そのまま LocalStorage に保存
-        localStorage.setItem('NXJikkyo-AccessToken', access_token);
+        localStorage.setItem('NX-Jikkyo-AccessToken', access_token);
     }
 
 
@@ -53,11 +53,11 @@ export default class Utils {
      */
     static deleteAccessToken(): void {
 
-        // LocalStorage に NXJikkyo-AccessToken キーが存在しない
-        if (localStorage.getItem('NXJikkyo-AccessToken') === null) return;
+        // LocalStorage に NX-Jikkyo-AccessToken キーが存在しない
+        if (localStorage.getItem('NX-Jikkyo-AccessToken') === null) return;
 
-        // NXJikkyo-AccessToken キーを削除
-        localStorage.removeItem('NXJikkyo-AccessToken');
+        // NX-Jikkyo-AccessToken キーを削除
+        localStorage.removeItem('NX-Jikkyo-AccessToken');
     }
 
 

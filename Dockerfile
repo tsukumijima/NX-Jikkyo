@@ -24,5 +24,5 @@ COPY ./client/ /code/client/
 # サーバーのソースコードをコピー
 COPY ./server/ /code/server/
 
-# NXJikkyo サーバーを起動
-ENTRYPOINT ["/code/server/.venv/bin/python", "NXJikkyo.py"]
+# NX-Jikkyo サーバーを起動
+ENTRYPOINT ["/code/server/.venv/bin/python", "NX-Jikkyo.py"]

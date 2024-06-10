@@ -13,8 +13,8 @@ from uvicorn.supervisors.watchfilesreload import WatchFilesReload
 
 from app.config import CONFIG
 from app.constants import (
-    NXJIKKYO_ACCESS_LOG_PATH,
-    NXJIKKYO_SERVER_LOG_PATH,
+    NX_JIKKYO_ACCESS_LOG_PATH,
+    NX_JIKKYO_SERVER_LOG_PATH,
     BASE_DIR,
     DATABASE_CONFIG,
     LOGGING_CONFIG,
@@ -33,10 +33,10 @@ cli = typer.Typer()
 
 def version(value: bool):
     if value is True:
-        typer.echo(f'NXJikkyo version {VERSION}')
+        typer.echo(f'NX-Jikkyo version {VERSION}')
         raise typer.Exit()
 
-@cli.command(help='NXJikkyo: Nico Nico Jikkyo Alternatives')
+@cli.command(help='NX-Jikkyo: Nico Nico Jikkyo Alternatives')
 def main(
     reload: bool = typer.Option(False, '--reload', help='Start Uvicorn in auto-reload mode.)'),
     version: bool = typer.Option(None, '--version', callback=version, is_eager=True, help='Show version information.'),
@@ -44,10 +44,10 @@ def main(
 
     # 前回のログをすべて削除する
     try:
-        if NXJIKKYO_SERVER_LOG_PATH.exists():
-            NXJIKKYO_SERVER_LOG_PATH.unlink()
-        if NXJIKKYO_ACCESS_LOG_PATH.exists():
-            NXJIKKYO_ACCESS_LOG_PATH.unlink()
+        if NX_JIKKYO_SERVER_LOG_PATH.exists():
+            NX_JIKKYO_SERVER_LOG_PATH.unlink()
+        if NX_JIKKYO_ACCESS_LOG_PATH.exists():
+            NX_JIKKYO_ACCESS_LOG_PATH.unlink()
     except PermissionError:
         pass
 
@@ -56,7 +56,7 @@ def main(
     from app import logging
 
     # バージョン情報をログに出力
-    logging.info(f'NXJikkyo version {VERSION}')
+    logging.info(f'NX-Jikkyo version {VERSION}')
 
     # Aerich でデータベースをアップグレードする
     ## 特にデータベースのアップグレードが必要ない場合は何も起こらない

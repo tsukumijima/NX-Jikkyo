@@ -24,8 +24,8 @@ from app.routers import (
 
 # FastAPI を初期化
 app = FastAPI(
-    title = 'NXJikkyo',
-    description = 'NXJikkyo: Nico Nico Jikkyo Alternatives',
+    title = 'NX-Jikkyo',
+    description = 'NX-Jikkyo: Nico Nico Jikkyo Alternatives',
     version = VERSION,
     # 開発時のみ Swagger UI と ReDoc を有効化
     openapi_url = '/api/v1/openapi.json' if CONFIG.ENVIRONMENT == 'Develop' else None,
@@ -167,7 +167,7 @@ async def RegisterMasterChannels():
             await Channel.create(
                 id = int(channel_id.replace('jk', '')),
                 name = channel_info['name'],
-                description = 'NXJikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+                description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
         logging.info('Master channels have been registered.')
 
@@ -197,8 +197,8 @@ async def AddThreads():
                 start_at = start_time_today,
                 end_at = end_time_today,
                 duration = int((end_time_today - start_time_today).total_seconds()),
-                title = f'{channel.name}【NXJikkyo】{today.strftime("%Y年%m月%d日")}',
-                description = 'NXJikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+                title = f'{channel.name}【NX-Jikkyo】{today.strftime("%Y年%m月%d日")}',
+                description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
             logging.info(f'Thread for {channel.name} on {today.strftime("%Y-%m-%d")} has been registered.')
 
@@ -217,8 +217,8 @@ async def AddThreads():
                 start_at = start_time_tomorrow,
                 end_at = end_time_tomorrow,
                 duration = int((end_time_tomorrow - start_time_tomorrow).total_seconds()),
-                title = f'{channel.name}【NXJikkyo】{tomorrow.strftime("%Y年%m月%d日")}',
-                description = 'NXJikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+                title = f'{channel.name}【NX-Jikkyo】{tomorrow.strftime("%Y年%m月%d日")}',
+                description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
             logging.info(f'Thread for {channel.name} on {tomorrow.strftime("%Y-%m-%d")} has been registered.')
 

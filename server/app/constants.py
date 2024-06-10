@@ -27,17 +27,17 @@ LOGO_DIR = STATIC_DIR / 'logos'
 
 # ログディレクトリ
 LOGS_DIR = BASE_DIR / 'logs'
-## NXJikkyo のサーバーログのパス
-NXJIKKYO_SERVER_LOG_PATH = LOGS_DIR / 'NXJikkyo-Server.log'
-## NXJikkyo のアクセスログのパス
-NXJIKKYO_ACCESS_LOG_PATH = LOGS_DIR / 'NXJikkyo-Access.log'
+## NX-Jikkyo のサーバーログのパス
+NX_JIKKYO_SERVER_LOG_PATH = LOGS_DIR / 'NX-Jikkyo-Server.log'
+## NX-Jikkyo のアクセスログのパス
+NX_JIKKYO_ACCESS_LOG_PATH = LOGS_DIR / 'NX-Jikkyo-Access.log'
 
 # データベース (Tortoise ORM) の設定
 __model_list = [name for _, name, _ in pkgutil.iter_modules(path=['app/models'])]
 DATABASE_CONFIG = {
     'timezone': 'Asia/Tokyo',
     'connections': {
-        'default': f'mysql://{CONFIG.MYSQL_USER}:{CONFIG.MYSQL_PASSWORD}@nxjikkyo-mysql:3306/{CONFIG.MYSQL_DATABASE}',
+        'default': f'mysql://{CONFIG.MYSQL_USER}:{CONFIG.MYSQL_PASSWORD}@nx-jikkyo-mysql:3306/{CONFIG.MYSQL_DATABASE}',
     },
     'apps': {
         'models': {
@@ -48,7 +48,7 @@ DATABASE_CONFIG = {
 }
 
 # Uvicorn のロギング設定
-## この dictConfig を Uvicorn に渡す (NXJikkyo 本体のロギング設定は app.logging に別で存在する)
+## この dictConfig を Uvicorn に渡す (NX-Jikkyo 本体のロギング設定は app.logging に別で存在する)
 ## Uvicorn のもとの dictConfig を参考にして作成した
 ## ref: https://github.com/encode/uvicorn/blob/0.18.2/uvicorn/config.py#L95-L126
 LOGGING_CONFIG: dict[str, Any] = {
@@ -95,7 +95,7 @@ LOGGING_CONFIG: dict[str, Any] = {
         },
     },
     'handlers': {
-        ## サーバーログは標準エラー出力と server/logs/NXJikkyo-Server.log の両方に出力する
+        ## サーバーログは標準エラー出力と server/logs/NX-Jikkyo-Server.log の両方に出力する
         'default': {
             'formatter': 'default',
             'class': 'logging.StreamHandler',
@@ -104,11 +104,11 @@ LOGGING_CONFIG: dict[str, Any] = {
         'default_file': {
             'formatter': 'default_file',
             'class': 'logging.FileHandler',
-            'filename': NXJIKKYO_SERVER_LOG_PATH,
+            'filename': NX_JIKKYO_SERVER_LOG_PATH,
             'mode': 'a',
             'encoding': 'utf-8',
         },
-        ## サーバーログ (デバッグ) は標準エラー出力と server/logs/NXJikkyo-Server.log の両方に出力する
+        ## サーバーログ (デバッグ) は標準エラー出力と server/logs/NX-Jikkyo-Server.log の両方に出力する
         'debug': {
             'formatter': 'debug',
             'class': 'logging.StreamHandler',
@@ -117,11 +117,11 @@ LOGGING_CONFIG: dict[str, Any] = {
         'debug_file': {
             'formatter': 'debug_file',
             'class': 'logging.FileHandler',
-            'filename': NXJIKKYO_SERVER_LOG_PATH,
+            'filename': NX_JIKKYO_SERVER_LOG_PATH,
             'mode': 'a',
             'encoding': 'utf-8',
         },
-        ## アクセスログは標準出力と server/logs/NXJikkyo-Access.log の両方に出力する
+        ## アクセスログは標準出力と server/logs/NX-Jikkyo-Access.log の両方に出力する
         'access': {
             'formatter': 'access',
             'class': 'logging.StreamHandler',
@@ -130,7 +130,7 @@ LOGGING_CONFIG: dict[str, Any] = {
         'access_file': {
             'formatter': 'access_file',
             'class': 'logging.FileHandler',
-            'filename': NXJIKKYO_ACCESS_LOG_PATH,
+            'filename': NX_JIKKYO_ACCESS_LOG_PATH,
             'mode': 'a',
             'encoding': 'utf-8',
         },
@@ -150,15 +150,15 @@ PASSWORD_CONTEXT = CryptContext(
 )
 
 # 外部 API に送信するリクエストヘッダー
-## NXJikkyo の User-Agent を指定
+## NX-Jikkyo の User-Agent を指定
 API_REQUEST_HEADERS: dict[str, str] = {
-    'User-Agent': f'NXJikkyo/{VERSION}',
+    'User-Agent': f'NX-Jikkyo/{VERSION}',
 }
 
-# NXJikkyo で利用する httpx.AsyncClient の設定
+# NX-Jikkyo で利用する httpx.AsyncClient の設定
 ## httpx.AsyncClient 自体は一度使ったら再利用できないので、httpx.AsyncClient を返す関数にしている
 HTTPX_CLIENT = lambda: httpx.AsyncClient(
-    # NXJikkyo の User-Agent を指定
+    # NX-Jikkyo の User-Agent を指定
     headers = API_REQUEST_HEADERS,
     # リダイレクトを追跡する
     follow_redirects = True,

@@ -40,7 +40,7 @@
             </div>
             <div class="account-register" v-if="userStore.is_logged_in === false">
                 <div class="account-register__heading">
-                    NXJikkyo アカウントにログインすると、<br>より便利な機能が使えます！
+                    NX-Jikkyo アカウントにログインすると、<br>より便利な機能が使えます！
                 </div>
                 <div class="account-register__feature">
                     <div class="account-feature">
@@ -59,8 +59,8 @@
                     </div>
                 </div>
                 <div class="account-register__description">
-                    NXJikkyo アカウントの作成に必要なものは<br class="smartphone-vertical-only">ユーザー名とパスワードだけです。<br>
-                    アカウントはローカルに導入した<br class="smartphone-vertical-only"> NXJikkyo サーバーにのみ保存されます。<br>
+                    NX-Jikkyo アカウントの作成に必要なものは<br class="smartphone-vertical-only">ユーザー名とパスワードだけです。<br>
+                    アカウントはローカルに導入した<br class="smartphone-vertical-only"> NX-Jikkyo サーバーにのみ保存されます。<br>
                     外部のサービスには保存されませんので、ご安心ください。<br>
                 </div>
                 <v-btn class="account-register__button" color="secondary" width="100%" max-width="250" height="50" variant="flat" to="/register/">
@@ -71,7 +71,7 @@
                 <div class="settings__item settings__item--switch">
                     <label class="settings__item-heading" for="sync_settings">設定をデバイス間で同期する</label>
                     <label class="settings__item-label" for="sync_settings">
-                        NXJikkyo では、設定を同じアカウントでログインしているデバイス間で同期できます！<br>
+                        NX-Jikkyo では、設定を同じアカウントでログインしているデバイス間で同期できます！<br>
                         同期をオンにすると、同期をオンにしているすべてのデバイスで共通の設定が使えます。ピン留めチャンネルやハッシュタグリストなども同期されます。<br>
                         なお、デバイス固有の設定（画質設定など）は、同期後も各デバイスで個別に反映されます。<br>
                     </label>
@@ -108,8 +108,8 @@
                 <v-form class="settings__item" ref="settings_username" @submit.prevent>
                     <div class="settings__item-heading">ユーザー名</div>
                     <div class="settings__item-label">
-                        NXJikkyo アカウントのユーザー名を設定します。アルファベットだけでなく日本語や記号も使えます。<br>
-                        同じ NXJikkyo サーバー上の他のアカウントと同じユーザー名には変更できません。<br>
+                        NX-Jikkyo アカウントのユーザー名を設定します。アルファベットだけでなく日本語や記号も使えます。<br>
+                        同じ NX-Jikkyo サーバー上の他のアカウントと同じユーザー名には変更できません。<br>
                     </div>
                     <v-text-field class="settings__item-form" color="primary" variant="outlined" placeholder="ユーザー名"
                         :density="is_form_dense ? 'compact' : 'default'"
@@ -123,7 +123,7 @@
                 <v-form class="settings__item" @submit.prevent>
                     <div class="settings__item-heading">アイコン画像</div>
                     <div class="settings__item-label">
-                        NXJikkyo アカウントのアイコン画像を設定します。<br>
+                        NX-Jikkyo アカウントのアイコン画像を設定します。<br>
                         アップロードされた画像は自動で 400×400 の正方形にリサイズされます。<br>
                     </div>
                     <v-file-input class="settings__item-form" color="primary" variant="outlined" hide-details
@@ -141,7 +141,7 @@
                 <v-form class="settings__item" ref="settings_password" @submit.prevent>
                     <div class="settings__item-heading">新しいパスワード</div>
                     <div class="settings__item-label">
-                        NXJikkyo アカウントの新しいパスワードを設定します。<br>
+                        NX-Jikkyo アカウントの新しいパスワードを設定します。<br>
                     </div>
                     <v-text-field class="settings__item-form" color="primary" variant="outlined" placeholder="新しいパスワード"
                         :density="is_form_dense ? 'compact' : 'default'"
@@ -159,7 +159,7 @@
                 <div class="settings__item mt-6">
                     <div class="settings__item-heading text-error-lighten-1">アカウントを削除</div>
                     <div class="settings__item-label">
-                        現在ログインしている NXJikkyo アカウントを削除します。<br>
+                        現在ログインしている NX-Jikkyo アカウントを削除します。<br>
                         <strong class="text-error-lighten-1">アカウントに紐づくすべてのデータが削除されます。元に戻すことはできません。</strong><br>
                     </div>
                 </div>

@@ -291,8 +291,8 @@ class PlayerController {
 
             // コメントの設定
             danmaku: {
-                // コメントするユーザー名: 便宜上 NXJikkyo に固定 (実際には利用されない)
-                user: 'NXJikkyo',
+                // コメントするユーザー名: 便宜上 NX-Jikkyo に固定 (実際には利用されない)
+                user: 'NX-Jikkyo',
                 // コメントの流れる速度
                 speedRate: settings_store.settings.comment_speed_rate,
                 // コメントのフォントサイズ
@@ -549,18 +549,18 @@ class PlayerController {
 
         // DPlayer に動画再生系のイベントハンドラーを登録する
         // this.setupVideoPlaybackHandler();
-        // NXJikkyo では動画自体は再生しないので強制的にバッファリング表示を止める
+        // NX-Jikkyo では動画自体は再生しないので強制的にバッファリング表示を止める
         player_store.background_url = PlayerUtils.generatePlayerBackgroundURL();
         player_store.is_background_display = true;
         player_store.is_video_buffering = false;
 
-        // DPlayer のフルスクリーン関係のメソッドを無理やり上書きし、NXJikkyo の UI と統合する
+        // DPlayer のフルスクリーン関係のメソッドを無理やり上書きし、NX-Jikkyo の UI と統合する
         this.setupFullscreenHandler();
 
-        // DPlayer の設定パネルを無理やり拡張し、NXJikkyo 独自の項目を追加する
+        // DPlayer の設定パネルを無理やり拡張し、NX-Jikkyo 独自の項目を追加する
         this.setupSettingPanelHandler();
 
-        // NXJikkyo 本体の UI を含むプレイヤー全体のコンテナ要素がリサイズされたときのイベントハンドラーを登録する
+        // NX-Jikkyo 本体の UI を含むプレイヤー全体のコンテナ要素がリサイズされたときのイベントハンドラーを登録する
         this.setupPlayerContainerResizeHandler();
 
         // プレイヤーのコントロール UI を表示する (初回実行)
@@ -1061,7 +1061,7 @@ class PlayerController {
 
 
     /**
-     * DPlayer のフルスクリーン関係のメソッドを無理やり上書きし、NXJikkyo の UI と統合する
+     * DPlayer のフルスクリーン関係のメソッドを無理やり上書きし、NX-Jikkyo の UI と統合する
      * 上書き元のコードは https://github.com/tsukumijima/DPlayer/blob/master/src/ts/fullscreen.ts にある
      */
     private setupFullscreenHandler(): void {
@@ -1129,7 +1129,7 @@ class PlayerController {
 
 
     /**
-     * DPlayer の設定パネルを無理やり拡張し、NXJikkyo 独自の項目を追加する
+     * DPlayer の設定パネルを無理やり拡張し、NX-Jikkyo 独自の項目を追加する
      */
     private setupSettingPanelHandler(): void {
         assert(this.player !== null);
@@ -1161,7 +1161,7 @@ class PlayerController {
 
 
     /**
-     * NXJikkyo 本体の UI を含むプレイヤー全体のコンテナ要素がリサイズされたときのイベントハンドラーを登録する
+     * NX-Jikkyo 本体の UI を含むプレイヤー全体のコンテナ要素がリサイズされたときのイベントハンドラーを登録する
      */
     private setupPlayerContainerResizeHandler(): void {
 

@@ -1,6 +1,6 @@
 
 // day.js に毎回プラグインやタイムゾーンを設定するのが面倒かつ嵌まりポイントが多いので、ここでエクスポートする day.js を使う
-// ややこしすぎるので NXJikkyo 内ではブラウザのタイムゾーンに関わらず、常に Asia/Tokyo として扱う
+// ややこしすぎるので NX-Jikkyo 内ではブラウザのタイムゾーンに関わらず、常に Asia/Tokyo として扱う
 // ref: https://github.com/iamkun/dayjs/issues/1227#issuecomment-917720826
 // ref: https://zenn.dev/taigakiyokawa/articles/20221122-dayjs-timezone
 

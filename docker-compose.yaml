@@ -1,9 +1,9 @@
 version: '3.9'
 
 services:
-  nxjikkyo:
-    image: nxjikkyo
-    container_name: nxjikkyo
+  nx-jikkyo:
+    image: nx-jikkyo
+    container_name: nx-jikkyo
     build:
       context: .
     restart: unless-stopped
@@ -20,13 +20,13 @@ services:
         source: './server/logs/'
         target: '/code/server/logs/'
     depends_on:
-      - nxjikkyo-mysql
+      - nx-jikkyo-mysql
     networks:
       - proxy-network
 
-  nxjikkyo-mysql:
+  nx-jikkyo-mysql:
     image: mysql:8.0
-    container_name: nxjikkyo-mysql
+    container_name: nx-jikkyo-mysql
     restart: unless-stopped
     environment:
       TZ: Asia/Tokyo

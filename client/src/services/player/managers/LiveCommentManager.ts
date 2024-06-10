@@ -29,7 +29,7 @@ interface IWatchSessionInfo {
 
 
 /**
- * ライブ視聴: NXJikkyo からリアルタイムに受信したコメントを DPlayer やイベントリスナーに送信する PlayerManager
+ * ライブ視聴: NX-Jikkyo からリアルタイムに受信したコメントを DPlayer やイベントリスナーに送信する PlayerManager
  */
 class LiveCommentManager implements PlayerManager {
 
@@ -68,7 +68,7 @@ class LiveCommentManager implements PlayerManager {
 
 
     /**
-     * NXJikkyo に接続し、セッションを初期化する
+     * NX-Jikkyo に接続し、セッションを初期化する
      */
     public async init(): Promise<void> {
         const player_store = usePlayerStore();
@@ -90,8 +90,8 @@ class LiveCommentManager implements PlayerManager {
             console.error(`[LiveCommentManager][WatchSession] Error: ${watch_session_info.detail}`);
 
             // 通常発生しないエラーメッセージ (サーバーエラーなど) はプレイヤー側にも通知する
-            if ((watch_session_info.detail !== 'このチャンネルはNXJikkyo に対応していません。') &&
-                (watch_session_info.detail !== '現在放送中のNXJikkyo がありません。')) {
+            if ((watch_session_info.detail !== 'このチャンネルはNX-Jikkyo に対応していません。') &&
+                (watch_session_info.detail !== '現在放送中のNX-Jikkyo がありません。')) {
                 if (this.player.template.notice.textContent!.includes('再起動しています…') === false) {
                     this.player.notice(watch_session_info.detail, undefined, undefined, '#FF6F6A');
                 }
@@ -122,7 +122,7 @@ class LiveCommentManager implements PlayerManager {
         if (watch_session_info === null) {
             return {
                 is_success: false,
-                detail: 'NXJikkyo のセッション情報を取得できませんでした。',
+                detail: 'NX-Jikkyo のセッション情報を取得できませんでした。',
             };
         }
         if (watch_session_info.is_success === false) {
@@ -160,7 +160,7 @@ class LiveCommentManager implements PlayerManager {
 
             // 接続切断の理由を表示
             if (this.player.template.notice.textContent!.includes('再起動しています…') === false) {
-                this.player.notice(`NXJikkyo との接続が切断されました。(Code: ${event.code})`, undefined, undefined, '#FF6F6A');
+                this.player.notice(`NX-Jikkyo との接続が切断されました。(Code: ${event.code})`, undefined, undefined, '#FF6F6A');
             }
             console.error(`[LiveCommentManager][WatchSession] Connection closed. (Code: ${event.code})`);
 
@@ -215,31 +215,31 @@ class LiveCommentManager implements PlayerManager {
                         break;
                     }
 
-                    let error = `NXJikkyo でエラーが発生しています。(Code: ${message.data.code})`;
+                    let error = `NX-Jikkyo でエラーが発生しています。(Code: ${message.data.code})`;
                     switch (message.data.code) {
                         case 'CONNECT_ERROR':
-                            error = 'NXJikkyo のコメントサーバーに接続できません。';
+                            error = 'NX-Jikkyo のコメントサーバーに接続できません。';
                             break;
                         case 'CONTENT_NOT_READY':
-                            error = 'NXJikkyo が配信できない状態です。';
+                            error = 'NX-Jikkyo が配信できない状態です。';
                             break;
                         case 'NO_THREAD_AVAILABLE':
-                            error = 'NXJikkyo のコメントスレッドを取得できません。';
+                            error = 'NX-Jikkyo のコメントスレッドを取得できません。';
                             break;
                         case 'NO_ROOM_AVAILABLE':
-                            error = 'NXJikkyo のコメント部屋を取得できません。';
+                            error = 'NX-Jikkyo のコメント部屋を取得できません。';
                             break;
                         case 'NO_PERMISSION':
-                            error = 'NXJikkyo の API にアクセスする権限がありません。';
+                            error = 'NX-Jikkyo の API にアクセスする権限がありません。';
                             break;
                         case 'NOT_ON_AIR':
-                            error = 'NXJikkyo が放送中ではありません。';
+                            error = 'NX-Jikkyo が放送中ではありません。';
                             break;
                         case 'BROADCAST_NOT_FOUND':
-                            error = 'NXJikkyo の配信情報を取得できません。';
+                            error = 'NX-Jikkyo の配信情報を取得できません。';
                             break;
                         case 'INTERNAL_SERVERERROR':
-                            error = 'NXJikkyo でサーバーエラーが発生しています。';
+                            error = 'NX-Jikkyo でサーバーエラーが発生しています。';
                             break;
                     }
 
@@ -271,34 +271,34 @@ class LiveCommentManager implements PlayerManager {
                     is_disconnect_message_received = true;
 
                     // 接続切断の理由
-                    let disconnect_reason = `NXJikkyo との接続が切断されました。(${message.data.reason})`;
+                    let disconnect_reason = `NX-Jikkyo との接続が切断されました。(${message.data.reason})`;
                     switch (message.data.reason) {
                         case 'TAKEOVER':
-                            disconnect_reason = 'NXJikkyo の番組から追い出されました。';
+                            disconnect_reason = 'NX-Jikkyo の番組から追い出されました。';
                             break;
                         case 'NO_PERMISSION':
-                            disconnect_reason = 'NXJikkyo の番組の座席を取得できませんでした。';
+                            disconnect_reason = 'NX-Jikkyo の番組の座席を取得できませんでした。';
                             break;
                         case 'END_PROGRAM':
-                            disconnect_reason = 'NXJikkyo がリセットされたか、コミュニティの番組が終了しました。';
+                            disconnect_reason = 'NX-Jikkyo がリセットされたか、コミュニティの番組が終了しました。';
                             break;
                         case 'PING_TIMEOUT':
                             disconnect_reason = 'コメントサーバーとの接続生存確認に失敗しました。';
                             break;
                         case 'TOO_MANY_CONNECTIONS':
-                            disconnect_reason = 'NXJikkyo の同一ユーザからの接続数上限を越えています。';
+                            disconnect_reason = 'NX-Jikkyo の同一ユーザからの接続数上限を越えています。';
                             break;
                         case 'TOO_MANY_WATCHINGS':
-                            disconnect_reason = 'NXJikkyo の同一ユーザからの視聴番組数上限を越えています。';
+                            disconnect_reason = 'NX-Jikkyo の同一ユーザからの視聴番組数上限を越えています。';
                             break;
                         case 'CROWDED':
-                            disconnect_reason = 'NXJikkyo の番組が満席です。';
+                            disconnect_reason = 'NX-Jikkyo の番組が満席です。';
                             break;
                         case 'MAINTENANCE_IN':
-                            disconnect_reason = 'NXJikkyo はメンテナンス中です。';
+                            disconnect_reason = 'NX-Jikkyo はメンテナンス中です。';
                             break;
                         case 'SERVICE_TEMPORARILY_UNAVAILABLE':
-                            disconnect_reason = 'NXJikkyo で一時的にサーバーエラーが発生しています。';
+                            disconnect_reason = 'NX-Jikkyo で一時的にサーバーエラーが発生しています。';
                             break;
                     }
 
@@ -499,7 +499,7 @@ class LiveCommentManager implements PlayerManager {
 
 
     /**
-     * NXJikkyo にコメントを送信する
+     * NX-Jikkyo にコメントを送信する
      * @param options DPlayer のコメントオプション
      */
     public sendComment(options: DPlayerType.APIBackendSendOptions): void {
@@ -615,7 +615,7 @@ class LiveCommentManager implements PlayerManager {
 
 
     /**
-     * 同じ設定でNXJikkyo に再接続する
+     * 同じ設定でNX-Jikkyo に再接続する
      */
     private async reconnect(): Promise<void> {
         const player_store = usePlayerStore();
@@ -623,7 +623,7 @@ class LiveCommentManager implements PlayerManager {
         // 再接続を開始
         console.warn('[LiveCommentManager] Reconnecting...');
         if (this.player.template.notice.textContent!.includes('再起動しています…') === false) {
-            this.player.notice('NXJikkyo に再接続しています…');
+            this.player.notice('NX-Jikkyo に再接続しています…');
         }
 
         // 前の視聴セッション・コメントセッションを破棄

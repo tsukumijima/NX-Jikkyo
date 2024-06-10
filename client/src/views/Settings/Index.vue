@@ -20,7 +20,7 @@
                     </v-btn>
                     <v-btn variant="flat" class="settings-navigation__button settings-navigation__button--version"
                         :class="{'settings-navigation__button--version-highlight': versionStore.is_update_available}"
-                        href="https://github.com/tsukumijima/NXJikkyo">
+                        href="https://github.com/tsukumijima/NX-Jikkyo">
                         <Icon icon="fluent:info-16-regular" width="26px" />
                         <span class="ml-4">
                             version {{versionStore.client_version}}{{versionStore.is_update_available ? ' (Update Available)' : ''}}

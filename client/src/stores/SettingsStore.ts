@@ -12,7 +12,7 @@ export type VideoStreamingQuality = '1080p-60fps' | '1080p' | '810p' | '720p' | 
 export const VIDEO_STREAMING_QUALITIES: VideoStreamingQuality[] = ['1080p-60fps', '1080p', '810p', '720p', '540p', '480p', '360p', '240p'];
 
 /**
- * LocalStorage に保存される NXJikkyo の設定データ
+ * LocalStorage に保存される NX-Jikkyo の設定データ
  * IClientSettings とは異なり、同期対象外の設定キーも含まれる
  */
 export interface ILocalClientSettings extends IClientSettings {
@@ -66,7 +66,7 @@ export interface ILocalClientSettings extends IClientSettings {
 }
 
 /**
- * LocalStorage に保存される NXJikkyo の設定データのデフォルト値
+ * LocalStorage に保存される NX-Jikkyo の設定データのデフォルト値
  * IClientSettings とは異なり、同期対象外の設定キーも含まれる
  */
 export const ILocalClientSettingsDefault: ILocalClientSettings = {
@@ -142,7 +142,7 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
 
     // ***** 設定 → キャプチャ *****
 
-    // キャプチャの保存先 (Default: NXJikkyo サーバーにアップロード)
+    // キャプチャの保存先 (Default: NX-Jikkyo サーバーにアップロード)
     capture_save_mode: 'UploadServer',
     // 字幕が表示されているときのキャプチャの保存モード (Default: 映像のみのキャプチャと、字幕を合成したキャプチャを両方保存する)
     capture_caption_mode: 'Both',
@@ -251,27 +251,27 @@ const SYNCABLE_SETTINGS_KEYS: (keyof IClientSettings)[] = [
 
 
 /**
- * LocalStorage の NXJikkyo-Settings キーから生の設定データを取得する
+ * LocalStorage の NX-Jikkyo-Settings キーから生の設定データを取得する
  * 返されるデータはノーマライズされていない生データで、最新であるかや ILocalClientSettings と一致するかは保証されない
  * @returns 生の設定データ
  */
 export function getLocalStorageSettings(): {[key: string]: any} {
-    const settings = localStorage.getItem('NXJikkyo-Settings');
+    const settings = localStorage.getItem('NX-Jikkyo-Settings');
     if (settings !== null) {
         return JSON.parse(settings);
     } else {
-        // もし LocalStorage に NXJikkyo-Settings キーがまだない場合、あらかじめデフォルトの設定値を保存しておく
+        // もし LocalStorage に NX-Jikkyo-Settings キーがまだない場合、あらかじめデフォルトの設定値を保存しておく
         setLocalStorageSettings(ILocalClientSettingsDefault);
         return ILocalClientSettingsDefault;
     }
 }
 
 /**
- * LocalStorage の NXJikkyo-Settings キーに設定データを JSON にシリアライズして保存する
+ * LocalStorage の NX-Jikkyo-Settings キーに設定データを JSON にシリアライズして保存する
  * @param settings 設定データ
  */
 export function setLocalStorageSettings(settings: ILocalClientSettings): void {
-    localStorage.setItem('NXJikkyo-Settings', JSON.stringify(settings));
+    localStorage.setItem('NX-Jikkyo-Settings', JSON.stringify(settings));
 }
 
 /**
@@ -288,7 +288,7 @@ export function getNormalizedLocalClientSettings(settings: {[key: string]: any})
         if (default_settings_key in settings) {
             normalized_settings[default_settings_key] = settings[default_settings_key];
         } else {
-            // 後のバージョンで追加されたなどの理由で現状の NXJikkyo-Settings に存在しない設定キーの場合
+            // 後のバージョンで追加されたなどの理由で現状の NX-Jikkyo-Settings に存在しない設定キーの場合
             // その設定キーのデフォルト値を取得する
             normalized_settings[default_settings_key] = ILocalClientSettingsDefault[default_settings_key];
         }
@@ -313,7 +313,7 @@ export function getSyncableClientSettings(settings: {[key: string]: any}): IClie
         if (sync_settings_key in settings) {
             syncable_settings[sync_settings_key as string] = settings[sync_settings_key];
         } else {
-            // 後から追加された設定キーなどの理由で設定キーが現状の NXJikkyo-Settings に存在しない場合
+            // 後から追加された設定キーなどの理由で設定キーが現状の NX-Jikkyo-Settings に存在しない場合
             // その設定キーのデフォルト値を取得する
             syncable_settings[sync_settings_key as string] = ILocalClientSettingsDefault[sync_settings_key];
         }

@@ -60,7 +60,7 @@ export class ProgramUtils {
     // ref: https://github.com/tsukumijima/ariblib/blob/master/ariblib/constants.py
 
     // ARIB-STD-B10-2-H コンテント記述子におけるジャンル指定
-    // NXJikkyo では見栄え的な都合で中分類の "／" を "・" に置き換えている (サーバー側も同様)
+    // NX-Jikkyo では見栄え的な都合で中分類の "／" を "・" に置き換えている (サーバー側も同様)
     static readonly CONTENT_TYPE = {
         0x0: ['ニュース・報道', {
             0x0: '定時・総合',
@@ -533,7 +533,7 @@ export class ProgramUtils {
         // シャープ → ハッシュ
         merged_table['♯'] = '#';
         // 波ダッシュ → 全角チルダ
-        // EDCB は ～ を全角チルダとして扱っているため、NXJikkyo でもそのように統一する
+        // EDCB は ～ を全角チルダとして扱っているため、NX-Jikkyo でもそのように統一する
         merged_table['〜'] = '～';
 
         // 番組表で使用される囲み文字の置換テーブル
@@ -578,7 +578,7 @@ export class ProgramUtils {
         // Unicode の囲み文字を大かっこで囲った文字に置換する
         // EDCB で EpgDataCap3_Unicode.dll を利用している場合や、Mirakurun 3.9.0-beta.24 以降など、
         // 番組情報取得元から Unicode の囲み文字が送られてくる場合に対応するためのもの
-        // Unicode の囲み文字はサロゲートペアなどで扱いが難しい上に NXJikkyo では囲み文字を CSS でハイライトしているため、Unicode にするメリットがない
+        // Unicode の囲み文字はサロゲートペアなどで扱いが難しい上に NX-Jikkyo では囲み文字を CSS でハイライトしているため、Unicode にするメリットがない
         // ref: https://note.nkmk.me/python-str-replace-translate-re-sub/
         for (const key in enclosed_characters_table) {
             merged_table[key] = enclosed_characters_table[key];

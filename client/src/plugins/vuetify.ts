@@ -112,7 +112,7 @@ const vuetify = createVuetify({
                     'on-warning': '#ffeaea',
                     'on-error': '#ffeaea',
                     'on-info': '#ffeaea',
-                    // NXJikkyo 独自定義のカラーパレット
+                    // NX-Jikkyo 独自定義のカラーパレット
                     // 上記までと異なり、すべてのバリアントが網羅されているわけではない (実際に使う色のみ定義されている)
                     'background': '#1e1310',
                     'background-lighten-1': '#2f221f',
