@@ -2,7 +2,6 @@
 import mitt from 'mitt';
 import { defineStore } from 'pinia';
 
-import { ITweetCapture } from '@/components/Watch/Panel/Twitter.vue';
 import { ICommentData } from '@/services/player/managers/LiveCommentManager';
 import { IRecordedProgram, IRecordedProgramDefault } from '@/services/Videos';
 import useSettingsStore from '@/stores/SettingsStore';
@@ -147,22 +146,6 @@ const usePlayerStore = defineStore('player', {
         // ビデオ視聴: 過去ログコメントへの取得に失敗した際のエラーメッセージ
         // null のとき、エラーは発生していないとみなす
         video_comment_init_failed_message: null as string | null,
-
-        // Twitter パネルコンポーネントで利用する、ツイート添付候補のキャプチャのリスト
-        // UI 上と KeyboardShortcutManager の両方から操作する必要があるため PlayerStore に持たせている
-        twitter_captures: [] as ITweetCapture[],
-
-        // Twitter パネルコンポーネントで利用する、ツイートに添付するキャプチャの Blob データのリスト
-        // Twitter パネル本体とキャプチャタブの間で共有するため PlayerStore に持たせている
-        twitter_selected_capture_blobs: [] as Blob[],
-
-        // Twitter パネルコンポーネントで利用する、キャプチャを拡大表示するモーダルの表示状態
-        // UI 上と KeyboardShortcutManager の両方から操作する必要があるため PlayerStore に持たせている
-        twitter_zoom_capture_modal: false,
-
-        // Twitter パネルコンポーネントで利用する、現在モーダルで拡大表示中のキャプチャ
-        // UI 上と KeyboardShortcutManager の両方から操作する必要があるため PlayerStore に持たせている
-        twitter_zoom_capture: null as ITweetCapture | null,
     }),
     actions: {
 
@@ -220,9 +203,6 @@ const usePlayerStore = defineStore('player', {
             this.shortcut_key_modal = false;
             this.live_stream_status = null;
             this.live_comment_init_failed_message = null;
-            this.twitter_captures = [];
-            this.twitter_zoom_capture_modal = false;
-            this.twitter_zoom_capture = null;
         }
     }
 });
