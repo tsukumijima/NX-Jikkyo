@@ -7,6 +7,10 @@
         <div class="watch-player__background-wrapper">
             <div class="watch-player__background" :class="{'watch-player__background--display': playerStore.is_background_display}"
                 :style="{backgroundImage: `url(${playerStore.background_url})`}">
+                <div class="watch-player__background-text">
+                    〈ここにコメントが流れます〉<br>
+                    {{ time }}
+                </div>
                 <img class="watch-player__background-logo" src="/assets/images/logo.svg">
             </div>
         </div>
@@ -41,7 +45,7 @@ import { defineComponent, PropType } from 'vue';
 
 import useChannelsStore from '@/stores/ChannelsStore';
 import usePlayerStore from '@/stores/PlayerStore';
-import Utils from '@/utils';
+import Utils, { dayjs } from '@/utils';
 
 export default defineComponent({
     name: 'Watch-Player',
@@ -55,11 +59,27 @@ export default defineComponent({
         return {
             // ユーティリティをテンプレートで使えるように
             Utils: Object.freeze(Utils),
+
+            // 現在時刻
+            time: dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss'),
+
+            // 現在時刻更新用のインターバルの ID
+            time_interval_id: 0,
         };
     },
     computed: {
         ...mapStores(useChannelsStore, usePlayerStore),
-    }
+    },
+    created() {
+        // 現在時刻を1秒おきに更新
+        this.time_interval_id = window.setInterval(() => {
+            this.time = dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss');
+        }, 1 * 1000);
+    },
+    beforeUnmount() {
+        // インターバルをクリア
+        window.clearInterval(this.time_interval_id);
+    },
 });
 
 </script>
@@ -502,6 +522,26 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             &--display {
                 opacity: 1;
                 visibility: visible;
+            }
+
+            .watch-player__background-text {
+                display: inline-block;
+                position: absolute;
+                top: 50%;
+                left: 0;
+                width: 100%;
+                transform: translateY(-50%);
+                color: rgb(var(--v-theme-text));
+                opacity: 0.8;
+                font-size: 22px;
+                font-weight: bold;
+                line-height: 1.7;
+                text-align: center;
+                filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.3));
+
+                @include smartphone-vertical {
+                    font-size: 18px;
+                }
             }
 
             .watch-player__background-logo {
