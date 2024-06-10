@@ -38,7 +38,7 @@ export interface ILiveChannel extends IChannel {
 
 /** 現在放送中のチャンネル情報を表すインターフェイスのデフォルト値 */
 export const ILiveChannelDefault: ILiveChannel = {
-    id: 'NID0-SID0',
+    id: 'jk0',
     display_channel_id: 'gr000',
     network_id: 0,
     service_id: 0,

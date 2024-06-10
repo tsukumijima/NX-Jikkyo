@@ -131,9 +131,9 @@ export default defineComponent({
                 }
                 &--active {
                     color: rgb(var(--v-theme-primary));
-                    background: #5b2d3c;
+                    background: #e64f8840;
                     &:hover {
-                        background: #5b2d3c;
+                        background: #e64f8840;
                     }
                 }
                 &--highlight {

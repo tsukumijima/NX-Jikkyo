@@ -506,6 +506,7 @@ export default defineComponent({
                 user-select: none;
                 box-sizing: border-box;
                 cursor: pointer;
+                border: 1px solid rgb(var(--v-theme-background-lighten-2));
                 // content-visibility: auto; を付与するだけでスマホでの描画パフォーマンスが大幅に向上する
                 content-visibility: auto;
                 contain-intrinsic-height: auto 233px;

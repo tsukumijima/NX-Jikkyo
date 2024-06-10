@@ -1,7 +1,7 @@
 <template>
     <header class="header">
         <router-link v-ripple class="nx-jikkyo-logo ml-3 ml-md-6" to="/">
-            <img class="nx-jikkyo-logo__image" src="/assets/images/logo.svg" height="21">
+            <img class="nx-jikkyo-logo__image" src="/assets/images/logo.svg" height="35">
         </router-link>
         <v-spacer></v-spacer>
     </header>

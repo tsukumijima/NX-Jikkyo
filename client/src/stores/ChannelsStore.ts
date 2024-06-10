@@ -204,13 +204,13 @@ const useChannelsStore = defineStore('channels', {
                     // display_channel_id (ex: gr011) の形式の ID なので、NIDxxx-SIDxxx の形式に変換する
                     // チャンネルタイプごとのチャンネル情報リストを取得する (すべてのチャンネルリストから探索するより効率的)
                     const channel_type = ChannelUtils.getChannelType(channel_id);
-                    if (channel_type === null) return 'NID0-SID0';  // 不正なチャンネル ID なことを示す特別な値
+                    if (channel_type === null) return 'jk0';  // 不正なチャンネル ID なことを示す特別な値
                     const channels: ILiveChannel[] = this.channels_list[channel_type];
                     const channel = channels.find((channel) => channel.display_channel_id === channel_id) ?? null;
-                    if (channel === null) return 'NID0-SID0';  // 不正なチャンネル ID なことを示す特別な値
+                    if (channel === null) return 'jk0';  // 不正なチャンネル ID なことを示す特別な値
                     return channel.id;
                 }
-            }).filter((channel_id) => channel_id !== 'NID0-SID0');  // NID0-SID0 は不正なチャンネル ID なので除外する
+            }).filter((channel_id) => channel_id !== 'jk0');  // jk0 は不正なチャンネル ID なので除外する
 
             // channels_list に格納されているすべてのチャンネルに対しループを回し、
             // 順次 channels_list_with_pinned に追加していく

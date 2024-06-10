@@ -25,7 +25,7 @@ const vuetify = createVuetify({
                     // プライマリカラー・セカンダリカラー・アクセントカラー
                     // Vuetify 2 でベースカラーを元に自動生成されたカラーパレットを移植したもの
                     // 各 -lighten / -darken バリアントと accent は、Vuetify 3 のデフォルトカラーパレットには存在しない
-                    'primary': '#e64f97',
+                    'primary': '#e64f88',
                     'primary-lighten-5': '#ffe0ff',
                     'primary-lighten-4': '#ffc2ff',
                     'primary-lighten-3': '#ffa5e9',
@@ -114,10 +114,10 @@ const vuetify = createVuetify({
                     'on-info': '#ffeaea',
                     // NX-Jikkyo 独自定義のカラーパレット
                     // 上記までと異なり、すべてのバリアントが網羅されているわけではない (実際に使う色のみ定義されている)
-                    'background': '#1e1310',
-                    'background-lighten-1': '#2f221f',
-                    'background-lighten-2': '#433532',
-                    'background-lighten-3': '#4c3c38',
+                    'background': '#000000',
+                    'background-lighten-1': '#1e1310',
+                    'background-lighten-2': '#2f221f',
+                    'background-lighten-3': '#433532',
                     'text': '#ffeaea',
                     'text-darken-1': '#d9c7c7',
                     'text-darken-2': '#8e7f7e',

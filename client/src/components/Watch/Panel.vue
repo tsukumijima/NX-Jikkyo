@@ -255,6 +255,7 @@ export default defineComponent({
         flex-shrink: 0;
         height: 77px;
         background: rgb(var(--v-theme-background-lighten-1));
+        border-top: 1px solid rgb(var(--v-theme-background-lighten-2));
         @include tablet-vertical {
             height: 66px;
             background: rgb(var(--v-theme-background));
@@ -304,10 +305,10 @@ export default defineComponent({
                     color: rgb(var(--v-theme-primary));
                 }
                 @include tablet-vertical {
-                    background: #5b2d3c;
+                    background: #e64f8840;
                 }
                 @include smartphone-vertical {
-                    background: #5b2d3c;
+                    background: #e64f8840;
                 }
             }
 

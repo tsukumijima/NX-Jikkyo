@@ -498,7 +498,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             .watch-player__background-logo {
                 display: inline-block;
                 position: absolute;
-                height: 34px;
+                height: 45px;
                 right: 56px;
                 bottom: 44px;
                 filter: drop-shadow(0px 0px 5px rgb(var(--v-theme-black)));

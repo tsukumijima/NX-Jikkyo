@@ -27,8 +27,8 @@ export interface IProgram {
 
 /** 番組情報を表すインターフェイスのデフォルト値 */
 export const IProgramDefault: IProgram = {
-    id: 'NID0-SID0-EID0',
-    channel_id: 'NID0-SID0',
+    id: 'jk0',
+    channel_id: 'jk0',
     network_id: 0,
     service_id: 0,
     event_id: 0,
