@@ -9,7 +9,7 @@
             <span class="ml-3">コメント/実況</span>
         </h2>
         <div class="settings__content" :class="{'settings__content--loading': is_loading}">
-            <div class="settings__item-label mt-0" style="border-left: 3px solid rgb(var(--v-theme-text)); padding-left: 12px;">
+            <div class="settings__item-label mt-0" style="border-left: 3px solid rgb(var(--v-theme-text-darken-1)); padding-left: 12px;">
                 コメントの透明度は、コメントプレイヤー下にある設定アイコン ⚙️ から変更できます。<br>
             </div>
             <div class="settings__item">
