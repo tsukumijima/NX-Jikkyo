@@ -160,8 +160,8 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     comment_speed_rate: 1,
     // コメントのフォントサイズ (Default: 34px)
     comment_font_size: 34,
-    // コメント送信後にコメント入力フォームを閉じる (Default: オン)
-    close_comment_form_after_sending: true,
+    // コメント送信後にコメント入力フォームを閉じる (Default: オフ)
+    close_comment_form_after_sending: false,
 
     // ***** 設定 → ニコニコ実況 (ミュート設定) *****
 

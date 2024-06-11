@@ -43,7 +43,7 @@
                 <label class="settings__item-heading" for="close_comment_form_after_sending">コメント送信後にコメント入力フォームを閉じる</label>
                 <label class="settings__item-label" for="close_comment_form_after_sending">
                     この設定をオンにすると、コメントを送信した後に、コメント入力フォームが自動で閉じるようになります。<br>
-                    コメント入力フォームが表示されたままだと、大半のショートカットキーが文字入力と競合して使えなくなります。とくに理由がなければ、オンにしておくのがおすすめです。<br>
+                    なお、コメント入力フォームが表示されたままだと、大半のショートカットキーが文字入力と競合して使えなくなります。ショートカットキーを頻繁に使う方はオンにしておくのがおすすめです。<br>
                 </label>
                 <v-switch class="settings__item-switch" color="primary" id="close_comment_form_after_sending" hide-details
                     v-model="settingsStore.settings.close_comment_form_after_sending">
