@@ -7,6 +7,7 @@
                 <p class="mt-5 mx-4 text-center">
                     <strong>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
                     コメントサーバーの負荷問題は……なんとかします…！
+                    最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣
                 </p>
                 <div class="channels-tab">
                     <div class="channels-tab__buttons" :style="{
