@@ -11,7 +11,6 @@
             }"
                 :style="{backgroundImage: `url(${playerStore.background_url})`}">
                 <div class="watch-player__background-text">
-                    〈ここにコメントが流れます〉<br>
                     {{ time }}
                 </div>
                 <img class="watch-player__background-logo" src="/assets/images/logo.svg">
@@ -65,7 +64,7 @@ export default defineComponent({
             Utils: Object.freeze(Utils),
 
             // 現在時刻
-            time: dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss'),
+            time: dayjs().format('YYYY/MM/DD\nHH:mm:ss'),
 
             // 現在時刻更新用のインターバルの ID
             time_interval_id: 0,
@@ -77,7 +76,7 @@ export default defineComponent({
     created() {
         // 現在時刻を1秒おきに更新
         this.time_interval_id = window.setInterval(() => {
-            this.time = dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss');
+            this.time = dayjs().format('YYYY/MM/DD\nHH:mm:ss');
         }, 1 * 1000);
     },
     beforeUnmount() {
@@ -529,7 +528,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             }
             &--background-hide {
                 background-image: none !important;
-                background-color: #1B110E;
+                background-color: #101010;
             }
 
             .watch-player__background-text {
@@ -541,14 +540,15 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
                 transform: translateY(-50%);
                 color: rgb(var(--v-theme-text));
                 opacity: 0.7;
-                font-size: 22px;
+                font-size: 28px;
                 font-weight: bold;
-                line-height: 1.7;
+                line-height: 1.4;
                 text-align: center;
+                white-space: pre;
                 filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.4));
 
                 @include smartphone-vertical {
-                    font-size: 18px;
+                    font-size: 24px;
                 }
             }
 
