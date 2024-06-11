@@ -206,6 +206,7 @@ export default defineComponent({
     .watch-header__program-time {
         flex-shrink: 0;
         margin-left: 16px;
+        font-family: 'Open Sans';
         font-size: 15px;
         font-weight: 500;
 

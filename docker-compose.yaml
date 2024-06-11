@@ -14,6 +14,9 @@ services:
         source: './.env'
         target: '/code/.env'
       - type: bind
+        source: './client/'
+        target: '/code/client/'
+      - type: bind
         source: './server/data/'
         target: '/code/server/data/'
       - type: bind

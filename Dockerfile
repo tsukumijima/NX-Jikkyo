@@ -18,9 +18,6 @@ COPY ./server/pyproject.toml ./server/poetry.lock ./server/poetry.toml /code/ser
 # 依存パッケージを poetry でインストール
 RUN python -m poetry install --only main --no-root
 
-# クライアントのソースコードをコピー
-COPY ./client/ /code/client/
-
 # サーバーのソースコードをコピー
 COPY ./server/ /code/server/
 
