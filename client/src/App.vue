@@ -91,7 +91,7 @@ html {
 .v-application {
     min-height: 100vh;
     min-height: 100dvh;
-    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    font-family: 'Quicksand', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
     font-weight: 500;
     overflow-x: clip;  // clip なら position: sticky; が効く
     -webkit-font-smoothing: antialiased;
@@ -101,7 +101,7 @@ html {
 
     // Safari は Twemoji COLR をうまく描画できない？ので当面無効にする
     @supports (-webkit-touch-callout: none) {
-        font-family: 'Open Sans', 'YakuHanJPs', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+        font-family: 'Quicksand', 'YakuHanJPs', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
     }
 }
 
@@ -139,7 +139,7 @@ body .route-container {
         background: rgb(var(--v-theme-background-lighten-1));
         color: rgb(var(--v-theme-text));
         font-size: 12px;
-        font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+        font-family: 'Quicksand', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
         font-weight: 500;
         opacity: 0.9;
         line-height: 22px;
@@ -170,7 +170,7 @@ body .route-container {
 
 // オーバーレイのスタイルを Vuetify 2 に合わせる (既定の --v-theme-on-surface では明るすぎる)
 .v-overlay-container {
-    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    font-family: 'Quicksand', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
     font-weight: 500;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

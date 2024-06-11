@@ -540,9 +540,10 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
                 transform: translateY(-50%);
                 color: rgb(var(--v-theme-text));
                 opacity: 0.7;
-                font-size: 28px;
-                font-weight: bold;
-                line-height: 1.4;
+                font-size: 34px;
+                font-family: 'Open Sans';
+                font-weight: 500;
+                line-height: 1.5;
                 text-align: center;
                 white-space: pre;
                 filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.4));
