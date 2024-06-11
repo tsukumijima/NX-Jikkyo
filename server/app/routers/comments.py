@@ -5,7 +5,7 @@ import time
 import traceback
 import uuid
 import websockets.exceptions
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -44,6 +44,10 @@ router = APIRouter(
 ## NX-Jikkyo ではリアルタイム来場者数を送るようにしている
 __viewer_counts: dict[str, int] = {}
 
+# チャンネル情報のキャッシュ
+__channels_cache: list[ChannelResponse] | None = None
+__channels_cache_expiry: datetime | None = None
+
 
 @router.get(
     '/channels',
@@ -55,6 +59,12 @@ async def ChannelsAPI():
     """
     全チャンネルの情報と、各チャンネルごとの全スレッドの情報を一括で取得する。
     """
+
+    global __channels_cache, __channels_cache_expiry
+
+    # キャッシュが有効であればそれを返す
+    if __channels_cache is not None and __channels_cache_expiry is not None and datetime.now(ZoneInfo('Asia/Tokyo')) < __channels_cache_expiry:
+        return __channels_cache
 
     # ID 昇順、スレッドは新しい順でチャンネルを取得
     connection = connections.get('default')
@@ -136,6 +146,10 @@ async def ChannelsAPI():
             description = cast(str, current_channel_description),
             threads = threads,
         ))
+
+    # キャッシュを更新
+    __channels_cache = response
+    __channels_cache_expiry = datetime.now(ZoneInfo('Asia/Tokyo')) + timedelta(seconds=5)
 
     return response
 
