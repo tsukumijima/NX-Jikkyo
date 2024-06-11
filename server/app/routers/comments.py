@@ -498,8 +498,10 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
 
     except websockets.exceptions.WebSocketException as e:
         # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
+        # 念のためこちらからも接続を切断しておく
         logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error.')
         logging.error(e)
+        await websocket.close(code=1011)
         __viewer_counts[channel_id] -= 1  # 接続を切断したので来場者数を減らす
 
     except Exception:
@@ -700,8 +702,10 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
 
     except websockets.exceptions.WebSocketException as e:
         # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
+        # 念のためこちらからも接続を切断しておく
         logging.error(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected by unexpected error.')
         logging.error(e)
+        await websocket.close(code=1011)
 
     except Exception:
         logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection.')
