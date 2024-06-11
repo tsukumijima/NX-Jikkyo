@@ -183,7 +183,8 @@ async def AddThreads():
     for channel in channels:
 
         # 今日の日付を取得
-        today = datetime.now(ZoneInfo('Asia/Tokyo')).date()
+        now = datetime.now(ZoneInfo('Asia/Tokyo'))
+        today = now.date()
         start_time_today = datetime.combine(today, datetime.min.time()) + timedelta(hours=4)
         end_time_today = start_time_today + timedelta(hours=24)
 
@@ -221,4 +222,16 @@ async def AddThreads():
                 description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
             logging.info(f'Thread for {channel.name} on {tomorrow.strftime("%Y-%m-%d")} has been registered.')
+
+        # もし現在時刻が 04:00 以前であれば、今日のスレッドを作成
+        if now < start_time_today:
+            await Thread.create(
+                channel = channel,
+                start_at = now,
+                end_at = start_time_today,
+                duration = int((start_time_today - now).total_seconds()),
+                title = f'{channel.name}【NX-Jikkyo】{now.strftime("%Y年%m月%d日")}',
+                description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+            )
+            logging.info(f'Temporary thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
 
