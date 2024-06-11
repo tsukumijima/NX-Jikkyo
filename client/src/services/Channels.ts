@@ -89,8 +89,9 @@ export interface INXJikkyoThread {
     duration: number;
     title: string;
     description: string;
+    status: string;
     jikkyo_force: number | null;
-    viewers: number;
+    viewers: number | null;
     comments: number;
 }
 

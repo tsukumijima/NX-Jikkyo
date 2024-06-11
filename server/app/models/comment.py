@@ -7,6 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from tortoise import fields
 from tortoise.models import Model as TortoiseModel
+from typing import Literal
 
 
 class Channel(TortoiseModel):
@@ -114,6 +115,7 @@ class ThreadResponse(BaseModel):
     duration: int
     title: str
     description: str
+    status: Literal['ACTIVE', 'UPCOMING', 'PAST']
     jikkyo_force: int | None
-    viewers: int
+    viewers: int | None
     comments: int

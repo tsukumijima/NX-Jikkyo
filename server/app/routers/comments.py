@@ -17,7 +17,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from tortoise import connections
-from typing import Annotated, cast
+from typing import Annotated, cast, Literal
 from zoneinfo import ZoneInfo
 
 from app import logging
@@ -94,15 +94,30 @@ async def ChannelsAPI():
             current_channel_description = cast(str, row['description'])
             threads = []
 
+        # タイムゾーン情報を付加した datetime に変換する
+        start_at = row['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+        end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+
+        # スレッドの現在のステータスを算出する
+        now = datetime.now(ZoneInfo('Asia/Tokyo'))
+        status: Literal['ACTIVE', 'UPCOMING', 'PAST']
+        if start_at <= now <= end_at:
+            status = 'ACTIVE'
+        elif start_at > now:
+            status = 'UPCOMING'
+        else:
+            status = 'PAST'
+
         thread = ThreadResponse(
             id = cast(int, row['thread_id']),
-            start_at = row['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo')),
-            end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo')),
+            start_at = start_at,
+            end_at = end_at,
             duration = cast(int, row['duration']),
             title = cast(str, row['title']),
             description = cast(str, row['thread_description']),
-            jikkyo_force = cast(int, row['jikkyo_force']),
-            viewers = __viewer_counts.get(f'jk{current_channel_id}', 0),
+            status = status,
+            jikkyo_force = cast(int, row['jikkyo_force']) if status == 'ACTIVE' else None,
+            viewers = __viewer_counts.get(f'jk{current_channel_id}', 0) if status == 'ACTIVE' else None,
             comments = cast(int, row['comments_count']),
         )
 
