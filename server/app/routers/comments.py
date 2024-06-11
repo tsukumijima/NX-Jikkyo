@@ -1,6 +1,7 @@
 
 import asyncio
 import hashlib
+import pathlib
 import time
 import traceback
 import uuid
@@ -47,6 +48,14 @@ __viewer_counts: dict[str, int] = {}
 # チャンネル情報のキャッシュ
 __channels_cache: list[ChannelResponse] | None = None
 __channels_cache_expiry: datetime | None = None
+
+
+def ValidateAndResolvePath(base_dir: pathlib.Path, relative_path: str) -> pathlib.Path:
+    """ ベースディレクトリ内の相対パスを検証し、正規化されたパスを返す """
+    resolved_path = (base_dir / relative_path).resolve()
+    if not resolved_path.is_relative_to(base_dir):
+        raise HTTPException(status_code=400, detail='Invalid path traversal attempt.')
+    return resolved_path
 
 
 @router.get(
@@ -173,8 +182,6 @@ def ChannelLogoAPI(
     指定されたチャンネルに紐づくロゴを取得する。
     """
 
-    # Path.exists() でファイルシステムにアクセスするため、あえて同期関数で実装している
-
     def GetETag(logo_data: bytes) -> str:
         """ ロゴデータのバイナリから ETag を生成する """
         return hashlib.sha256(logo_data).hexdigest()
@@ -185,8 +192,10 @@ def ChannelLogoAPI(
 
     # ***** 同梱のロゴを利用（存在する場合）*****
 
-    # 同梱されているロゴがあれば取得する (ない場合は None が返る)
-    logo_path = LOGO_DIR / f'{channel_id}.png'
+    # 同梱されているロゴがあれば取得する
+    logo_path = ValidateAndResolvePath(LOGO_DIR, f'{channel_id}.png')
+
+    # Path.exists() が同期的なので、あえて同期 API で実装している
     if logo_path.exists():
 
         # リクエストに If-None-Match ヘッダが存在し、ETag が一致する場合は 304 を返す
