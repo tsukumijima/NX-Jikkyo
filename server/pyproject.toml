@@ -8,7 +8,6 @@ package-mode = false
 serve  = "cd ../ && docker compose build && docker compose run --rm --service-ports nx-jikkyo"
 dev    = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ nx-jikkyo --reload"
 aerich = "cd ../ && docker compose build && docker compose run --rm --service-ports --volume=./server/app/:/code/server/app/ --entrypoint=/code/server/.venv/bin/aerich nx-jikkyo"
-mysqldump = "cd ../ && docker compose exec nx-jikkyo-mysql /bin/bash -c 'mysqldump -u root -pnx-jikkyo_password nx-jikkyo_db' > ./backup/$(date +'%Y%m%d_%H%M%S').sql"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
