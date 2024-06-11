@@ -9,6 +9,17 @@
             <span class="ml-3">全般</span>
         </h2>
         <div class="settings__content">
+            <div class="settings__item settings__item--switch">
+                <label class="settings__item-heading" for="tv_channel_selection_requires_alt_key">チャンネル選局のキーボードショートカットを {{Utils.AltOrOption()}} + 数字キー/テンキーに変更する</label>
+                <label class="settings__item-label" for="tv_channel_selection_requires_alt_key">
+                    この設定をオンにすると、数字キーまたはテンキーに対応するリモコン番号（1～12）の実況チャンネルに切り替えるとき、{{Utils.AltOrOption()}} キーを同時に押す必要があります。<br>
+                    コメントを入力しようとして誤って数字キーを押してしまい、チャンネルが変わってしまう事態を避けたい方におすすめです。<br>
+                </label>
+                <v-switch class="settings__item-switch" color="primary" id="tv_channel_selection_requires_alt_key" hide-details
+                    v-model="settingsStore.settings.tv_channel_selection_requires_alt_key">
+                </v-switch>
+            </div>
+            <v-divider class="mt-6"></v-divider>
             <div class="settings__item">
                 <div class="settings__item-heading">デフォルトのパネルの表示状態</div>
                 <div class="settings__item-label">
