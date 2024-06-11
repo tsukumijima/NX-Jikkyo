@@ -174,12 +174,24 @@ class Channels {
                 channel_number: channel.id.length <= 4 ? ('00' + channel.id.replaceAll('jk', '')).slice(-2) + '1' : channel.id.replaceAll('jk', ''),
                 type: channel.id.length <= 4 ? 'GR' : 'BS',
                 name: channel.name,
-                jikkyo_force: channel.threads[0].jikkyo_force,
+                jikkyo_force: (() => {
+                    const now = new Date();
+                    const current_thread = channel.threads.find(thread =>
+                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
+                    );
+                    return current_thread ? current_thread.jikkyo_force : null;
+                })(),
                 is_display: true,
                 is_subchannel: false,
                 is_radiochannel: false,
                 is_watchable: true,
-                viewer_count: channel.threads[0].comments, // 敢えて累計視聴者数の代わりに累計コメント数を入れている
+                viewer_count: (() => {
+                    const now = new Date();
+                    const current_thread = channel.threads.find(thread =>
+                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
+                    );
+                    return current_thread ? current_thread.comments : 0;
+                })(),
                 program_present: (() => {
                     const now = new Date();
                     const current_thread = channel.threads.find(thread =>
