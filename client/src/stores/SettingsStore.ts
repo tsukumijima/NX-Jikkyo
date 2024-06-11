@@ -21,8 +21,9 @@ export interface ILocalClientSettings extends IClientSettings {
     saved_twitter_hashtags: string[];
     pinned_channel_ids: string[];
     panel_display_state: 'RestorePreviousState' | 'AlwaysDisplay' | 'AlwaysFold';
-    tv_panel_active_tab: 'Program' | 'Channel' | 'Comment' | 'Twitter';
-    video_panel_active_tab: 'RecordedProgram' | 'Series' | 'Comment' | 'Twitter';
+    tv_panel_active_tab: 'Program' | 'Channel' | 'Comment';
+    video_panel_active_tab: 'RecordedProgram' | 'Series' | 'Comment';
+    show_player_background_image: boolean;
     tv_channel_selection_requires_alt_key: boolean;
     tv_streaming_quality: LiveStreamingQuality;
     tv_streaming_quality_cellular: LiveStreamingQuality;
@@ -86,10 +87,12 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     pinned_channel_ids: [],
     // デフォルトのパネルの表示状態 (Default: 前回の状態を復元する)
     panel_display_state: 'RestorePreviousState',
-    // テレビをみるときにデフォルトで表示されるパネルのタブ (Default: 番組情報タブ)
+    // テレビをみるときにデフォルトで表示されるパネルのタブ (Default: コメントタブ)
     tv_panel_active_tab: 'Comment',
-    // ビデオをみるときにデフォルトで表示されるパネルのタブ (Default: 番組情報タブ)
-    video_panel_active_tab: 'RecordedProgram',
+    // ビデオをみるときにデフォルトで表示されるパネルのタブ (Default: コメントタブ)
+    video_panel_active_tab: 'Comment',
+    // プレイヤーの背景画像を表示する (Default: オン)
+    show_player_background_image: true,
     // チャンネル選局のキーボードショートカットを Alt or Option + 数字キー/テンキーに変更する (Default: オフ)
     tv_channel_selection_requires_alt_key: false,
 
@@ -207,6 +210,7 @@ const SYNCABLE_SETTINGS_KEYS: (keyof IClientSettings)[] = [
     'panel_display_state',
     'tv_panel_active_tab',
     'video_panel_active_tab',
+    'show_player_background_image',
     'tv_channel_selection_requires_alt_key',
     // tv_streaming_quality: 同期無効
     // tv_streaming_quality_cellular: 同期無効

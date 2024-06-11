@@ -5,7 +5,10 @@
         'watch-player--video': playback_mode === 'Video',
     }">
         <div class="watch-player__background-wrapper">
-            <div class="watch-player__background" :class="{'watch-player__background--display': playerStore.is_background_display}"
+            <div class="watch-player__background" :class="{
+                'watch-player__background--display': playerStore.is_background_display,
+                'watch-player__background--background-hide': settingsStore.settings.show_player_background_image === false,
+            }"
                 :style="{backgroundImage: `url(${playerStore.background_url})`}">
                 <div class="watch-player__background-text">
                     〈ここにコメントが流れます〉<br>
@@ -45,6 +48,7 @@ import { defineComponent, PropType } from 'vue';
 
 import useChannelsStore from '@/stores/ChannelsStore';
 import usePlayerStore from '@/stores/PlayerStore';
+import useSettingsStore from '@/stores/SettingsStore';
 import Utils, { dayjs } from '@/utils';
 
 export default defineComponent({
@@ -68,7 +72,7 @@ export default defineComponent({
         };
     },
     computed: {
-        ...mapStores(useChannelsStore, usePlayerStore),
+        ...mapStores(useChannelsStore, usePlayerStore, useSettingsStore),
     },
     created() {
         // 現在時刻を1秒おきに更新
@@ -522,6 +526,10 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             &--display {
                 opacity: 1;
                 visibility: visible;
+            }
+            &--background-hide {
+                background-image: none !important;
+                background-color: #1B110E;
             }
 
             .watch-player__background-text {
