@@ -492,7 +492,7 @@ export default defineComponent({
             height: 26px;
             padding: 0 9px;
             border-radius: 4px;
-            background: rgb(var(--v-theme-background-lighten-3));
+            background: rgb(var(--v-theme-background-lighten-2));
             font-size: 11px;
             line-height: 1.8;
             letter-spacing: 0;
