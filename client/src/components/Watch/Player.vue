@@ -511,7 +511,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             aspect-ratio: 16 / 9;
             transform: translate(-50%, -50%);
             background-blend-mode: overlay;
-            background-color: rgba(14, 14, 18, 0.45);
+            background-color: rgba(14, 14, 18, 0.7);
             background-size: cover;
             background-image: none;
             opacity: 0;
@@ -532,7 +532,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
                 width: 100%;
                 transform: translateY(-50%);
                 color: rgb(var(--v-theme-text));
-                opacity: 0.85;
+                opacity: 0.7;
                 font-size: 22px;
                 font-weight: bold;
                 line-height: 1.7;
@@ -547,10 +547,10 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             .watch-player__background-logo {
                 display: inline-block;
                 position: absolute;
-                height: 45px;
+                height: 40px;
                 right: 56px;
                 bottom: 44px;
-                opacity: 0.85;
+                opacity: 0.7;
                 filter: drop-shadow(0px 0px 5px rgb(var(--v-theme-black)));
 
                 @include tablet-vertical {
