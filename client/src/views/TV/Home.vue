@@ -41,9 +41,9 @@
                                                 <span class="ml-1">{{channel.jikkyo_force ?? '--'}}</span>
                                                 <span style="margin-left: 3px;"> コメ/分</span>
                                             </div>
-                                            <div class="channel__broadcaster-status-viewers ml-4">
+                                            <div class="channel__broadcaster-status-viewers ml-2">
                                                 <Icon icon="bi:chat-left-text-fill" height="11px" />
-                                                <span class="ml-1">累計コメント数:</span>
+                                                <span class="ml-1">コメント数:</span>
                                                 <span class="ml-1">{{channel.viewer_count}}</span>
                                             </div>
                                         </div>
@@ -499,7 +499,7 @@ export default defineComponent({
                 display: flex;
                 flex-direction: column;
                 position: relative;
-                height: 270px;
+                height: 251px;
                 padding: 18px 20px;
                 padding-bottom: 19px;
                 border-radius: 14px;
@@ -514,7 +514,7 @@ export default defineComponent({
                 border: 1px solid rgb(var(--v-theme-background-lighten-2));
                 // content-visibility: auto; を付与するだけでスマホでの描画パフォーマンスが大幅に向上する
                 content-visibility: auto;
-                contain-intrinsic-height: auto 233px;
+                contain-intrinsic-height: auto 214px;
 
                 // 1列表示
                 @media (max-width: 1007.9px) {
@@ -636,7 +636,7 @@ export default defineComponent({
                         flex-shrink: 0;
                         align-items: center;
                         margin-top: 2px;
-                        font-size: 12px;
+                        font-size: 11.5px;
                         color: rgb(var(--v-theme-text-darken-1));
                         @include tablet-vertical {
                             margin-top: 2px;
@@ -770,7 +770,7 @@ export default defineComponent({
                         font-feature-settings: "palt" 1;  // 文字詰め
                         letter-spacing: 0.07em;  // 字間を少し空ける
                         overflow: hidden;
-                        -webkit-line-clamp: 2;  // 2行までに制限
+                        -webkit-line-clamp: 1;  // 1行までに制限
                         -webkit-box-orient: vertical;
                         @include tablet-vertical {
                             font-size: 14px;
