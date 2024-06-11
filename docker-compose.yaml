@@ -39,6 +39,9 @@ services:
       - type: bind
         source: './server/data/database/'
         target: '/var/lib/mysql/'
+      - type: bind
+        source: './my.cnf'
+        target: '/etc/mysql/conf.d/my.cnf'
     networks:
       - proxy-network
 

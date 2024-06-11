@@ -409,18 +409,10 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     if 'font' in message['data']:
                         comment_commands.append(message['data']['font'])
 
-                    # コメ番を算出
-                    ## コメントがまだない場合は 1 から始まる
-                    last_comment = await Comment.filter(thread=active_thread).order_by('-no').first()
-                    if last_comment:
-                        comment_no = last_comment.no + 1
-                    else:
-                        comment_no = 1
-
                     # コメントを DB に登録
+                    ## コメ番は MySQL のトリガーにより自動で算出されるので、ここでは指定しない
                     comment = await Comment.create(
                         thread = active_thread,
-                        no = comment_no,
                         vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
                         mail = ' '.join(comment_commands),  # コメントコマンドは空白区切りで組み立てる
                         user_id = watch_session_client_id,  # ユーザー ID は視聴セッションのクライアント ID をそのまま入れる
