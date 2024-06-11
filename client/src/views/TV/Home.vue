@@ -4,6 +4,10 @@
         <main>
             <Navigation />
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
+                <p class="mt-5 mx-4 text-center">
+                    <strong>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
+                    コメントサーバーの負荷問題は……なんとかします…！
+                </p>
                 <div class="channels-tab">
                     <div class="channels-tab__buttons" :style="{
                         '--tab-length': Array.from(channelsStore.channels_list_with_pinned).length,
@@ -386,7 +390,7 @@ export default defineComponent({
     .channels-list {
         width: 100%;
         // タブとボトムナビゲーション分の高さを引き、スクロールバーが出るよう 1px 足す
-        min-height: calc(100% - var(--channels-tab-height) + var(--bottom-navigation-height) + 1px);
+        /* min-height: calc(100% - var(--channels-tab-height) + var(--bottom-navigation-height) + 1px); */
         padding-bottom: var(--channels-list-padding-bottom);
         background: transparent !important;
         overflow: hidden;

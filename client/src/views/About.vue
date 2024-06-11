@@ -26,7 +26,7 @@
                     <strong>そこで突貫工事ではありますが、ニコニコ生放送互換のサードパーティーツールが比較的対応しやすい技術仕様で、ニコニコ実況が使えない間のつなぎとしてテレビを実況できる、このサイトを開発しました。</strong><br>
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
-                    <strong>ぜひこのサイトをまだ知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
+                    <strong>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
                     コメントサーバーの負荷問題は……なんとかします…！
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
