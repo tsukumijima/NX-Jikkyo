@@ -10,7 +10,7 @@
         </h2>
         <div class="settings__content" :class="{'settings__content--loading': is_loading}">
             <div class="settings__item-label mt-0">
-                コメントの透明度の設定は、別途プレイヤー下の設定アイコンから行えます。<br>
+                コメントの透明度の設定は、別途コメントプレイヤー下の設定アイコンから行えます。<br>
             </div>
             <div class="settings__item">
                 <div class="settings__item-heading">コメントのミュート設定</div>
