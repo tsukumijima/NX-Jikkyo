@@ -423,7 +423,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         no = comment_no,
                         vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
                         mail = ' '.join(comment_commands),  # コメントコマンドは空白区切りで組み立てる
-                        user_id = watch_session_client_id,
+                        user_id = watch_session_client_id,  # ユーザー ID は視聴セッションのクライアント ID をそのまま入れる
                         premium = False,  # 簡易実装なのでプレミアム会員判定は省略
                         anonymity = message['data']['isAnonymous'] is True,
                         content = message['data']['text'],
@@ -546,7 +546,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
         """ 受信コメントをクライアント側に送信する """
         response = {
             'chat': {
-                'thread': active_thread.id,
+                'thread': str(active_thread.id),
                 'no': comment.no,
                 'vpos': comment.vpos,
                 'date': int(comment.date.timestamp()),
@@ -656,7 +656,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
             await websocket.send_json({
                 'thread': {
                     "resultcode": 0,  # 成功
-                    "thread": thread_id,
+                    "thread": str(thread_id),
                     "last_res": last_comment_no,
                     "ticket": "0x12345678",  # よくわからん値だが固定
                     "revision": 1,  # よくわからん値だが固定
