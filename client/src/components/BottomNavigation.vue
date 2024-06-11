@@ -13,7 +13,7 @@
         <v-btn class="bottom-navigation-button" to="/about/"
             :class="{'v-btn--active': $route.path.startsWith('/about')}">
             <Icon icon="fluent:info-16-regular" width="26px" />
-            <span class="mt-1">About</span>
+            <span class="mt-1">NX-Jikkyo とは</span>
         </v-btn>
         <v-btn class="bottom-navigation-button" to="/settings/"
             :class="{'v-btn--active': $route.path.startsWith('/settings')}">

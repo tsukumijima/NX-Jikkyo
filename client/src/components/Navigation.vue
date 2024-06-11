@@ -16,7 +16,7 @@
                     <router-link v-ripple class="navigation__link" active-class="navigation__link--active" to="/about/"
                         :class="{'navigation__link--active': $route.path.startsWith('/about')}">
                         <Icon class="navigation__link-icon" icon="fluent:info-16-regular" width="26px" />
-                        <span class="navigation__link-text">About</span>
+                        <span class="navigation__link-text">NX-Jikkyo とは</span>
                     </router-link>
                     <v-spacer></v-spacer>
                     <router-link v-ripple class="navigation__link" active-class="navigation__link--active" to="/settings/"

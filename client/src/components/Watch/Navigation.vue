@@ -17,7 +17,7 @@
         </a>
         <router-link v-ripple class="watch-navigation__link" active-class="watch-navigation__link--active" to="/about/"
             :class="{'watch-navigation__link--active': $route.path.startsWith('/about')}"
-            v-tooltip.right="'About'">
+            v-tooltip.right="'NX-Jikkyo とは'">
             <Icon class="watch-navigation__link-icon" icon="fluent:info-16-regular" width="26px" />
         </router-link>
         <v-spacer></v-spacer>
