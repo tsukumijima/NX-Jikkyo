@@ -119,3 +119,33 @@ class ThreadResponse(BaseModel):
     jikkyo_force: int | None
     viewers: int | None
     comments: int
+
+class ThreadWithCommentsResponse(BaseModel):
+    """
+    スレッド情報にコメントを含む Pydantic モデル
+    """
+    id: int
+    start_at: datetime
+    end_at: datetime
+    duration: int
+    title: str
+    description: str
+    status: Literal['ACTIVE', 'UPCOMING', 'PAST']
+    jikkyo_force: int | None
+    viewers: int | None
+    comments: list[CommentResponse]
+
+class CommentResponse(BaseModel):
+    """
+    コメント情報のレスポンスの Pydantic モデル
+    """
+    id: int
+    thread_id: int
+    no: int
+    vpos: int
+    date: datetime
+    mail: str
+    user_id: str
+    premium: bool
+    anonymity: bool
+    content: str
