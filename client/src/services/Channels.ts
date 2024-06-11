@@ -303,8 +303,6 @@ class Channels {
         // return response.data;
 
         // 常にモックする
-        // ただそれだと早すぎて色々バグる？ので、0.5s だけ遅らせる
-        await Utils.sleep(0.5);
         return {
             is_success: true,
             audience_token: `${Utils.api_base_url.replaceAll('http', 'ws')}/channels/${channel_id}/ws/watch`,
