@@ -222,6 +222,7 @@ export default defineComponent({
     .watch-header__now {
         flex-shrink: 0;
         margin-left: 16px;
+        font-family: 'Open Sans';
         font-size: 13px;
         font-weight: 500;
 

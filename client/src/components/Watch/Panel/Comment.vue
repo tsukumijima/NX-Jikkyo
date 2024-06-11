@@ -590,6 +590,7 @@ export default defineComponent({
                     margin-left: auto;
                     padding-left: 8px;
                     color: rgb(var(--v-theme-text-darken-1));
+                    font-family: 'Open Sans';
                     font-size: 13px;
                 }
 
