@@ -8,6 +8,9 @@
                 <p class="mt-4 text-text-darken-1">
                     <strong>NX-Jikkyo は、<a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">サイバー攻撃で期間未定の鯖落ち中</a> のニコニコ実況に代わる、ニコニコ実況民のための避難所であり、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/blob/master/server/app/routers/comments.py" target="_blank">ニコニコ生放送互換の WebSocket API</a> を備えるコメントサーバーです。</strong><br>
                 </p>
+                <blockquote class="mt-5 text-text-darken-1">
+                    <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！ぜひチェックしてみてください🙏</strong>
+                </blockquote>
                 <hr class="mt-5">
                 <p class="mt-5 text-text-darken-1">
                     個人的にもニコニコ実況がすぐに復活してくれればそれが一番良いのですが、この感じだと残念ながら数週間はサーバーダウンが続きそうに思えます。<br>
@@ -35,7 +38,7 @@
                     一部 UI が不自然な箇所がありますが、元々 KonomiTV のプレイヤーロジックはそのまま動画再生処理だけを強引に無効化し、コメント再生だけを行わせているためです。
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
-                    ニコニコ実況の復活後のこのサイトの処遇はまだ決めていません。引き続き需要があれば、あるいはサーバー負荷の問題がなければ残す可能性も十分あります。
+                    ニコニコ実況の復活後のこのサイトの処遇は未定です。ニコニコ実況復活後も引き続き需要があれば、あるいはサーバー負荷的に大丈夫そうなら、継続する可能性も十分あります。
                 </blockquote>
                 <p class="mt-5 text-text-darken-1">
                     投稿いただいたコメントは自動的にデータベースに記録されます。書き込んだ瞬間だけでなく、後からでも過去ログを見れるように考慮して設計しています。<br>
