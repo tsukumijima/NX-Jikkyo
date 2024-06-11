@@ -17,6 +17,15 @@
                 <div class="settings__item-label">
                     表示したくないコメントを、映像上やコメントリストに表示しないようにミュートできます。<br>
                 </div>
+                <div class="settings__item-label mt-2">
+                    デフォルトでは、下記のミュート設定がオンになっています。<br>
+                    これらのコメントも表示したい方は、適宜オフに設定してください。<br>
+                    <ul class="ml-5 mt-2">
+                        <li>露骨な表現を含むコメントをミュートする</li>
+                        <li>ネガティブな表現、差別的な表現、政治的に偏った表現を含むコメントをミュートする</li>
+                        <li>文字サイズが大きいコメントをミュートする</li>
+                    </ul>
+                </div>
             </div>
             <v-btn class="settings__save-button mt-4" variant="flat" @click="comment_mute_settings_modal = !comment_mute_settings_modal">
                 <Icon icon="heroicons-solid:filter" height="19px" />
