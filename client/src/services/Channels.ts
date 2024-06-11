@@ -137,7 +137,28 @@ class Channels {
             STARDIGIO: [],
         };
 
-        response.data.forEach((channel) => {
+        // まずは放送中のスレッドが存在するチャンネルのみに絞り込む
+        const now = new Date();
+        const filtered_channels = response.data.filter(channel =>
+            channel.threads.some(thread => new Date(thread.start_at) <= now && now <= new Date(thread.end_at))
+        );
+
+        // チャンネルごとに ILiveChannel 互換のオブジェクトを生成する
+        filtered_channels.forEach((channel) => {
+
+            // 現在放送中のスレッドを取得
+            const current_thread = channel.threads.find(thread =>
+                new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
+            );
+
+            // 次に放送されるスレッドを取得
+            const current_thread_index = channel.threads.findIndex(thread =>
+                new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
+            );
+            const next_thread = (current_thread_index !== -1 && current_thread_index + 1 < channel.threads.length)
+                ? channel.threads[current_thread_index + 1]
+                : null;
+
             const live_channel: ILiveChannel = {
                 id: channel.id,
                 display_channel_id: channel.id,
@@ -175,91 +196,60 @@ class Channels {
                 channel_number: channel.id.length <= 4 ? ('00' + channel.id.replaceAll('jk', '')).slice(-2) + '1' : channel.id.replaceAll('jk', ''),
                 type: channel.id.length <= 4 ? 'GR' : 'BS',
                 name: channel.name,
-                jikkyo_force: (() => {
-                    const now = new Date();
-                    const current_thread = channel.threads.find(thread =>
-                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
-                    );
-                    return current_thread ? current_thread.jikkyo_force : null;
-                })(),
+                jikkyo_force: current_thread ? current_thread.jikkyo_force : null,
                 is_display: true,
                 is_subchannel: false,
                 is_radiochannel: false,
                 is_watchable: true,
-                viewer_count: (() => {
-                    const now = new Date();
-                    const current_thread = channel.threads.find(thread =>
-                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
-                    );
-                    return current_thread ? current_thread.comments : 0;
-                })(),
-                program_present: (() => {
-                    const now = new Date();
-                    const current_thread = channel.threads.find(thread =>
-                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
-                    );
-                    if (!current_thread) return null;
-
-                    const program: IProgram = {
-                        id: current_thread.id.toString(),
-                        channel_id: channel.id,
-                        network_id: -1,
-                        service_id: -1,
-                        event_id: -1,
-                        title: current_thread.title,
-                        description: current_thread.description,
-                        detail: {},
-                        start_time: current_thread.start_at,
-                        end_time: current_thread.end_at,
-                        duration: current_thread.duration,
-                        is_free: false,
-                        genres: [],
-                        video_type: '',
-                        video_codec: '',
-                        video_resolution: '',
-                        primary_audio_type: '',
-                        primary_audio_language: '',
-                        primary_audio_sampling_rate: '',
-                        secondary_audio_type: null,
-                        secondary_audio_language: null,
-                        secondary_audio_sampling_rate: null,
-                    };
-                    return program;
-                })(),
-                program_following: (() => {
-                    const now = new Date();
-                    const current_thread_index = channel.threads.findIndex(thread =>
-                        new Date(thread.start_at) <= now && now <= new Date(thread.end_at)
-                    );
-                    if (current_thread_index === -1 || current_thread_index + 1 >= channel.threads.length) return null;
-
-                    const next_thread = channel.threads[current_thread_index + 1];
-                    const program: IProgram = {
-                        id: next_thread.id.toString(),
-                        channel_id: channel.id,
-                        network_id: -1,
-                        service_id: -1,
-                        event_id: -1,
-                        title: next_thread.title,
-                        description: next_thread.description,
-                        detail: {},
-                        start_time: next_thread.start_at,
-                        end_time: next_thread.end_at,
-                        duration: next_thread.duration,
-                        is_free: false,
-                        genres: [],
-                        video_type: '',
-                        video_codec: '',
-                        video_resolution: '',
-                        primary_audio_type: '',
-                        primary_audio_language: '',
-                        primary_audio_sampling_rate: '',
-                        secondary_audio_type: null,
-                        secondary_audio_language: null,
-                        secondary_audio_sampling_rate: null,
-                    };
-                    return program;
-                })(),
+                viewer_count: current_thread ? current_thread.comments : 0,
+                program_present: current_thread ? {
+                    id: current_thread.id.toString(),
+                    channel_id: channel.id,
+                    network_id: -1,
+                    service_id: -1,
+                    event_id: -1,
+                    title: current_thread.title,
+                    description: current_thread.description,
+                    detail: {},
+                    start_time: current_thread.start_at,
+                    end_time: current_thread.end_at,
+                    duration: current_thread.duration,
+                    is_free: false,
+                    genres: [],
+                    video_type: '',
+                    video_codec: '',
+                    video_resolution: '',
+                    primary_audio_type: '',
+                    primary_audio_language: '',
+                    primary_audio_sampling_rate: '',
+                    secondary_audio_type: null,
+                    secondary_audio_language: null,
+                    secondary_audio_sampling_rate: null,
+                } : null,
+                program_following: next_thread ? {
+                    id: next_thread.id.toString(),
+                    channel_id: channel.id,
+                    network_id: -1,
+                    service_id: -1,
+                    event_id: -1,
+                    title: next_thread.title,
+                    description: next_thread.description,
+                    detail: {},
+                    start_time: next_thread.start_at,
+                    end_time: next_thread.end_at,
+                    duration: next_thread.duration,
+                    is_free: false,
+                    genres: [],
+                    video_type: '',
+                    video_codec: '',
+                    video_resolution: '',
+                    primary_audio_type: '',
+                    primary_audio_language: '',
+                    primary_audio_sampling_rate: '',
+                    secondary_audio_type: null,
+                    secondary_audio_language: null,
+                    secondary_audio_sampling_rate: null,
+                } : null,
             };
 
             if (channel.id.length <= 4) {
