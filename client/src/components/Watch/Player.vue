@@ -515,7 +515,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             aspect-ratio: 16 / 9;
             transform: translate(-50%, -50%);
             background-blend-mode: overlay;
-            background-color: rgba(14, 14, 18, 0.7);
+            background-color: rgba(14, 14, 18, 0.65);
             background-size: cover;
             background-image: none;
             opacity: 0;
