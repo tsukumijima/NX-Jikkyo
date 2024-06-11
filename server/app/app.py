@@ -172,7 +172,7 @@ async def RegisterMasterChannels():
         logging.info('Master channels have been registered.')
 
 # 1時間に1回、明日分の全実況チャンネルのスレッド予定が DB に登録されているかを確認し、もしなければ登録する
-# スレッドは同じ実況チャンネル内では絶対に開催時間が被ってはならないし、基本開催時間は 04:00 〜 翌朝 04:00 の 24 時間
+# スレッドは同じ実況チャンネル内では絶対に放送時間が被ってはならないし、基本放送時間は 04:00 〜 翌朝 04:00 の 24 時間
 ## wait_first を指定していないので起動時にも実行される
 @app.on_event('startup')
 @repeat_every(seconds=60 * 60, logger=logging.logger)
@@ -225,13 +225,16 @@ async def AddThreads():
 
         # もし現在時刻が 04:00 以前であれば、今日のスレッドを作成
         if now < start_time_today:
-            await Thread.create(
-                channel = channel,
-                start_at = now,
-                end_at = start_time_today,
-                duration = int((start_time_today - now).total_seconds()),
-                title = f'{channel.name}【NX-Jikkyo】{now.strftime("%Y年%m月%d日")}',
-                description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
-            )
-            logging.info(f'Thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
+            # すでに現在放送中のがあるかを確認
+            existing_thread_now = await Thread.filter(channel=channel, start_at=now).first()
+            if not existing_thread_now:
+                await Thread.create(
+                    channel = channel,
+                    start_at = now,
+                    end_at = start_time_today,
+                    duration = int((start_time_today - now).total_seconds()),
+                    title = f'{channel.name}【NX-Jikkyo】{now.strftime("%Y年%m月%d日")}',
+                    description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+                )
+                logging.info(f'Thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
 

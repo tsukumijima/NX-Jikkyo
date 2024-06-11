@@ -34,7 +34,7 @@ class Thread(TortoiseModel):
     """
     コメントのスレッドを表す Tortoise ORM モデル
     各チャンネルごとに毎日4時に新しいスレッドが開始され、翌朝4時に終了する
-    各チャンネルで同時に開催されるスレッドは1つだけ (ニコニコ実況の仕様に準拠)
+    各チャンネルで同時に放送されるスレッドは1つだけ (ニコニコ実況の仕様に準拠)
     """
 
     # データベース上のテーブル名
@@ -43,7 +43,7 @@ class Thread(TortoiseModel):
 
     # ID は自動でインクリメントされる
     id = fields.IntField(pk=True)
-    # スレッドが開催されているチャンネル ID
+    # スレッドが放送されているチャンネル ID
     channel = fields.ForeignKeyField('models.Channel', related_name='threads')
     channel_id: int
     # スレッド開始日時

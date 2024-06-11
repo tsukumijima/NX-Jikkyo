@@ -272,7 +272,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         await websocket.close(code=4001)
         return
 
-    # 現在アクティブな (開催中の) スレッドを取得
+    # 現在アクティブな (放送中の) スレッドを取得
     now = datetime.now(ZoneInfo('Asia/Tokyo'))
     active_thread = await Thread.filter(
         channel_id = channel_id_int,
@@ -478,7 +478,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                 await websocket.send_json({'type': 'ping'})
                 last_ping_time = time.time()
 
-            # スレッドの開催終了時刻を過ぎたら接続を切断する
+            # スレッドの放送終了時刻を過ぎたら接続を切断する
             if datetime.now(ZoneInfo('Asia/Tokyo')) > active_thread.end_at:
                 logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected because the thread ended.')
                 await websocket.send_json({
@@ -684,7 +684,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         await SendComment(active_thread, thread_key, comment)
                         last_comment_id = comment.id
 
-                    # スレッドの開催終了時刻を過ぎたら接続を切断する
+                    # スレッドの放送終了時刻を過ぎたら接続を切断する
                     current_time = time.time()
                     if current_time > active_thread.end_at.timestamp():
                         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
