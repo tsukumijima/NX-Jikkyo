@@ -225,8 +225,12 @@ async def AddThreads():
 
         # もし現在時刻が 04:00 以前であれば、今日のスレッドを作成
         if now < start_time_today:
-            # すでに現在放送中のがあるかを確認
-            existing_thread_now = await Thread.filter(channel=channel, start_at=now).first()
+            # すでに現在放送中のスレッドがあるかを確認
+            existing_thread_now = await Thread.filter(
+                channel = channel,
+                start_at__lte = now,
+                end_at__gte = now
+            ).first()
             if not existing_thread_now:
                 await Thread.create(
                     channel = channel,
