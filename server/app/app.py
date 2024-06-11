@@ -185,7 +185,7 @@ async def AddThreads():
         # 今日の日付を取得
         now = datetime.now(ZoneInfo('Asia/Tokyo'))
         today = now.date()
-        start_time_today = datetime.combine(today, datetime.min.time()) + timedelta(hours=4)
+        start_time_today = datetime.combine(today, datetime.min.time(), ZoneInfo('Asia/Tokyo')) + timedelta(hours=4)
         end_time_today = start_time_today + timedelta(hours=24)
 
         # 今日用のスレッドが既に存在するか確認
