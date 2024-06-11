@@ -10,7 +10,7 @@
         </h2>
         <div class="settings__content">
             <div class="settings__item settings__item--switch">
-                <label class="settings__item-heading" for="show_player_background_image">プレイヤーの背景画像を表示する</label>
+                <label class="settings__item-heading" for="show_player_background_image">コメントプレイヤーに背景画像を表示する</label>
                 <label class="settings__item-label" for="show_player_background_image">
                     この設定をオンにすると、コメントプレイヤーにランダムで背景画像を表示します。<br>
                     オフにした場合は、背景画像を表示しません。<br>
