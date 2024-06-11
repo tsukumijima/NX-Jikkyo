@@ -9,7 +9,9 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
         <meta name="apple-mobile-web-app-title" content="NX-Jikkyo">
         <meta name="theme-color" content="#0D0807">
+        <title>NX-Jikkyo : ニコニコ実況避難所</title>
         <meta name="description" content="サイバー攻撃で期間未定の鯖落ち中のニコニコ実況に代わる避難所です。長期化してほしくないけど長期化に備え…">
+        <link rel="canonical" href="https://nx-jikkyo.tsukumijima.net/">
 
         <!-- OGP -->
         <meta property="og:type" content="article">
@@ -31,7 +33,17 @@
         <!-- NX-Jikkyo は常にダークモードのため Dark Reader 拡張機能を無効化 -->
         <!-- ref: https://github.com/darkreader/darkreader/blob/main/CONTRIBUTING.md#disabling-dark-reader-on-your-site -->
         <meta name="darkreader-lock">
-        <title>NX-Jikkyo : ニコニコ実況避難所</title>
+
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MK1R2QRD5D"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-MK1R2QRD5D');
+        </script>
+
+        <!-- Web フォント -->
         <style>
             @font-face {
                 font-family: 'Open Sans';
@@ -94,15 +106,6 @@
                 src: url('/assets/fonts/MaterialDesignIcons.woff2') format('woff2');
             }
         </style>
-
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MK1R2QRD5D"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-MK1R2QRD5D');
-        </script>
       <script type="module" crossorigin src="/assets/index-e2AUcmcm.js"></script>
       <link rel="stylesheet" crossorigin href="/assets/index.CyCPXi0_.css">
     <link rel="manifest" href="/manifest.webmanifest"></head>
