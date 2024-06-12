@@ -96,6 +96,21 @@ class Comment(TortoiseModel):
     content = fields.TextField()
 
 
+class CommentCounter(TortoiseModel):
+    """
+    コメ番の採番テーブル
+    """
+
+    # データベース上のテーブル名
+    class Meta(TortoiseModel.Meta):
+        table: str = 'comment_counters'
+
+    # スレッド ID
+    thread_id = fields.IntField(pk=True)
+    # スレッド内の最大コメ番
+    max_no = fields.IntField(default=0)
+
+
 class ChannelResponse(BaseModel):
     """
     チャンネル情報のレスポンスの Pydantic モデル

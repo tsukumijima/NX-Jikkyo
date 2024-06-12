@@ -17,7 +17,12 @@ from app.constants import (
     DATABASE_CONFIG,
     VERSION,
 )
-from app.models.comment import Channel, Thread
+from app.models.comment import (
+    Channel,
+    Comment,
+    CommentCounter,
+    Thread,
+)
 from app.routers import (
     comments,
 )
@@ -242,3 +247,12 @@ async def AddThreads():
                 )
                 logging.info(f'Thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
 
+    # 採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
+    threads = await Thread.all()
+    for thread in threads:
+        comment_count = await Comment.filter(thread=thread).count()
+        await CommentCounter.update_or_create(
+            thread_id = thread.id,
+            defaults = {'max_no': comment_count}
+        )
+    logging.info('Comment counters have been synchronized.')
