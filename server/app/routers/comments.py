@@ -436,13 +436,19 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     # コメントを DB に登録
                     async with in_transaction() as connection:
 
-                        # 同じスレッド内の最大のコメ番を取得し、行ロックを取得
-                        result = await connection.execute_query(
-                            'SELECT COALESCE(MAX(no), 0) AS max_no FROM comments WHERE thread_id = %s FOR UPDATE',
+                        # 採番テーブルに記録されたコメ番をインクリメント
+                        await connection.execute_query(
+                            'INSERT INTO comment_counters (thread_id, max_no) VALUES (%s, 1) '
+                            'ON DUPLICATE KEY UPDATE max_no = max_no + 1',
                             [active_thread.id]
                         )
-                        max_no = result[0]['max_no']
-                        new_no = max_no + 1
+                        # インクリメント後のコメ番を取得
+                        ## 採番テーブルを使うことでコメ番の重複を防いでいる
+                        new_no_result = await connection.execute_query_dict(
+                            'SELECT max_no FROM comment_counters WHERE thread_id = %s',
+                            [active_thread.id]
+                        )
+                        new_no = new_no_result[0]['max_no']
 
                         # 新しいコメントを作成
                         comment = await Comment.create(
