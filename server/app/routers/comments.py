@@ -438,8 +438,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
 
                         # 採番テーブルに記録されたコメ番をインクリメント
                         await connection.execute_query(
-                            'INSERT INTO comment_counters (thread_id, max_no) VALUES (%s, 1) '
-                            'ON DUPLICATE KEY UPDATE max_no = max_no + 1',
+                            'UPDATE comment_counters SET max_no = max_no + 1 WHERE thread_id = %s',
                             [active_thread.id]
                         )
                         # インクリメント後のコメ番を取得
