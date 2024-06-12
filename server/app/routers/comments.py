@@ -19,6 +19,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from tortoise import connections
+from tortoise.transactions import in_transaction
 from typing import Annotated, cast, Literal
 from zoneinfo import ZoneInfo
 
@@ -433,16 +434,27 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         comment_commands.append(message['data']['font'])
 
                     # コメントを DB に登録
-                    ## コメ番は MySQL のトリガーにより自動で算出されるので、ここでは指定しない
-                    comment = await Comment.create(
-                        thread = active_thread,
-                        vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
-                        mail = ' '.join(comment_commands),  # コメントコマンドは空白区切りで組み立てる
-                        user_id = watch_session_client_id,  # ユーザー ID は視聴セッションのクライアント ID をそのまま入れる
-                        premium = False,  # 簡易実装なのでプレミアム会員判定は省略
-                        anonymity = message['data']['isAnonymous'] is True,
-                        content = message['data']['text'],
-                    )
+                    async with in_transaction() as connection:
+
+                        # 同じスレッド内の最大のコメ番を取得し、行ロックを取得
+                        result = await connection.execute_query(
+                            'SELECT COALESCE(MAX(no), 0) AS max_no FROM comments WHERE thread_id = %s FOR UPDATE',
+                            [active_thread.id]
+                        )
+                        max_no = result[0]['max_no']
+                        new_no = max_no + 1
+
+                        # 新しいコメントを作成
+                        comment = await Comment.create(
+                            thread = active_thread,
+                            no = new_no,
+                            vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
+                            mail = ' '.join(comment_commands),  # コメントコマンドは空白区切りで組み立てる
+                            user_id = watch_session_client_id,  # ユーザー ID は視聴セッションのクライアント ID をそのまま入れる
+                            premium = False,  # 簡易実装なのでプレミアム会員判定は省略
+                            anonymity = message['data']['isAnonymous'] is True,
+                            content = message['data']['text'],
+                        )
 
                     # 投稿結果を返す
                     await websocket.send_json({

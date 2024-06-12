@@ -3,6 +3,22 @@ from tortoise import BaseDBAsyncClient
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
     return """
+        DROP TRIGGER IF EXISTS before_comment_insert;
+
+        ALTER TABLE `comments`
+        DROP INDEX `idx_thread_id`,
+        DROP INDEX `idx_id`,
+        ADD INDEX `idx_thread_id_id` (`thread_id`, `id`);
+    """
+
+
+async def downgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        ALTER TABLE `comments`
+        DROP INDEX `idx_thread_id_id`,
+        ADD INDEX `idx_thread_id` (`thread_id`),
+        ADD INDEX `idx_id` (`id`);
+
         CREATE TRIGGER before_comment_insert
         BEFORE INSERT ON comments
         FOR EACH ROW
@@ -15,10 +31,4 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
             -- 新しいコメ番を設定
             SET NEW.no = max_no + 1;
         END;
-    """
-
-
-async def downgrade(db: BaseDBAsyncClient) -> str:
-    return """
-        DROP TRIGGER IF EXISTS before_comment_insert;
     """
