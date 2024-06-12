@@ -11,6 +11,10 @@
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏</strong>
                 </blockquote>
+                <blockquote class="mt-5 text-text-darken-1">
+                    <strong><a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV 0.10.1</a> にて、ニコニコ実況の代わりに NX-Jikkyo からリアルタイムに実況コメントを取得する設定が追加されました！<br></strong>
+                    <a class="link" href="https://github.com/tsukumijima/KonomiTV" target="_blank">KonomiTV</a> + ニコニコ実況ユーザーの方はサーバー設定から NX-Jikkyo を有効にすると再び実況コメントを表示できるようになるのでアプデ推奨です🙏<br>
+                </blockquote>
                 <h2 class="mt-5">開発経緯</h2>
                 <p class="mt-3 text-text-darken-1">
                     個人的にもニコニコ実況がすぐに復活してくれればそれが一番良いのですが、この感じだと残念ながら数週間はサーバーダウンが続きそうに思えます。<br>
@@ -26,7 +30,7 @@
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
-                    コメントサーバーの負荷問題は……なんとかします…！
+                    コメントサーバーの負荷問題は……なんとかします…！現時点での最大瞬間ユーザー数の数倍程度なら今のサーバーでも捌けそうな状況です。<br>
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong>
@@ -55,7 +59,7 @@
                     もちろん15時間で突貫で作ったサイトなのでバグも多いでしょうし、大量のコメントの負荷には耐えきれないかもしれません。しかし、コメントが全く残らないよりはマシだと考えています。
                 </p>
                 <p class="mt-2 text-text-darken-1">
-                    まだ手間的に間に合ってはいないのですが、<strong>少なくともニコニコ実況が復活するまでに書き込んでいただいた過去ログは、後日私 (tsukumi) が責任を持って <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> で閲覧可能な過去ログとしてインポート・マージする予定です。</strong>
+                    まだ手間的に間に合ってはいないのですが、<strong>少なくともニコニコ実況が復活するまでに書き込んでいただいた過去ログは、後日私 (tsukumi) が責任を持って <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> で閲覧可能な過去ログとしてインポート・マージする予定です。ご安心ください！</strong>
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
                     …ちなみに、NX-Jikkyo というサイト名は突貫開発をやる中でたまたま適当にひらめいた名前で、特に深い意味はありません。<br>
