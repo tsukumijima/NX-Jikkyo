@@ -74,14 +74,15 @@ export default defineComponent({
         ...mapStores(useChannelsStore, usePlayerStore, useSettingsStore),
     },
     created() {
-        // 現在時刻を1秒おきに更新
+        // 現在時刻を0.1秒おきに更新
         this.time_interval_id = window.setInterval(() => {
             // プレイヤー停止中は時刻を更新しない
             if ((window as any).player && (window as any).player.video && (window as any).player.video.paused) {
+                this.time = '〈コメント再生停止中〉';
                 return;
             }
             this.time = dayjs().format('YYYY/MM/DD\nHH:mm:ss');
-        }, 1 * 1000);
+        }, 0.1 * 1000);
     },
     beforeUnmount() {
         // インターバルをクリア
