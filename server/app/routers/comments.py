@@ -7,6 +7,7 @@ import time
 import traceback
 import uuid
 import websockets.exceptions
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from fastapi import (
     APIRouter,
@@ -168,6 +169,56 @@ async def ChannelsAPI():
     __channels_cache_expiry = datetime.now(ZoneInfo('Asia/Tokyo')) + timedelta(seconds=5)
 
     return response
+
+
+@router.get(
+    '/channels/xml',
+    summary = 'namami・旧ニコニコ実況互換用チャンネル情報 API',
+    response_class = Response,
+    responses = {
+        status.HTTP_200_OK: {
+            'description': 'namami・旧ニコニコ実況互換用のチャンネル情報。',
+            'content': {'application/xml': {}},
+        }
+    }
+)
+async def ChannelsXMLAPI():
+    """
+    namami・旧ニコニコ実況互換用のチャンネル情報を XML 形式で返す。<br>
+    NicoJK.ini の channelsUri= に指定する用途を想定。
+    """
+
+    channels_response = await ChannelsAPI()
+
+    root = ET.Element('channels', status='ok')
+
+    for channel in channels_response:
+        channel_id_num = int(channel.id.replace('jk', ''))
+        if channel_id_num < 100:
+            channel_element = ET.SubElement(root, 'channel')
+        else:
+            channel_element = ET.SubElement(root, 'bs_channel')
+
+        ET.SubElement(channel_element, 'id').text = str(channel_id_num)
+        if channel_id_num < 100:
+            ET.SubElement(channel_element, 'no').text = str(channel_id_num)
+        ET.SubElement(channel_element, 'name').text = channel.name
+        ET.SubElement(channel_element, 'video').text = channel.id
+
+        # アクティブな最初のスレッドの情報のみを返す
+        # 通常アクティブなスレッドは1つだけのはずだが…
+        active_threads = [thread for thread in channel.threads if thread.status == 'ACTIVE']
+        if active_threads:
+            thread = active_threads[0]
+            thread_element = ET.SubElement(channel_element, 'thread')
+            ET.SubElement(thread_element, 'id').text = str(thread.id)
+            ET.SubElement(thread_element, 'last_res').text = ''  # 常に空文字列
+            ET.SubElement(thread_element, 'force').text = str(thread.jikkyo_force)
+            ET.SubElement(thread_element, 'viewers').text = str(thread.viewers)
+            ET.SubElement(thread_element, 'comments').text = str(thread.comments)
+
+    xml_str = ET.tostring(root, encoding='utf-8', method='xml')
+    return Response(content=xml_str, media_type='application/xml; charset=UTF-8')
 
 
 @router.get(
