@@ -24,6 +24,7 @@ services:
         target: '/code/server/logs/'
     depends_on:
       - nx-jikkyo-mysql
+      - nx-jikkyo-redis
     networks:
       - proxy-network
 
@@ -45,6 +46,17 @@ services:
       - type: bind
         source: './my.cnf'
         target: '/etc/mysql/conf.d/my.cnf'
+    networks:
+      - proxy-network
+
+  nx-jikkyo-redis:
+    image: redis:6.2
+    container_name: nx-jikkyo-redis
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: './server/data/redis/'
+        target: '/data'
     networks:
       - proxy-network
 
