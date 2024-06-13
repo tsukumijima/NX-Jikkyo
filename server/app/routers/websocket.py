@@ -1,342 +1,35 @@
 
 import asyncio
-import hashlib
 import json
-import pathlib
 import time
 import traceback
 import uuid
 import websockets.exceptions
-import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import datetime
 from fastapi import (
     APIRouter,
-    HTTPException,
-    Path,
-    Request,
-    Response,
-    status,
 )
-from fastapi.responses import FileResponse
-from redis.asyncio.client import Redis
 from starlette.websockets import (
     WebSocket,
     WebSocketDisconnect,
     WebSocketState,
 )
-from tortoise import connections
 from tortoise.transactions import in_transaction
-from typing import Annotated, cast, Literal
 from zoneinfo import ZoneInfo
 
 from app import logging
-from app.constants import LOGO_DIR, VERSION
+from app.constants import REDIS_CLIENT, REDIS_VIEWER_COUNT_KEY
 from app.models.comment import (
-    ChannelResponse,
     Comment,
-    CommentResponse,
     Thread,
-    ThreadResponse,
-    ThreadWithCommentsResponse,
 )
 
 
 # ルーター
 router = APIRouter(
-    tags = ['Comments'],
+    tags = ['WebSocket'],
     prefix = '/api/v1',
 )
-
-# Redisクライアントの初期化
-redis = Redis.from_url('redis://nx-jikkyo-redis', encoding='utf-8', decode_responses=True)
-
-# 視聴者数カウントのキー
-VIEWER_COUNT_KEY = 'viewer_counts'
-
-# チャンネル情報のキャッシュ
-__channels_cache: list[ChannelResponse] | None = None
-__channels_cache_expiry: datetime | None = None
-
-
-def ValidateAndResolvePath(base_dir: pathlib.Path, relative_path: str) -> pathlib.Path:
-    """ ベースディレクトリ内の相対パスを検証し、正規化されたパスを返す """
-    resolved_path = (base_dir / relative_path).resolve()
-    if not resolved_path.is_relative_to(base_dir):
-        raise HTTPException(status_code=400, detail='Invalid path traversal attempt.')
-    return resolved_path
-
-
-@router.get(
-    '/channels',
-    summary = 'チャンネル情報 API',
-    response_description = 'チャンネル情報。',
-    response_model = list[ChannelResponse],
-)
-async def ChannelsAPI():
-    """
-    全チャンネルの情報と、各チャンネルごとの全スレッドの情報を一括で取得する。
-    """
-
-    global __channels_cache, __channels_cache_expiry
-
-    # キャッシュが有効であればそれを返す
-    if __channels_cache is not None and __channels_cache_expiry is not None and datetime.now(ZoneInfo('Asia/Tokyo')) < __channels_cache_expiry:
-        return __channels_cache
-
-    # ID 昇順、スレッドは新しい順でチャンネルを取得
-    connection = connections.get('default')
-    channels = await connection.execute_query_dict(
-        '''
-        SELECT
-            c.id,
-            c.name,
-            c.description,
-            t.id AS thread_id,
-            t.start_at,
-            t.end_at,
-            t.duration,
-            t.title,
-            t.description AS thread_description,
-            COUNT(com.id) AS comments_count,
-            SUM(CASE WHEN com.date >= NOW() - INTERVAL 60 SECOND THEN 1 ELSE 0 END) AS jikkyo_force
-        FROM channels c
-        LEFT JOIN threads t ON c.id = t.channel_id
-        LEFT JOIN comments com ON t.id = com.thread_id
-        GROUP BY c.id, c.name, c.description, t.id, t.start_at, t.end_at, t.duration, t.title, t.description
-        ORDER BY c.id ASC, t.start_at ASC
-        '''
-    )
-
-    # チャンネルごとに
-    response: list[ChannelResponse] = []
-    current_channel_id: int | None = None
-    current_channel_name: str | None = None
-    current_channel_description: str | None = None
-    threads: list[ThreadResponse] = []
-    for row in channels:
-        if current_channel_id != row['id']:
-            if current_channel_id is not None:
-                response.append(ChannelResponse(
-                    id = f'jk{current_channel_id}',
-                    name = cast(str, current_channel_name),
-                    description = cast(str, current_channel_description),
-                    threads = threads,
-                ))
-            current_channel_id = cast(int, row['id'])
-            current_channel_name = cast(str, row['name'])
-            current_channel_description = cast(str, row['description'])
-            threads = []
-
-        # タイムゾーン情報を付加した datetime に変換する
-        start_at = row['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
-        end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
-
-        # スレッドの現在のステータスを算出する
-        now = datetime.now(ZoneInfo('Asia/Tokyo'))
-        status: Literal['ACTIVE', 'UPCOMING', 'PAST']
-        if start_at <= now <= end_at:
-            status = 'ACTIVE'
-        elif start_at > now:
-            status = 'UPCOMING'
-        else:
-            status = 'PAST'
-
-        thread = ThreadResponse(
-            id = cast(int, row['thread_id']),
-            start_at = start_at,
-            end_at = end_at,
-            duration = cast(int, row['duration']),
-            title = cast(str, row['title']),
-            description = cast(str, row['thread_description']),
-            status = status,
-            jikkyo_force = cast(int, row['jikkyo_force']) if status == 'ACTIVE' else None,
-            viewers = int(await redis.hget(VIEWER_COUNT_KEY, f'jk{current_channel_id}') or 0) if status == 'ACTIVE' else None,
-            comments = cast(int, row['comments_count']),
-        )
-
-        threads.append(thread)
-
-    if current_channel_id is not None:
-        response.append(ChannelResponse(
-            id = f'jk{current_channel_id}',
-            name = cast(str, current_channel_name),
-            description = cast(str, current_channel_description),
-            threads = threads,
-        ))
-
-    # キャッシュを更新
-    __channels_cache = response
-    __channels_cache_expiry = datetime.now(ZoneInfo('Asia/Tokyo')) + timedelta(seconds=5)
-
-    return response
-
-
-@router.get(
-    '/channels/xml',
-    summary = 'namami・旧ニコニコ実況互換用チャンネル情報 API',
-    response_class = Response,
-    responses = {
-        status.HTTP_200_OK: {
-            'description': 'namami・旧ニコニコ実況互換用のチャンネル情報。',
-            'content': {'application/xml': {}},
-        }
-    }
-)
-async def ChannelsXMLAPI():
-    """
-    namami・旧ニコニコ実況互換用のチャンネル情報を XML 形式で返す。<br>
-    NicoJK.ini の channelsUri= に指定する用途を想定。
-    """
-
-    channels_response = await ChannelsAPI()
-
-    root = ET.Element('channels', status='ok')
-
-    for channel in channels_response:
-        channel_id_num = int(channel.id.replace('jk', ''))
-        if channel_id_num < 100:
-            channel_element = ET.SubElement(root, 'channel')
-        else:
-            channel_element = ET.SubElement(root, 'bs_channel')
-
-        ET.SubElement(channel_element, 'id').text = str(channel_id_num)
-        if channel_id_num < 100:
-            ET.SubElement(channel_element, 'no').text = str(channel_id_num)
-        ET.SubElement(channel_element, 'name').text = channel.name
-        ET.SubElement(channel_element, 'video').text = channel.id
-
-        # アクティブな最初のスレッドの情報のみを返す
-        # 通常アクティブなスレッドは1つだけのはずだが…
-        active_threads = [thread for thread in channel.threads if thread.status == 'ACTIVE']
-        if active_threads:
-            thread = active_threads[0]
-            thread_element = ET.SubElement(channel_element, 'thread')
-            ET.SubElement(thread_element, 'id').text = str(thread.id)
-            ET.SubElement(thread_element, 'last_res').text = ''  # 常に空文字列
-            ET.SubElement(thread_element, 'force').text = str(thread.jikkyo_force)
-            ET.SubElement(thread_element, 'viewers').text = str(thread.viewers)
-            ET.SubElement(thread_element, 'comments').text = str(thread.comments)
-
-    xml_str = ET.tostring(root, encoding='utf-8', method='xml')
-    return Response(content=xml_str, media_type='application/xml; charset=UTF-8')
-
-
-@router.get(
-    '/channels/{channel_id}/logo',
-    summary = 'チャンネルロゴ API',
-    response_class = Response,
-    responses = {
-        status.HTTP_200_OK: {
-            'description': 'チャンネルロゴ。',
-            'content': {'image/png': {}},
-        }
-    }
-)
-def ChannelLogoAPI(
-    request: Request,
-    channel_id: Annotated[str, Path(description='チャンネル ID 。ex: jk101')],
-):
-    """
-    指定されたチャンネルに紐づくロゴを取得する。
-    """
-
-    def GetETag(logo_data: bytes) -> str:
-        """ ロゴデータのバイナリから ETag を生成する """
-        return hashlib.sha256(logo_data).hexdigest()
-
-    # HTTP レスポンスヘッダーの Cache-Control の設定
-    ## 1ヶ月キャッシュする
-    CACHE_CONTROL = 'public, no-transform, immutable, max-age=2592000'
-
-    # ***** 同梱のロゴを利用（存在する場合）*****
-
-    # 同梱されているロゴがあれば取得する
-    logo_path = ValidateAndResolvePath(LOGO_DIR, f'{channel_id}.png')
-
-    # Path.exists() が同期的なので、あえて同期 API で実装している
-    if logo_path.exists():
-
-        # リクエストに If-None-Match ヘッダが存在し、ETag が一致する場合は 304 を返す
-        ## ETag はロゴファイルのパスとバージョン情報のハッシュから生成する
-        etag = GetETag(f'{logo_path}{VERSION}'.encode())
-        if request.headers.get('If-None-Match') == etag:
-            return Response(status_code=304)
-
-        # ロゴデータを返す
-        return FileResponse(logo_path, headers={
-            'Cache-Control': CACHE_CONTROL,
-            'ETag': etag,
-        })
-
-    # ***** デフォルトのロゴ画像を利用 *****
-
-    # 同梱のロゴファイルも Mirakurun や EDCB からのロゴもない場合は、デフォルトのロゴ画像を返す
-    return FileResponse(LOGO_DIR / 'default.png', headers={
-        'Cache-Control': CACHE_CONTROL,
-        'ETag': GetETag('default'.encode()),
-    })
-
-
-@router.get(
-    '/threads/{thread_id}',
-    summary = 'スレッド取得 API',
-    response_description = 'スレッド情報とスレッド内の全コメント。',
-    response_model = ThreadWithCommentsResponse,
-)
-async def ThreadAPI(thread_id: Annotated[int, Path(description='スレッド ID 。')]):
-    """
-    指定されたスレッドの情報と、スレッド内の全コメントを取得する。
-    """
-
-    # スレッドが存在するか確認
-    thread = await Thread.filter(id=thread_id).first()
-    if not thread:
-        raise HTTPException(status_code=404, detail='Thread not found.')
-
-    # スレッドの現在のステータスを算出する
-    now = datetime.now(ZoneInfo('Asia/Tokyo'))
-    status: Literal['ACTIVE', 'UPCOMING', 'PAST']
-    if thread.start_at <= now <= thread.end_at:
-        status = 'ACTIVE'
-    elif thread.start_at > now:
-        status = 'UPCOMING'
-    else:
-        status = 'PAST'
-
-    # スレッドの全コメントをコメ番順に取得
-    comments = await Comment.filter(thread_id=thread_id).order_by('no').all()
-
-    # コメントを変換
-    comment_responses: list[CommentResponse] = []
-    for comment in comments:
-        comment_responses.append(CommentResponse(
-            id = comment.id,
-            thread_id = comment.thread_id,
-            no = comment.no,
-            vpos = comment.vpos,
-            date = comment.date,
-            mail = comment.mail,
-            user_id = comment.user_id,
-            premium = comment.premium,
-            anonymity = comment.anonymity,
-            content = comment.content,
-        ))
-
-    # スレッド情報とコメント情報を返す
-    thread_response = ThreadWithCommentsResponse(
-        id = thread.id,
-        start_at = thread.start_at,
-        end_at = thread.end_at,
-        duration = thread.duration,
-        title = thread.title,
-        description = thread.description,
-        status = status,
-        jikkyo_force = None,
-        viewers = None,
-        comments = comment_responses,
-    )
-
-    return thread_response
 
 
 @router.websocket('/channels/{channel_id}/ws/watch')
@@ -460,7 +153,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
-                        'viewers': int(await redis.hget(VIEWER_COUNT_KEY, channel_id) or 0),
+                        'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
                         'comments': await Comment.filter(thread=active_thread).count(),
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
@@ -578,7 +271,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
-                        'viewers': int(await redis.hget(VIEWER_COUNT_KEY, channel_id) or 0),
+                        'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
                         'comments': await Comment.filter(thread=active_thread).count(),
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
@@ -611,7 +304,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     },
                 })
                 await websocket.close(code=1011)
-                await redis.hincrby(VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
+                await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
                 return
 
             # 接続が切れたらタスクを終了
@@ -624,7 +317,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
     try:
 
         # 視聴カウントをインクリメント
-        await redis.hincrby(VIEWER_COUNT_KEY, channel_id, 1)
+        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, 1)
 
         # クライアントからのメッセージを受信するタスクを実行開始
         receiver_task = asyncio.create_task(RunReceiverTask())
@@ -638,7 +331,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
     except WebSocketDisconnect:
         # 接続が切れた時の処理
         logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
-        await redis.hincrby(VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
+        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
 
     except websockets.exceptions.WebSocketException:
         # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
@@ -646,7 +339,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error.')
         logging.error(traceback.format_exc())
         await websocket.close(code=1011)
-        await redis.hincrby(VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
+        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
 
     except Exception:
         logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
@@ -658,7 +351,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
             },
         })
         await websocket.close(code=1011)
-        await redis.hincrby(VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
+        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
 
 
 @router.websocket('/channels/{channel_id}/ws/comment')

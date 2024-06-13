@@ -24,14 +24,19 @@ from app.models.comment import (
     Thread,
 )
 from app.routers import (
-    comments,
+    channels,
+    threads,
+    websocket,
 )
 
 
 # FastAPI を初期化
 app = FastAPI(
     title = 'NX-Jikkyo',
-    description = 'NX-Jikkyo: Nico Nico Jikkyo Alternatives',
+    description = 'NX-Jikkyo: Nico Nico Jikkyo Alternatives<br><br>'
+        'この API ドキュメントには WebSocket API のドキュメントは掲載されていません。ご了承ください。<br>'
+        'ニコ生互換の視聴セッション WebSocket の URL は wss://nx-jikkyo.tsukumijima.net/api/v1/channels/(実況ID, ex: jk211)/ws/watch です。<br>'
+        'ニコ生統合後の新ニコニコ実況対応クライアントであれば、ニコ生視聴ページに埋め込まれている JSON (embedded-data) 内の site.relive.webSocketUrl から取得していた接続先 WebSocket の URL を、上記 URL に差し替えるだけで対応できるはずです。',
     version = VERSION,
     openapi_url = '/api/v1/openapi.json',
     docs_url = '/api/v1/docs',
@@ -39,7 +44,9 @@ app = FastAPI(
 )
 
 # ルーターを登録
-app.include_router(comments.router)
+app.include_router(channels.router)
+app.include_router(threads.router)
+app.include_router(websocket.router)
 
 # CORS の設定
 ## 開発環境では全てのオリジンからのリクエストを許可

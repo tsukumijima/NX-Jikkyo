@@ -3,6 +3,7 @@ import httpx
 import pkgutil
 from passlib.context import CryptContext
 from pathlib import Path
+from redis.asyncio.client import Redis
 from typing import Any
 
 from app.config import CONFIG
@@ -165,3 +166,9 @@ HTTPX_CLIENT = lambda: httpx.AsyncClient(
     # 3 秒応答がない場合はタイムアウトする
     timeout = 3.0,
 )
+
+# Redis クライアント
+REDIS_CLIENT = Redis.from_url('redis://nx-jikkyo-redis', encoding='utf-8', decode_responses=True)
+
+# Redis 上の視聴者数カウントのキー
+REDIS_VIEWER_COUNT_KEY = 'viewer_counts'
