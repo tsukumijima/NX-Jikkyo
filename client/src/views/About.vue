@@ -18,6 +18,7 @@
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://github.com/DBCTRADO/TVTest" target="_blank">TVTest</a> のニコニコ実況表示プラグイン <a class="link" href="https://github.com/xtne6f/NicoJK/releases/tag/master-240613" target="_blank">NicoJK master-240613</a> にて、ニコニコ実況の代わりに NX-Jikkyo からリアルタイムに実況コメントを取得する設定が追加されました！<br></strong>
                     <a class="link" href="https://github.com/DBCTRADO/TVTest" target="_blank">TVTest</a> + ニコニコ実況ユーザーの方は NicoJK.ini を編集して NX-Jikkyo を有効にすると再び実況コメントを表示できるようになるのでアプデ推奨です🙏<br>
+                    NicoJK の更新方法の詳細は <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/" target="_blank">こちら</a> に記載しています。
                 </blockquote>
                 <h2 class="mt-5">開発経緯</h2>
                 <p class="mt-3 text-text-darken-1">
@@ -60,7 +61,7 @@
                 <hr class="mt-5">
                 <p class="mt-5 text-text-darken-1">
                     <strong>このサイトを公開した最大の理由は、十数年にも及ぶニコニコ実況の歴史上異常事態である、数週間に渡りテレビの過去ログコメントが完全に断たれる事態をなんとしてでも避けたいからです。</strong><br>
-                    もちろん15時間で突貫で作ったサイトなのでバグも多いでしょうし、大量のコメントの負荷には耐えきれないかもしれません。しかし、コメントが全く残らないよりはマシだと考えています。
+                    もちろん元々15時間で突貫で作ったサイトなのでバグも多いでしょうし、大量のコメントの負荷には耐えきれないかもしれません（随時改善中です）。しかし、コメントが全く残らないよりはマシだと考えています。
                 </p>
                 <p class="mt-2 text-text-darken-1">
                     まだ手間的に間に合ってはいないのですが、<strong>少なくともニコニコ実況が復活するまでに書き込んでいただいた過去ログは、後日私 (tsukumi) が責任を持って <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> で閲覧可能な過去ログとしてインポート・マージする予定です。ご安心ください！</strong>
@@ -70,7 +71,7 @@
                     もう少しかっこいい名前が出てくれば良かったのですが、「Jikkyo」と入れないと何のサービスか分かりづらそうというのもあり…。
                 </blockquote>
                 <p class="mt-5 text-text-darken-1 text-right">
-                    2024/06/10 (Last Update: 2024/06/11)<br>
+                    2024/06/10 (Last Update: 2024/06/14)<br>
                     <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a> (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a>)
                 </p>
             </div>
