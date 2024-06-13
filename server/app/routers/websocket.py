@@ -415,7 +415,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                     thread: 'THREAD_ID',  // スレッド ID
                     threadkey: 'THREAD_KEY',  // スレッドキー
                     user_id: '',  // ユーザー ID（設定不要らしい）
-                    res_from: -50,  // 最初にコメントを 50 個送信する
+                    res_from: -100,  // 最初にコメントを 100 個送信する
                 }
             },
             {ping: {content: 'pf:0'}},
@@ -463,7 +463,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
 
                 # ping コマンド
                 if 'ping' in message:
-                    # よくわからないので基本無視
+                    # 仕様がよくわからないので当面無視
                     continue
 
                 # スレッドコマンド
@@ -492,8 +492,8 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                         if 'when' in message['thread']:
                             when = int(message['thread']['when'])
 
-                    # 送られてきたスレッドコマンドの形式が不正
                     except Exception:
+                        # 送られてきたスレッドコマンドの形式が不正
                         logging.error(f'CommentSessionAPI [{channel_id}]: invalid message.')
                         logging.error(message)
                         logging.error(traceback.format_exc())
@@ -503,6 +503,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                     # ここまできたらスレッド ID と res_from が取得できているので、当該スレッドの情報を取得
                     active_thread = await Thread.filter(id=thread_id).first()
                     if not active_thread:
+                        # 指定された ID と一致するスレッドが見つからない
                         logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
                         await websocket.close(code=4404)
                         return
@@ -527,8 +528,8 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                             "resultcode": 0,  # 成功
                             "thread": str(thread_id),
                             "last_res": last_comment_no,
-                            "ticket": "0x12345678",  # よくわからん値だが固定
-                            "revision": 1,  # よくわからん値だが固定
+                            "ticket": "0x12345678",  # よくわからん値だが NX-Jikkyo では固定値とする
+                            "revision": 1,  # よくわからん値だが NX-Jikkyo では固定値とする
                             "server_time": int(time.time()),
                         },
                     })
@@ -548,6 +549,11 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                     ## コメ番は (整合性を担保しようとしているとはいえ) ID ほど厳格ではないので、コメ番ではなく ID ベースでコメント取得時に絞り込む
                     ## 初回取得時のコメントが空の場合、現在当該スレッドに1つもコメントが投稿されていない状態を意味する
                     last_sent_comment_id = comments[-1].id if len(comments) > 0 else 0
+
+                    # when が指定されている場合は放送中かに関わらずここで終了し、次のコマンドを待ち受ける
+                    ## when は取得するコメントの投稿日時の下限を示す UNIX タイムスタンプなので、指定時刻以降のコメントを送信する必要はない
+                    if when is not None:
+                        continue
 
                     # スレッドが放送中の場合のみ、指定されたスレッドの新着コメントがあれば随時送信するタスクを非同期で実行開始
                     ## このとき、既に他のスレッド用にタスクが起動していた場合はキャンセルして停止させてから実行する
@@ -598,7 +604,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
 
         # クライアントからのメッセージを受信するタスクの実行が完了するまで待機
         # サーバーからクライアントにメッセージを送信するタスクは必要に応じて起動される
-        await RunReceiverTask()
+        await asyncio.create_task(RunReceiverTask())
 
     except WebSocketDisconnect:
         # 接続が切れた時の処理
