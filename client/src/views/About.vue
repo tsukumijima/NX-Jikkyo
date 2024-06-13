@@ -15,6 +15,10 @@
                     <strong><a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV 0.10.1</a> にて、ニコニコ実況の代わりに NX-Jikkyo からリアルタイムに実況コメントを取得する設定が追加されました！<br></strong>
                     <a class="link" href="https://github.com/tsukumijima/KonomiTV" target="_blank">KonomiTV</a> + ニコニコ実況ユーザーの方はサーバー設定から NX-Jikkyo を有効にすると再び実況コメントを表示できるようになるのでアプデ推奨です🙏<br>
                 </blockquote>
+                <blockquote class="mt-5 text-text-darken-1">
+                    <strong><a class="link" href="https://github.com/DBCTRADO/TVTest" target="_blank">TVTest</a> のニコニコ実況表示プラグイン <a class="link" href="https://github.com/xtne6f/NicoJK/releases/tag/master-240613" target="_blank">NicoJK master-240613</a> にて、ニコニコ実況の代わりに NX-Jikkyo からリアルタイムに実況コメントを取得する設定が追加されました！<br></strong>
+                    <a class="link" href="https://github.com/DBCTRADO/TVTest" target="_blank">TVTest</a> + ニコニコ実況ユーザーの方は NicoJK.ini を編集して NX-Jikkyo を有効にすると再び実況コメントを表示できるようになるのでアプデ推奨です🙏<br>
+                </blockquote>
                 <h2 class="mt-5">開発経緯</h2>
                 <p class="mt-3 text-text-darken-1">
                     個人的にもニコニコ実況がすぐに復活してくれればそれが一番良いのですが、この感じだと残念ながら数週間はサーバーダウンが続きそうに思えます。<br>
