@@ -76,6 +76,10 @@ export default defineComponent({
     created() {
         // 現在時刻を1秒おきに更新
         this.time_interval_id = window.setInterval(() => {
+            // プレイヤー停止中は時刻を更新しない
+            if ((window as any).player && (window as any).player.video && (window as any).player.video.paused) {
+                return;
+            }
             this.time = dayjs().format('YYYY/MM/DD\nHH:mm:ss');
         }, 1 * 1000);
     },
