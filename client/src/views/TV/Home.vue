@@ -6,7 +6,7 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <p class="mt-5 mx-4 text-center">
                     <strong>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
-                    <a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV 0.10.1</a> にて NX-Jikkyo の表示に対応しました！
+                    <a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV 0.10.1</a> / <a class="link" href="https://github.com/xtne6f/NicoJK/releases/tag/master-240613" target="_blank">TVTest (NicoJK master-240613)</a> にて NX-Jikkyo の表示に対応しました！<br>
                     最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣
                 </p>
                 <div class="channels-tab">
