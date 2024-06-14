@@ -180,16 +180,16 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     # 匿名フラグが True なら 184 を追加
                     if message['data']['isAnonymous'] is True:
                         comment_commands.append('184')
-                    # コメント色コマンドがあれば追加 (ex: white)
+                    # コメント色コマンド (ex: white) があれば追加
                     if 'color' in message['data']:
                         comment_commands.append(message['data']['color'])
-                    # コメント位置コマンドがあれば追加 (ex: naka)
+                    # コメント位置コマンド (ex: naka) があれば追加
                     if 'position' in message['data']:
                         comment_commands.append(message['data']['position'])
-                    # コメントサイズコマンドがあれば追加 # (ex: medium)
+                    # コメントサイズコマンド (ex: medium) があれば追加
                     if 'size' in message['data']:
                         comment_commands.append(message['data']['size'])
-                    # コメントフォントコマンドがあれば追加 (ex: defont)
+                    # コメントフォントコマンド (ex: defont) があれば追加
                     if 'font' in message['data']:
                         comment_commands.append(message['data']['font'])
 
@@ -214,7 +214,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                             thread = active_thread,
                             no = new_no,
                             vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
-                            mail = ' '.join(comment_commands),  # コメントコマンドは空白区切りで組み立てる
+                            mail = ' '.join(comment_commands),  # コメントコマンド (mail) は空白区切りの文字列として組み立てる
                             user_id = watch_session_client_id,  # ユーザー ID は視聴セッションのクライアント ID をそのまま入れる
                             premium = False,  # 簡易実装なのでプレミアム会員判定は省略
                             anonymity = message['data']['isAnonymous'] is True,
