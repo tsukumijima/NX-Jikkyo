@@ -21,6 +21,8 @@ class Config(BaseSettings):
     # 基本
     ENVIRONMENT: Literal['Develop', 'Production'] = 'Develop'
     SERVER_PORT: int = 3100
+    SPECIFIED_SERVER_PORT: int = 3100  # 実際は .env 内の環境変数としては存在せず、便宜上の値
+    SUB_SERVER_PROCESS_COUNT: int = 0
     JWT_SECRET_KEY: str
 
     # データベース接続

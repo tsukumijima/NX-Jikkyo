@@ -139,6 +139,10 @@ tortoise.contrib.fastapi.register_tortoise(
 @app.on_event('startup')
 async def RegisterMasterChannels():
 
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
+    if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
+        return
+
     # マスタデータのチャンネル情報
     master_channels = {
         'jk1': {'name': 'NHK総合'},
@@ -189,6 +193,10 @@ async def RegisterMasterChannels():
 @app.on_event('startup')
 @repeat_every(seconds=60 * 60, logger=logging.logger)
 async def AddThreads():
+
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
+    if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
+        return
 
     # 今日と明日用のスレッドが登録されているかを確認し、もしなければ登録する
     channels = await Channel.all()

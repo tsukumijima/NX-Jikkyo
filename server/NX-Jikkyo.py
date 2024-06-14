@@ -5,6 +5,8 @@ import logging
 import time
 import typer
 import uvicorn
+import subprocess
+import sys
 import warnings
 from aerich import Command
 from tortoise import Tortoise
@@ -38,25 +40,42 @@ def version(value: bool):
 
 @cli.command(help='NX-Jikkyo: Nico Nico Jikkyo Alternatives')
 def main(
-    reload: bool = typer.Option(False, '--reload', help='Start Uvicorn in auto-reload mode.)'),
+    port: int = typer.Option(CONFIG.SERVER_PORT, '--port', help='Server port number.'),
+    reload: bool = typer.Option(False, '--reload', help='Start Uvicorn in auto-reload mode.'),
     version: bool = typer.Option(None, '--version', callback=version, is_eager=True, help='Show version information.'),
 ):
 
-    # 前回のログをすべて削除する
-    try:
-        if NX_JIKKYO_SERVER_LOG_PATH.exists():
-            NX_JIKKYO_SERVER_LOG_PATH.unlink()
-        if NX_JIKKYO_ACCESS_LOG_PATH.exists():
-            NX_JIKKYO_ACCESS_LOG_PATH.unlink()
-    except PermissionError:
-        pass
+    # 指定されたポートを設定
+    CONFIG.SPECIFIED_SERVER_PORT = port
+
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ
+    if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
+
+        # 自分が実行されたコマンドラインと同一だが --port オプションでポートがインクリメントされているサブプロセスを起動する
+        ## 例えば SERVER_PORT が 3100 なら 3101, 3102 ... と起動する
+        for count in range(CONFIG.SUB_SERVER_PROCESS_COUNT):
+            subprocess.Popen([sys.executable, __file__, '--port', str(port + count + 1)])
+
+        # 前回のログをすべて削除する
+        try:
+            if NX_JIKKYO_SERVER_LOG_PATH.exists():
+                NX_JIKKYO_SERVER_LOG_PATH.unlink()
+            if NX_JIKKYO_ACCESS_LOG_PATH.exists():
+                NX_JIKKYO_ACCESS_LOG_PATH.unlink()
+        except PermissionError:
+            pass
+
+    # サブサーバープロセスの場合、メインプロセスでやってるマイグレーションが終わってないなどの
+    # 諸問題を避けるために5秒待ってから起動する
+    else:
+        time.sleep(5)
 
     # ここでロガーをインポートする
     ## 前回のログを削除する前でないと正しく動作しない
     from app import logging
 
     # バージョン情報をログに出力
-    logging.info(f'NX-Jikkyo version {VERSION}')
+    logging.info(f'NX-Jikkyo version {VERSION} (Port {CONFIG.SPECIFIED_SERVER_PORT})')
 
     # Aerich でデータベースをアップグレードする
     ## 特にデータベースのアップグレードが必要ない場合は何も起こらない
@@ -79,7 +98,10 @@ def main(
         else:
             for version_file in migrated:
                 logging.info(f'Successfully migrated to {version_file}.')
-    asyncio.run(UpgradeDatabase())
+
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
+    if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
+        asyncio.run(UpgradeDatabase())
 
     # Uvicorn の設定
     server_config = uvicorn.Config(
@@ -88,7 +110,7 @@ def main(
         # リッスンするアドレス
         host = '0.0.0.0',
         # リッスンするポート番号
-        port = CONFIG.SERVER_PORT,
+        port = port,
         # 自動リロードモードモードで起動するか
         reload = reload,
         # リロードするフォルダ
