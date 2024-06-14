@@ -17,18 +17,30 @@ const router = createRouter({
     routes: [
         {
             path: '/',
-            name: 'Home',
+            name: 'TV Home',
             component: () => import('@/views/TV/Home.vue'),
+            meta: {
+                title: 'テレビ実況 | NX-Jikkyo',
+                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。',
+            },
         },
         {
             path: '/watch/:display_channel_id',
-            name: 'Watch',
+            name: 'TV Watch',
             component: () => import('@/views/TV/Watch.vue'),
+            meta: {
+                title: 'テレビ実況 - コメント再生 | NX-Jikkyo',
+                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。',
+            },
         },
         {
             path: '/about/',
             name: 'About',
             component: () => import('@/views/About.vue'),
+            meta: {
+                title: 'NX-Jikkyo とは | NX-Jikkyo',
+                description: 'NX-Jikkyo のサイトについての情報です。',
+            },
         },
         {
             path: '/settings/',
@@ -42,12 +54,20 @@ const router = createRouter({
                 }
                 // それ以外の画面サイズでは全般設定にリダイレクト
                 next({path: '/settings/general/'});
-            }
+            },
+            meta: {
+                title: '設定 | NX-Jikkyo',
+                description: 'NX-Jikkyo の設定を変更できます。',
+            },
         },
         {
             path: '/settings/general',
             name: 'Settings General',
             component: () => import('@/views/Settings/General.vue'),
+            meta: {
+                title: '設定 - 全般 | NX-Jikkyo',
+                description: 'NX-Jikkyo の全般の設定を変更できます。',
+            },
         },
         // {
         //     path: '/settings/account',
@@ -58,6 +78,10 @@ const router = createRouter({
             path: '/settings/jikkyo',
             name: 'Settings Jikkyo',
             component: () => import('@/views/Settings/Jikkyo.vue'),
+            meta: {
+                title: '設定 - コメント/実況 | NX-Jikkyo',
+                description: 'NX-Jikkyo のコメント/実況の設定を変更できます。',
+            },
         },
         // {
         //     path: '/login/',
@@ -73,6 +97,10 @@ const router = createRouter({
             path: '/:pathMatch(.*)*',
             name: 'NotFound',
             component: () => import('@/views/NotFound.vue'),
+            meta: {
+                title: '404 Not Found | NX-Jikkyo',
+                description: 'お探しのページは存在しないか、鋭意開発中です。',
+            },
         },
     ],
 
@@ -85,6 +113,21 @@ const router = createRouter({
             // それ以外は常に先頭にスクロールする
             return {top: 0, left: 0};
         }
+    }
+});
+
+// タイトルと概要を動的に変更
+router.beforeEach((to) => {
+    document.title = (to.meta.title || 'NX-Jikkyo') as string;
+    const default_description = 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。';
+    const description_meta = document.querySelector('meta[name="description"]')!;
+    if (description_meta) {
+        description_meta.setAttribute('content', (to.meta.description || default_description) as string);
+    } else {
+        const meta = document.createElement('meta');
+        meta.name = 'description';
+        meta.content = (to.meta.description || default_description) as string;
+        document.head.appendChild(meta);
     }
 });
 
