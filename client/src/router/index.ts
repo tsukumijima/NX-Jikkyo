@@ -118,16 +118,28 @@ const router = createRouter({
 
 // タイトルと概要を動的に変更
 router.beforeEach((to) => {
-    document.title = (to.meta.title || 'NX-Jikkyo') as string;
-    const default_description = 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。';
-    const description_meta = document.querySelector('meta[name="description"]')!;
+    const title = (to.meta.title || 'NX-Jikkyo') as string;
+    const description = (to.meta.description || 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。') as string;
+    document.title = title;
+    const description_meta = document.querySelector('meta[name="description"]');
     if (description_meta) {
-        description_meta.setAttribute('content', (to.meta.description || default_description) as string);
-    } else {
-        const meta = document.createElement('meta');
-        meta.name = 'description';
-        meta.content = (to.meta.description || default_description) as string;
-        document.head.appendChild(meta);
+        description_meta.setAttribute('content', description);
+    }
+    const og_title_meta = document.querySelector('meta[property="og:title"]');
+    if (og_title_meta) {
+        og_title_meta.setAttribute('content', title);
+    }
+    const og_description_meta = document.querySelector('meta[property="og:description"]');
+    if (og_description_meta) {
+        og_description_meta.setAttribute('content', description);
+    }
+    const twitter_title_meta = document.querySelector('meta[name="twitter:title"]');
+    if (twitter_title_meta) {
+        twitter_title_meta.setAttribute('content', title);
+    }
+    const twitter_description_meta = document.querySelector('meta[name="twitter:description"]');
+    if (twitter_description_meta) {
+        twitter_description_meta.setAttribute('content', description);
     }
 });
 
