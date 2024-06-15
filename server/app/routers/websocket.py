@@ -474,15 +474,10 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                 if 'thread' in message:
                     try:
 
-                        # スレッド ID
+                        # thread: スレッド ID
                         thread_id = int(message['thread']['thread'])
 
-                        # スレッドキー
-                        ## 視聴セッション側の yourPostKey と同一
-                        ## NX-Jikkyo ではコメントの user_id に入れられる watch_session_client_id がセットされている
-                        thread_key = str(message['thread']['threadkey'])
-
-                        # 初回にクライアントに送信する最新コメントの数
+                        # res_from: 初回にクライアントに送信する最新コメントの数
                         ## res_from が正の値になることはない (はず)
                         res_from = int(message['thread']['res_from'])
                         if res_from > 0:  # 1 以上の res_from には非対応 (本家ニコ生では正の値が来た場合コメ番換算で取得するらしい？)
@@ -490,7 +485,17 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
                             await websocket.close(code=4001)
                             return
 
-                        # when: 取得するコメントの投稿日時の下限を示す UNIX タイムスタンプ (過去ログ取得時のみ設定される)
+                        # threadkey: スレッドキー
+                        ## 視聴セッション側の yourPostKey と同一
+                        ## NX-Jikkyo では (コメントに user_id としてセットされる) watch_session_client_id がセットされている
+                        ## 過去ログ取得時は設定されないため、その場合は空文字とする
+                        if 'threadkey' in message['thread']:
+                            thread_key = str(message['thread']['threadkey'])
+                        else:
+                            thread_key = ''
+
+                        # when: 取得するコメントの投稿日時の下限を示す UNIX タイムスタンプ
+                        ## 過去ログ取得時のみ設定される
                         ## 例えば when が 2024-01-01 00:00:00 の場合、2023-12-31 23:59:59 までに投稿されたコメントから
                         ## res_from 件分だけコメント投稿時刻順に後ろから遡ってコメントを取得する
                         if 'when' in message['thread']:
