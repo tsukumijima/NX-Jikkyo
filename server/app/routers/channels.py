@@ -13,6 +13,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from tortoise import connections
+from tortoise import timezone
 from typing import Annotated, cast, Literal
 from zoneinfo import ZoneInfo
 
@@ -48,7 +49,7 @@ async def ChannelsAPI():
     global __channels_cache, __channels_cache_expiry
 
     # キャッシュが有効であればそれを返す
-    if __channels_cache is not None and __channels_cache_expiry is not None and datetime.now(ZoneInfo('Asia/Tokyo')) < __channels_cache_expiry:
+    if __channels_cache is not None and __channels_cache_expiry is not None and timezone.now() < __channels_cache_expiry:
         return __channels_cache
 
     # ID 昇順、スレッドは新しい順でチャンネルを取得
@@ -100,7 +101,7 @@ async def ChannelsAPI():
         end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
 
         # スレッドの現在のステータスを算出する
-        now = datetime.now(ZoneInfo('Asia/Tokyo'))
+        now = timezone.now()
         status: Literal['ACTIVE', 'UPCOMING', 'PAST']
         if start_at <= now <= end_at:
             status = 'ACTIVE'
@@ -134,7 +135,7 @@ async def ChannelsAPI():
 
     # キャッシュを更新 (5秒間有効)
     __channels_cache = response
-    __channels_cache_expiry = datetime.now(ZoneInfo('Asia/Tokyo')) + timedelta(seconds=5)
+    __channels_cache_expiry = timezone.now() + timedelta(seconds=5)
 
     return response
 
