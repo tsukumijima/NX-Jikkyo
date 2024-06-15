@@ -132,7 +132,7 @@ async def ChannelsAPI():
             threads = threads,
         ))
 
-    # キャッシュを更新
+    # キャッシュを更新 (5秒間有効)
     __channels_cache = response
     __channels_cache_expiry = datetime.now(ZoneInfo('Asia/Tokyo')) + timedelta(seconds=5)
 
