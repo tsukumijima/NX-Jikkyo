@@ -5,17 +5,19 @@ import time
 import traceback
 import uuid
 import websockets.exceptions
-from datetime import datetime
 from fastapi import (
     APIRouter,
+    Path,
+    Query,
 )
 from starlette.websockets import (
     WebSocket,
     WebSocketDisconnect,
     WebSocketState,
 )
+from tortoise import timezone
 from tortoise.transactions import in_transaction
-from zoneinfo import ZoneInfo
+from typing import Annotated
 
 from app import logging
 from app.constants import REDIS_CLIENT, REDIS_VIEWER_COUNT_KEY
@@ -34,7 +36,11 @@ router = APIRouter(
 
 
 @router.websocket('/channels/{channel_id}/ws/watch')
-async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
+async def WatchSessionAPI(
+    websocket: WebSocket,
+    channel_id: Annotated[str, Path(description='実況チャンネル ID 。ex: jk211')],
+    thread_id: Annotated[int | None, Query(description='スレッド ID 。過去の特定スレッドの過去ログコメントを取得する際に指定する。')] = None,
+):
     """
     ニコ生の視聴セッション Web Socket 互換 API
     """
@@ -47,21 +53,39 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         await websocket.close(code=4001)
         return
 
-    # 現在アクティブな (放送中の) スレッドを取得
-    now = datetime.now(ZoneInfo('Asia/Tokyo'))
-    active_thread = await Thread.filter(
-        channel_id = channel_id_int,
-        start_at__lte = now,
-        end_at__gte = now
-    ).first()
-    if not active_thread:
-        logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
-        await websocket.close(code=4404)
-        return
+    # スレッド ID が指定されていなければ、現在アクティブな (放送中の) スレッドを取得
+    if not thread_id:
+        now = timezone.now()
+        thread = await Thread.filter(
+            channel_id = channel_id_int,
+            start_at__lte = now,
+            end_at__gte = now
+        ).first()
+        if not thread:
+            logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
+            await websocket.close(code=4404)
+            return
+
+    # スレッド ID が指定されていれば、そのスレッドを取得
+    ## 放送開始前のスレッドが指定された場合はエラーを返す
+    else:
+        thread = await Thread.filter(
+            id=thread_id,
+            channel_id=channel_id_int,
+        ).first()
+        if not thread:
+            logging.error(f'WatchSessionAPI [{channel_id}]: Thread not found.')
+            await websocket.close(code=4404)
+            return
+        if thread.end_at < timezone.now():
+            logging.error(f'WatchSessionAPI [{channel_id}]: Thread is upcoming.')
+            await websocket.close(code=4404)
+            return
 
     # クライアントごとにユニークな ID を割り当てる
     watch_session_client_id = str(uuid.uuid4())
     logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} connected.')
+    logging.info(f'WatchSessionAPI [{channel_id}]: Thread ID: {thread.id} User-Agent: {websocket.headers.get("User-Agent", "Unknown")}')
 
     # 接続を受け入れる
     await websocket.accept()
@@ -101,7 +125,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                 await websocket.send_json({
                     'type': 'serverTime',
                     'data': {
-                        'currentMs': datetime.now(ZoneInfo('Asia/Tokyo')).isoformat(),
+                        'currentMs': timezone.now().isoformat(),
                     },
                 })
 
@@ -134,7 +158,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         # 「部屋名」
                         'name': 'アリーナ',
                         # 「メッセージサーバーのスレッド ID」
-                        'threadId': str(active_thread.id),
+                        'threadId': str(thread.id),
                         # 「(互換性確保のためのダミー値, 現在常に `true`)」
                         'isFirst': True,
                         # 「(互換性確保のためのダミー文字列)」
@@ -146,7 +170,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         # 「vpos を計算する基準 (vpos:0) となる時刻。(ISO8601 形式)」
                         ## 確か本家ニコ生では番組開始時刻が vpos (相対的なコメント時刻) に入っていたはず (忘れた…)
                         ## NX-Jikkyo でも本家ニコ生同様に番組開始時刻を ISO 8601 形式で入れている
-                        'vposBaseTime': active_thread.start_at.isoformat(),
+                        'vposBaseTime': thread.start_at.isoformat(),
                     },
                 })
 
@@ -155,7 +179,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     'type': 'statistics',
                     'data': {
                         'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
-                        'comments': (await CommentCounter.get(thread_id=active_thread.id)).max_no,
+                        'comments': (await CommentCounter.get(thread_id=thread.id)).max_no,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
@@ -174,6 +198,17 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
 
             # コメント投稿リクエスト
             elif message_type == 'postComment':
+
+                # 放送が終了したスレッドにはコメントを投稿できない
+                if thread.end_at < timezone.now():
+                    await websocket.send_json({
+                        'type': 'error',
+                        'data': {
+                            'message': 'NOT_ON_AIR',
+                        },
+                    })
+                    continue
+
                 try:
                     # 送られてきたリクエストから mail に相当するコメントコマンドを組み立てる
                     # リクエストでは直接は mail は送られてこないので、いい感じに組み立てる必要がある
@@ -200,19 +235,19 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         # 採番テーブルに記録されたコメ番をインクリメント
                         await connection.execute_query(
                             'UPDATE comment_counters SET max_no = max_no + 1 WHERE thread_id = %s',
-                            [active_thread.id]
+                            [thread.id]
                         )
                         # インクリメント後のコメ番を取得
                         ## 採番テーブルを使うことでコメ番の重複を防いでいる
                         new_no_result = await connection.execute_query_dict(
                             'SELECT max_no FROM comment_counters WHERE thread_id = %s',
-                            [active_thread.id]
+                            [thread.id]
                         )
                         new_no = new_no_result[0]['max_no']
 
                         # 新しいコメントを作成
                         comment = await Comment.create(
-                            thread = active_thread,
+                            thread = thread,
                             no = new_no,
                             vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
                             mail = ' '.join(comment_commands),  # コメントコマンド (mail) は空白区切りの文字列として組み立てる
@@ -240,6 +275,8 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                         },
                     })
                     logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} posted a comment.')
+
+                # コメント投稿に失敗した場合はエラーを返す
                 except Exception:
                     logging.error(f'WatchSessionAPI [{channel_id}]: Invalid message.')
                     logging.error(message)
@@ -273,7 +310,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     'type': 'statistics',
                     'data': {
                         'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
-                        'comments': (await CommentCounter.get(thread_id=active_thread.id)).max_no,
+                        'comments': (await CommentCounter.get(thread_id=thread.id)).max_no,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
@@ -285,7 +322,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                 await websocket.send_json({
                     'type': 'serverTime',
                     'data': {
-                        'serverTime': datetime.now(ZoneInfo('Asia/Tokyo')).isoformat(),
+                        'serverTime': timezone.now().isoformat(),
                     },
                 })
                 last_server_time_time = time.time()
@@ -296,7 +333,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                 last_ping_time = time.time()
 
             # スレッドの放送終了時刻を過ぎたら接続を切断する
-            if datetime.now(ZoneInfo('Asia/Tokyo')) > active_thread.end_at:
+            if timezone.now() > thread.end_at:
                 logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected because the thread ended.')
                 await websocket.send_json({
                     'type': 'disconnect',
@@ -359,7 +396,10 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
 
 
 @router.websocket('/channels/{channel_id}/ws/comment')
-async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
+async def CommentSessionAPI(
+    websocket: WebSocket,
+    channel_id: Annotated[str, Path(description='実況チャンネル ID 。ex: jk211')],
+):
     """
     ニコ生のコメントセッション Web Socket 互換 API の実装
     視聴セッション側と違い明確なドキュメントがないため、本家が動いてない以上手探りで実装するほかない…
@@ -373,6 +413,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
     # クライアントごとにユニークな ID を割り当てる
     comment_session_client_id = str(uuid.uuid4())
     logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} connected.')
+    logging.info(f'CommentSessionAPI [{channel_id}]: User-Agent: {websocket.headers.get("User-Agent", "Unknown")}')
 
     # 接続を受け入れる
     await websocket.accept()
@@ -476,6 +517,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
 
                         # thread: スレッド ID
                         thread_id = int(message['thread']['thread'])
+                        logging.info(f'CommentSessionAPI [{channel_id}]: Thread ID: {thread_id}')
 
                         # res_from: 初回にクライアントに送信する最新コメントの数
                         ## res_from が正の値になることはない (はず)
@@ -503,7 +545,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
 
                     except Exception:
                         # 送られてきたスレッドコマンドの形式が不正
-                        logging.error(f'CommentSessionAPI [{channel_id}]: invalid message.')
+                        logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message.')
                         logging.error(message)
                         logging.error(traceback.format_exc())
                         await websocket.close(code=4001)
