@@ -12,8 +12,8 @@
                     <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏</strong>
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
-                    <strong><a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> の NX-Jikkyo 暫定対応版にて、ニコニコ実況の代わりに NX-Jikkyo のコメントをリアルタイム表示できるようになりました！！🎉🎊<br></strong>
-                    <a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> + ニコニコ実況ユーザーの方は今まで通り実況コメントを表示できるようになるので導入推奨です🙏 （暫定版時点では既存の jkcommentviewer とは別ソフト扱いみたいです）<br>
+                    <strong><a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer v2.3.7.3</a> 正式版にて、ニコニコ実況の代わりに NX-Jikkyo のコメントをリアルタイム表示できるようになりました！！🎉🎊<br></strong>
+                    <a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> + ニコニコ実況ユーザーの方は [基本設定] → [オプション] → [チャンネルリストの勢いを NX-Jikkyo から取得する] をオンにすると今まで通り実況コメントを表示できるようになるのでアプデ推奨です🙏<br>
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://github.com/DBCTRADO/TVTest" target="_blank">TVTest</a> のニコニコ実況表示プラグイン <a class="link" href="https://github.com/xtne6f/NicoJK/releases/tag/master-240613" target="_blank">NicoJK master-240613</a> にて、ニコニコ実況の代わりに NX-Jikkyo のコメントをリアルタイム表示できるようになりました！！🎉🎊<br></strong>
@@ -77,7 +77,7 @@
                     もう少しかっこいい名前が出てくれば良かったのですが、「Jikkyo」と入れないと何のサービスか分かりづらそうというのもあり…。
                 </blockquote>
                 <p class="mt-5 text-text-darken-1 text-right">
-                    2024/06/10 (Last Update: 2024/06/14)<br>
+                    2024/06/10 (Last Update: 2024/06/15)<br>
                     <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a> (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a>)
                 </p>
             </div>
