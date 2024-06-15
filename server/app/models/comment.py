@@ -140,6 +140,7 @@ class ThreadWithCommentsResponse(BaseModel):
     スレッド情報にコメントを含む Pydantic モデル
     """
     id: int
+    channel_id: str
     start_at: datetime
     end_at: datetime
     duration: int

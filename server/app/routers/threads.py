@@ -71,6 +71,7 @@ async def ThreadAPI(thread_id: Annotated[int, Path(description='スレッド ID 
     # スレッド情報とコメント情報を返す
     thread_response = ThreadWithCommentsResponse(
         id = thread.id,
+        channel_id = f'jk{thread.channel_id}',
         start_at = thread.start_at,
         end_at = thread.end_at,
         duration = thread.duration,
