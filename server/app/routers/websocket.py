@@ -328,7 +328,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         # 両方が完了するまで待機
         await asyncio.gather(sender_task, receiver_task)
 
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, websockets.exceptions.ConnectionClosedOK):
         # 接続が切れた時の処理
         logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
 
@@ -610,7 +610,7 @@ async def CommentSessionAPI(channel_id: str, websocket: WebSocket):
         # サーバーからクライアントにメッセージを送信するタスクは必要に応じて起動される
         await asyncio.create_task(RunReceiverTask())
 
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, websockets.exceptions.ConnectionClosedOK):
         # 接続が切れた時の処理
         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
 
