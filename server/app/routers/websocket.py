@@ -302,6 +302,9 @@ async def WatchSessionAPI(
         # 最後に ping を送信した時刻
         last_ping_time = time.time()
 
+        # 処理開始時点でスレッドが放送中かどうか
+        is_on_air = thread.start_at < timezone.now() < thread.end_at
+
         while True:
 
             # 60 秒に 1 回最新の視聴統計情報を送信 (互換性のため)
@@ -332,8 +335,9 @@ async def WatchSessionAPI(
                 await websocket.send_json({'type': 'ping'})
                 last_ping_time = time.time()
 
-            # スレッドの放送終了時刻を過ぎたら接続を切断する
-            if timezone.now() > thread.end_at:
+            # 処理開始時点では放送中だった場合のみ、スレッドの放送終了時刻を過ぎたら接続を切断する
+            ## 最初から過去のスレッドだった場合は実行しない
+            if is_on_air is True and timezone.now() > thread.end_at:
                 logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected because the thread ended.')
                 await websocket.send_json({
                     'type': 'disconnect',
