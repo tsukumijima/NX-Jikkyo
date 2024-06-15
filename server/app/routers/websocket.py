@@ -21,6 +21,7 @@ from app import logging
 from app.constants import REDIS_CLIENT, REDIS_VIEWER_COUNT_KEY
 from app.models.comment import (
     Comment,
+    CommentCounter,
     Thread,
 )
 
@@ -154,7 +155,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     'type': 'statistics',
                     'data': {
                         'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
-                        'comments': await Comment.filter(thread=active_thread).count(),
+                        'comments': (await CommentCounter.get(thread_id=active_thread.id)).max_no,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
@@ -272,7 +273,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     'type': 'statistics',
                     'data': {
                         'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
-                        'comments': await Comment.filter(thread=active_thread).count(),
+                        'comments': (await CommentCounter.get(thread_id=active_thread.id)).max_no,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
