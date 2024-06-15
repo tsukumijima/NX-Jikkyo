@@ -254,18 +254,18 @@ def ChannelLogoAPI(
 
 @router.get(
     '/channels/total-viewers',
-    summary = '全チャンネルの同時視聴人数の合計を返す API',
+    summary = '全チャンネルの同時接続数カウントの合計を返す API',
     response_model = dict,
     responses = {
         status.HTTP_200_OK: {
-            'description': '全チャンネルの同時視聴人数の合計。',
+            'description': '全チャンネルの同時接続数カウントの合計。',
             'content': {'application/json': {}},
         },
     },
 )
 async def GetTotalViewers():
     """
-    全チャンネルの同時視聴人数の合計を返す。ほぼデバッグ&負荷検証用。
+    全チャンネルの同時接続数カウントの合計を返す。ほぼデバッグ&負荷検証用。
     """
     channels = await ChannelsAPI()
     total_viewers = sum(

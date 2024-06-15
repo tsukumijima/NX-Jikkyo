@@ -15,6 +15,8 @@ from app.config import CONFIG
 from app.constants import (
     CLIENT_DIR,
     DATABASE_CONFIG,
+    REDIS_CLIENT,
+    REDIS_VIEWER_COUNT_KEY,
     VERSION,
 )
 from app.models.comment import (
@@ -186,6 +188,15 @@ async def RegisterMasterChannels():
                 description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
         logging.info('Master channels have been registered.')
+
+# サーバー起動時にチャンネルごとに同時接続数カウントを 0 にリセット
+## サーバーは再起動しても Redis サーバーは再起動しない場合があり、そうした状況でカウントの整合性を保つために必要
+@app.on_event('startup')
+async def ResetViewerCount():
+    for channel in await Channel.all():
+        # チャンネルごとに保存された同時接続数カウントをリセット
+        await REDIS_CLIENT.hset(REDIS_VIEWER_COUNT_KEY, f'jk{channel.id}', 0)
+        logging.info(f'Viewer count for {channel.name} has been reset.')
 
 # 1時間に1回、明日分の全実況チャンネルのスレッド予定が DB に登録されているかを確認し、もしなければ登録する
 # スレッドは同じ実況チャンネル内では絶対に放送時間が被ってはならないし、基本放送時間は 04:00 〜 翌朝 04:00 の 24 時間
