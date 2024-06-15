@@ -5,6 +5,7 @@ import time
 import traceback
 import uuid
 import websockets.exceptions
+from datetime import datetime
 from fastapi import (
     APIRouter,
     Path,
@@ -478,8 +479,8 @@ async def CommentSessionAPI(
         thread_key: str | None = None
         # 初回にクライアントに送信する最新コメントの数
         res_from: int | None = None
-        # 取得するコメントの投稿日時の下限を示す UNIX タイムスタンプ
-        when: int | None = None
+        # 取得するコメントの投稿日時の下限
+        when: datetime | None = None
         # コマンドのカウント
         command_count: int = 0
         # 指定されたスレッドの新着コメントがあれば随時送信するタスク
@@ -545,7 +546,7 @@ async def CommentSessionAPI(
                         ## 例えば when が 2024-01-01 00:00:00 の場合、2023-12-31 23:59:59 までに投稿されたコメントから
                         ## res_from 件分だけコメント投稿時刻順に後ろから遡ってコメントを取得する
                         if 'when' in message['thread']:
-                            when = int(message['thread']['when'])
+                            when = datetime.fromtimestamp(message['thread']['when'])
 
                     except Exception:
                         # 送られてきたスレッドコマンドの形式が不正
@@ -588,6 +589,7 @@ async def CommentSessionAPI(
                             "server_time": int(time.time()),
                         },
                     })
+                    logging.info(f'CommentSessionAPI [{channel_id}]: Thread info sent. thread: {thread_id} / last_res: {last_comment_no}')
 
                     # この rs,ps,pf,rf の謎コマンドに挟んでコメントを送るのが重要
                     ## : の後の数字は何回か送るごとに5ずつ増えるらしい…？
