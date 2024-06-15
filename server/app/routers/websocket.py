@@ -304,7 +304,6 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
                     },
                 })
                 await websocket.close(code=1011)
-                await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
                 return
 
             # 接続が切れたらタスクを終了
@@ -316,7 +315,7 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
 
     try:
 
-        # 視聴カウントをインクリメント
+        # 同時接続数カウントを 1 増やす
         await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, 1)
 
         # クライアントからのメッセージを受信するタスクを実行開始
@@ -331,7 +330,6 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
     except WebSocketDisconnect:
         # 接続が切れた時の処理
         logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
-        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
 
     except websockets.exceptions.WebSocketException:
         # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
@@ -339,7 +337,6 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
         logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error.')
         logging.error(traceback.format_exc())
         await websocket.close(code=1011)
-        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
 
     except Exception:
         logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
@@ -351,7 +348,13 @@ async def WatchSessionAPI(channel_id: str, websocket: WebSocket):
             },
         })
         await websocket.close(code=1011)
-        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)  # 接続を切断したので来場者数を減らす
+
+    finally:
+        # ここまできたら確実に接続が切断されているので同時接続数カウントを 1 減らす
+        ## 最低でも 0 未満にはならないようにする
+        current_count = int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0)
+        if current_count > 0:
+            await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)
 
 
 @router.websocket('/channels/{channel_id}/ws/comment')
