@@ -655,7 +655,8 @@ async def CommentSessionAPI(
                 return
 
             # 少し待機してから次のループへ
-            await asyncio.sleep(0.1)
+            ## 0.1 秒間隔だと SQL クエリの負荷が高すぎるので、当面 0.25 秒間隔にする
+            await asyncio.sleep(0.25)
 
     try:
 
