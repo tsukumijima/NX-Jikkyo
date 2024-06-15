@@ -11,10 +11,6 @@
 # .env を作成
 cp .env.example .env
 
-# JWT シークレットを生成
-## .env 内の JWT_SECRET_KEY に設定する
-python -c 'import secrets; print(secrets.token_hex(32))'
-
 # ローカルの Docker 環境に proxy-network という名前でネットワークを作成
 ## 開発環境だけならなくてもいいのだが、本番環境では異なる Docker Compose 構成 (=nginx) から
 ## NX-Jikkyo の HTTP サーバーにアクセスできるようにするために必要
@@ -38,4 +34,10 @@ poetry run task dev
 
 # Aerich (マイグレーションツール) を使う
 poetry run task aerich --help
+
+# MySQL のバックアップを取る
+./mysqldump.sh
+
+# MySQLTuner を実行する場合 (別途 MySQLTuner のダウンロードが必要)
+~/mysqltuner.pl --host $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' nx-jikkyo-mysql) --user root --pass nx-jikkyo_password --forcemem 4096 --forceswap 2048
 ```
