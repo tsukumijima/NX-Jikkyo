@@ -137,7 +137,7 @@ tortoise.contrib.fastapi.register_tortoise(
     add_exception_handlers = True,
 )
 
-# 初回のみマスタデータのチャンネル情報を登録
+# サーバーの初回起動時のみ、チャンネル情報をマスタデータとして登録
 @app.on_event('startup')
 async def RegisterMasterChannels():
 
@@ -229,7 +229,7 @@ async def AddThreads():
         if not existing_thread_today:
 
             # 今日用のスレッドを作成
-            await Thread.create(
+            thread = await Thread.create(
                 channel = channel,
                 start_at = start_time_today,
                 end_at = end_time_today,
@@ -237,6 +237,7 @@ async def AddThreads():
                 title = f'{channel.name}【NX-Jikkyo】{today.strftime("%Y年%m月%d日")}',
                 description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
+            await CommentCounter.create(thread_id=thread.id, max_no=0)
             logging.info(f'Thread for {channel.name} on {today.strftime("%Y-%m-%d")} has been registered.')
 
         # 明日の日付を取得
@@ -249,7 +250,7 @@ async def AddThreads():
         if not existing_thread_tomorrow:
 
             # 明日用のスレッドを作成
-            await Thread.create(
+            thread = await Thread.create(
                 channel = channel,
                 start_at = start_time_tomorrow,
                 end_at = end_time_tomorrow,
@@ -257,6 +258,7 @@ async def AddThreads():
                 title = f'{channel.name}【NX-Jikkyo】{tomorrow.strftime("%Y年%m月%d日")}',
                 description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
+            await CommentCounter.create(thread_id=thread.id, max_no=0)
             logging.info(f'Thread for {channel.name} on {tomorrow.strftime("%Y-%m-%d")} has been registered.')
 
         # もし現在時刻が 04:00 以前であれば、今日のスレッドを作成
@@ -268,7 +270,7 @@ async def AddThreads():
                 end_at__gte = now
             ).first()
             if not existing_thread_now:
-                await Thread.create(
+                thread = await Thread.create(
                     channel = channel,
                     start_at = now,
                     end_at = start_time_today,
@@ -276,9 +278,10 @@ async def AddThreads():
                     title = f'{channel.name}【NX-Jikkyo】{now.strftime("%Y年%m月%d日")}',
                     description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
                 )
+                await CommentCounter.create(thread_id=thread.id, max_no=0)
                 logging.info(f'Thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
 
-    # 採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
+    # 念のため、定期的に採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
     threads = await Thread.all()
     for thread in threads:
         comment_count = await Comment.filter(thread=thread).count()
