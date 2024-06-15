@@ -193,8 +193,13 @@ async def RegisterMasterChannels():
 ## サーバーは再起動しても Redis サーバーは再起動しない場合があり、そうした状況でカウントの整合性を保つために必要
 @app.on_event('startup')
 async def ResetViewerCount():
+
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
+    if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
+        return
+
+    # チャンネルごとに保存された同時接続数カウントをリセット
     for channel in await Channel.all():
-        # チャンネルごとに保存された同時接続数カウントをリセット
         await REDIS_CLIENT.hset(REDIS_VIEWER_COUNT_KEY, f'jk{channel.id}', 0)
         logging.info(f'Viewer count for {channel.name} has been reset.')
 
