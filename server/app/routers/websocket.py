@@ -77,7 +77,7 @@ async def WatchSessionAPI(
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread not found.')
             await websocket.close(code=4404)
             return
-        if thread.end_at < timezone.now():
+        if timezone.now() < thread.start_at:
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread is upcoming.')
             await websocket.close(code=4404)
             return
