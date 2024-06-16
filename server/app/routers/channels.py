@@ -1,8 +1,8 @@
 
 import hashlib
 import pathlib
+import time
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -32,7 +32,7 @@ router = APIRouter(
 
 # チャンネル情報のキャッシュ
 __channels_cache: list[ChannelResponse] | None = None
-__channels_cache_expiry: datetime | None = None
+__channels_cache_expiry: float | None = None
 
 
 @router.get(
@@ -49,7 +49,8 @@ async def ChannelsAPI():
     global __channels_cache, __channels_cache_expiry
 
     # キャッシュが有効であればそれを返す
-    if __channels_cache is not None and __channels_cache_expiry is not None and timezone.now() < __channels_cache_expiry:
+    ## 下記クエリはかなり重いので、できるだけキャッシュを返したい
+    if __channels_cache is not None and __channels_cache_expiry is not None and time.time() < __channels_cache_expiry:
         return __channels_cache
 
     # ID 昇順、スレッドは新しい順でチャンネルを取得
@@ -66,12 +67,13 @@ async def ChannelsAPI():
             t.duration,
             t.title,
             t.description AS thread_description,
-            COUNT(com.id) AS comments_count,
+            cc.max_no AS comments_count,
             SUM(CASE WHEN com.date >= NOW() - INTERVAL 60 SECOND THEN 1 ELSE 0 END) AS jikkyo_force
         FROM channels c
         LEFT JOIN threads t ON c.id = t.channel_id
+        LEFT JOIN comment_counters cc ON t.id = cc.thread_id
         LEFT JOIN comments com ON t.id = com.thread_id
-        GROUP BY c.id, c.name, c.description, t.id, t.start_at, t.end_at, t.duration, t.title, t.description
+        GROUP BY c.id, c.name, c.description, t.id, t.start_at, t.end_at, t.duration, t.title, t.description, cc.max_no
         ORDER BY c.id ASC, t.start_at ASC
         '''
     )
@@ -133,9 +135,9 @@ async def ChannelsAPI():
             threads = threads,
         ))
 
-    # キャッシュを更新 (5秒間有効)
+    # キャッシュを更新 (10秒間有効)
     __channels_cache = response
-    __channels_cache_expiry = timezone.now() + timedelta(seconds=5)
+    __channels_cache_expiry = time.time() + 10
 
     return response
 
