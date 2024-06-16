@@ -69,15 +69,39 @@
                     <strong>このサイトを公開した最大の理由は、十数年にも及ぶニコニコ実況の歴史上異常事態である、1ヶ月以上に渡りテレビの過去ログコメントが完全に断たれる事態をなんとしてでも避けたいからです。</strong><br>
                     もちろん元々15時間で突貫で作ったサイトなのでバグも多いでしょうし、大量のコメントの負荷には耐えきれないかもしれません（随時改善中です）。しかし、コメントが全く残らないよりはマシだと考えています。
                 </p>
-                <p class="mt-2 text-text-darken-1">
-                    まだ手間的に間に合ってはいないのですが、<strong>少なくともニコニコ実況が復活するまでに書き込んでいただいた過去ログは、後日私 (tsukumi) が責任を持って <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> で閲覧可能な過去ログとしてインポート・マージする予定です。ご安心ください！</strong>
-                </p>
+                <blockquote class="mt-2 text-text-darken-1">
+                    <strong>NX-Jikkyo に書き込んでいただいたコメントの過去ログは、順次 <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> で取得できるよう反映されています！ご安心ください…！</strong>
+                </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
                     …ちなみに、NX-Jikkyo というサイト名は突貫開発をやる中でたまたま適当にひらめいた名前で、特に深い意味はありません。<br>
                     もう少しかっこいい名前が出てくれば良かったのですが、「Jikkyo」と入れないと何のサービスか分かりづらそうというのもあり…。
                 </blockquote>
+                <h2 class="mt-5">動作環境</h2>
+                <div class="mt-3">
+                    <strong>PC: Google Chrome</strong><br>
+                    <ul class="pl-5 mt-3 text-text-darken-1">
+                        <li>Firefox でも動作するはずですが、コメント描画が重めなことが確認されています。</li>
+                        <li>動作確認も基本行っておらず、積極的なサポートはしていません。Chrome を使うことをおすすめします。</li>
+                        <li>Mac Safari はサポートしていません。Mac でも Chrome を使ってください。</li>
+                    </ul>
+                </div>
+                <div class="mt-3">
+                    <strong>Android: Google Chrome</strong><br>
+                    <ul class="pl-5 mt-3 text-text-darken-1">
+                        <li>Android の Firefox はサポートしていません。</li>
+                    </ul>
+                </div>
+                <div class="mt-3">
+                    <strong>iPhone (iOS) / iPad (iPadOS): Safari</strong><br>
+                    <ul class="pl-5 mt-3 text-text-darken-1">
+                        <li>iOS / iPadOS 17.1 以降のみに対応しています。</li>
+                        <li>動作確認は iOS / iPadOS 17.1 以降で行っています。</li>
+                        <li>iOS / iPadOS の Chrome (WKWebView) はサポートしていません。</li>
+                        <li>Safari は全体的にバグが多く開発が大変なため、全体的にあまり動作確認を行えていません。修正できていない不具合があるかもしれません。</li>
+                    </ul>
+                </div>
                 <p class="mt-5 text-text-darken-1 text-right">
-                    2024/06/10 (Last Update: 2024/06/15)<br>
+                    2024/06/10 (Last Update: 2024/06/16)<br>
                     <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a> (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a>)
                 </p>
             </div>
