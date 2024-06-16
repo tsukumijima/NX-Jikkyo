@@ -564,10 +564,10 @@ export default defineComponent({
             @include tablet-vertical {
                 padding-left: 24px;
                 padding-right: 18px;
-                padding-bottom: 0px;
+                /* padding-bottom: 0px; */
             }
             @include smartphone-vertical {
-                padding-bottom: 0px;
+                /* padding-bottom: 0px; */
             }
 
             .comment {

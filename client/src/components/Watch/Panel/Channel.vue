@@ -6,6 +6,7 @@
                 '--active-tab-index': active_tab_index,
             }">
                 <v-btn variant="flat" class="channels-tab__button"
+                    :class="{ 'channels-tab__button--active': active_tab_index === index }"
                     v-for="([channels_type,], index) in Array.from(channelsStore.channels_list_with_pinned_for_watch)" :key="channels_type"
                     @click="active_tab_index = index">
                     {{channels_type}}
@@ -203,12 +204,12 @@ export default defineComponent({
         }
         @include smartphone-horizontal {
             height: 52px;
-            margin-top: 0px;
+            margin-top: 4px;
             --channels-tab-padding-bottom: 8px;
         }
         @include smartphone-vertical {
             height: 54px;
-            margin-top: 0px;
+            margin-top: 4px;
             --channels-tab-padding-bottom: 8px;
         }
 
@@ -230,7 +231,10 @@ export default defineComponent({
                 width: 80px;
                 height: 100%;
                 padding: 0 8px;
-                border-radius: 2.5px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
                 color: rgb(var(--v-theme-text)) !important;
                 background-color: transparent !important;
                 font-size: 15px;
@@ -239,6 +243,10 @@ export default defineComponent({
                 cursor: pointer;
                 @include smartphone-horizontal {
                     font-size: 14.5px;
+                }
+
+                &--active {
+                    background-color: rgb(var(--v-theme-background-lighten-2)) !important;
                 }
             }
 

@@ -4,7 +4,7 @@
         <main>
             <Navigation />
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
-                <p class="mt-5 mx-4 text-center">
+                <p class="mt-5 mb-2 mx-4 text-center">
                     <strong>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
                     <a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> / <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/#toc3" target="_blank">TVTest (NicoJK)</a> / <a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV</a> 最新版で NX-Jikkyo に対応しました！！🎉🎊<br>
                     最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣 （<a class="link" href="https://twitter.com/TVRemotePlus/status/1801495262348906833" target="_blank">干し芋 or アマギフいただけると大変モチベになります🙏</a>）
@@ -15,6 +15,7 @@
                         '--active-tab-index': active_tab_index,
                     }">
                         <v-btn variant="flat" class="channels-tab__button"
+                            :class="{ 'channels-tab__button--active': active_tab_index === index }"
                             v-for="([channels_type,], index) in Array.from(channelsStore.channels_list_with_pinned)" :key="channels_type"
                             @click="active_tab_index = index">
                             {{channels_type}}
@@ -323,7 +324,7 @@ export default defineComponent({
         background: linear-gradient(
             to bottom,
             rgb(var(--v-theme-background)) calc(100% - calc(var(--channels-tab-padding-bottom) + 3px)),
-            rgb(var(--v-theme-background-lighten-1))
+            rgb(var(--v-theme-background-lighten-2))
                 calc(100% - calc(var(--channels-tab-padding-bottom) + 3px))
                 calc(100% - var(--channels-tab-padding-bottom)),
             rgb(var(--v-theme-background)) calc(100% - 12px)
@@ -331,12 +332,12 @@ export default defineComponent({
 
         @include smartphone-horizontal {
             top: 0px;
-            padding-top: 0px;
+            padding-top: 4px;
             --channels-tab-padding-bottom: 8px;
         }
         @include smartphone-vertical {
             top: 0px;
-            padding-top: 0px;
+            padding-top: 4px;
             --channels-tab-padding-bottom: 10px;
         }
 
@@ -358,19 +359,26 @@ export default defineComponent({
                 width: 98px;
                 height: 100%;
                 padding: 0;
-                border-radius: 2.5px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
                 color: rgb(var(--v-theme-text)) !important;
                 background-color: transparent !important;
-                font-size: 16px;
+                font-size: 17px;
                 letter-spacing: 0.0892857143em !important;
                 text-transform: none;
                 cursor: pointer;
                 @include smartphone-horizontal {
-                    font-size: 15px;
+                    font-size: 16.5px;
                 }
                 @include smartphone-vertical {
                     width: 90px;
-                    font-size: 15px;
+                    font-size: 16.5px;
+                }
+
+                &--active {
+                    background-color: rgb(var(--v-theme-background-lighten-2)) !important;
                 }
             }
 
