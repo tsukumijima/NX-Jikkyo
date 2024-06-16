@@ -180,7 +180,7 @@ const useChannelsStore = defineStore('channels', {
             // 事前に Map を定義しておく
             // Map にしていたのは、確か連想配列の順序を保証してくれるからだったはず
             const channels_list_with_pinned = new Map<ChannelTypePretty, ILiveChannel[]>();
-            // channels_list_with_pinned.set('ピン留め', []);
+            channels_list_with_pinned.set('ピン留め', []);
             channels_list_with_pinned.set('地デジ', []);
 
             // 初回のチャンネル情報更新がまだ実行されていない or 実行中のときは最低限の上記2つだけで返す
@@ -268,11 +268,11 @@ const useChannelsStore = defineStore('channels', {
             });
 
             // ピン留め中チャンネルを pinned_channel_ids の順に並び替える
-            // channels_list_with_pinned.get('ピン留め')?.push(...pinned_channels.sort((a, b) => {
-            //     const index_a = settings_store.settings.pinned_channel_ids.indexOf(a.id);
-            //     const index_b = settings_store.settings.pinned_channel_ids.indexOf(b.id);
-            //     return index_a - index_b;
-            // }));
+            channels_list_with_pinned.get('ピン留め')?.push(...pinned_channels.sort((a, b) => {
+                const index_a = settings_store.settings.pinned_channel_ids.indexOf(a.id);
+                const index_b = settings_store.settings.pinned_channel_ids.indexOf(b.id);
+                return index_a - index_b;
+            }));
 
             // 最後に、チャンネルが1つもないチャンネルタイプのタブを除外する (ピン留めタブを除く)
             for (const [channel_type, channels] of channels_list_with_pinned) {
@@ -285,9 +285,9 @@ const useChannelsStore = defineStore('channels', {
             }
 
             // ただし、this.channels_list_with_pinned 全体が空でもうピン留めタブしか残っていない場合は、ピン留めタブも削除する
-            // if (channels_list_with_pinned.size === 1 && channels_list_with_pinned.has('ピン留め')) {
-            //     channels_list_with_pinned.delete('ピン留め');
-            // }
+            if (channels_list_with_pinned.size === 1 && channels_list_with_pinned.has('ピン留め')) {
+                channels_list_with_pinned.delete('ピン留め');
+            }
 
             return channels_list_with_pinned;
         },

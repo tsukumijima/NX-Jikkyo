@@ -54,6 +54,15 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div v-ripple class="channel__broadcaster-pin"
+                                        v-tooltip="isPinnedChannel(channel) ? 'ピン留めを外す' : 'ピン留めする'"
+                                        :class="{'channel__broadcaster-pin--pinned': isPinnedChannel(channel)}"
+                                        @click.prevent.stop="isPinnedChannel(channel) ? removePinnedChannel(channel) : addPinnedChannel(channel)"
+                                        @mousedown.prevent.stop=""> <!-- ← 親要素の波紋が広がらないように -->
+                                        <svg class="iconify iconify--fluent" width="24px" height="24px" viewBox="0 0 20 20">
+                                            <path fill="currentColor" d="M13.325 2.617a2 2 0 0 0-3.203.52l-1.73 3.459a1.5 1.5 0 0 1-.784.721l-3.59 1.436a1 1 0 0 0-.335 1.636L6.293 13L3 16.292V17h.707L7 13.706l2.61 2.61a1 1 0 0 0 1.636-.335l1.436-3.59a1.5 1.5 0 0 1 .722-.784l3.458-1.73a2 2 0 0 0 .52-3.203l-4.057-4.057Z"></path>
+                                        </svg>
+                                    </div>
                                 </div>
                                 <div class="channel__program-present">
                                     <div class="channel__program-present-title-wrapper">
@@ -85,7 +94,7 @@
                                 v-if="channels_type === 'ピン留め' && channels.length === 0">
                                 <div class="d-flex justify-center align-center flex-column">
                                     <h2>ピン留めされているチャンネルが<br>ありません。</h2>
-                                    <div class="mt-4 text-text-darken-1">各チャンネルの <Icon style="position: relative; bottom: -5px;" icon="fluent:pin-20-filled" width="22px" /> アイコンから、よくみる<br>チャンネルをこのタブにピン留めできます。</div>
+                                    <div class="mt-4 text-text-darken-1">各チャンネルの <Icon style="position: relative; bottom: -5px;" icon="fluent:pin-20-filled" width="22px" /> アイコンから、よく実況する<br>チャンネルをこのタブにピン留めできます。</div>
                                     <div class="mt-2 text-text-darken-1">チャンネルをピン留めすると、<br>このタブが最初に表示されます。</div>
                                 </div>
                             </div>
@@ -171,9 +180,9 @@ export default defineComponent({
 
         // ピン留めされているチャンネルがないなら、タブを地デジタブに切り替える
         // ピン留めができる事を示唆するためにピン留めタブ自体は残す
-        // if (this.settingsStore.settings.pinned_channel_ids.length === 0) {
-        //     this.active_tab_index = 1;
-        // }
+        if (this.settingsStore.settings.pinned_channel_ids.length === 0) {
+            this.active_tab_index = 1;
+        }
 
         // 00秒までの残り秒数を取得
         // 現在 16:01:34 なら 26 (秒) になる
@@ -196,9 +205,9 @@ export default defineComponent({
 
         // この時点でピン留めされているチャンネルがないなら、タブを地デジタブに切り替える
         // ピン留めされているチャンネル自体はあるが、現在放送されていないため表示できない場合に備える
-        // if (this.channelsStore.channels_list_with_pinned.get('ピン留め')?.length === 0) {
-        //     this.active_tab_index = 1;
-        // }
+        if (this.channelsStore.channels_list_with_pinned.get('ピン留め')?.length === 0) {
+            this.active_tab_index = 1;
+        }
 
         // content-visibility: auto の指定の関係でうまく計算されないことがある Swiper の autoHeight を強制的に再計算する
         this.swiper_instance?.updateAutoHeight();
@@ -246,9 +255,9 @@ export default defineComponent({
             this.settingsStore.settings.pinned_channel_ids = this.settingsStore.settings.pinned_channel_ids.filter((id) => id !== channel.id);
 
             // この時点でピン留めされているチャンネルがないなら、タブを地デジタブに切り替える
-            // if (this.channelsStore.channels_list_with_pinned.get('ピン留め')?.length === 0) {
-            //     this.active_tab_index = 1;
-            // }
+            if (this.channelsStore.channels_list_with_pinned.get('ピン留め')?.length === 0) {
+                this.active_tab_index = 1;
+            }
 
             // ピン留めを外したチャンネルを通知
             Message.show(`${channel.name}のピン留めを外しました。`);

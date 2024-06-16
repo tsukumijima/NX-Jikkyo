@@ -9,6 +9,17 @@
             <span class="ml-3">全般</span>
         </h2>
         <div class="settings__content">
+            <div class="settings__item">
+                <div class="settings__item-heading">ピン留め中チャンネルの並び替え</div>
+                <div class="settings__item-label">
+                    ピン留め中のチャンネルの表示順序を変更できます。よくみるチャンネルは先頭に配置しておくと便利です。<br>
+                    ピン留め中のチャンネルの追加・削除は、別途 TV ホーム画面のチャンネルリストから行えます。<br>
+                </div>
+            </div>
+            <v-btn class="settings__save-button mt-4" variant="flat" @click="pinned_channel_settings_modal = !pinned_channel_settings_modal">
+                <Icon icon="iconamoon:sorting-left-bold" height="19px" />
+                <span class="ml-1">ピン留め中チャンネルの並び替え設定を開く</span>
+            </v-btn>
             <div class="settings__item settings__item--switch">
                 <label class="settings__item-heading" for="show_player_background_image">コメントプレイヤーに背景画像を表示する</label>
                 <label class="settings__item-label" for="show_player_background_image">
@@ -92,6 +103,7 @@
                 <Icon icon="material-symbols:device-reset-rounded" class="mr-2" height="23px" />設定をリセット
             </v-btn>
         </div>
+        <PinnedChannelSettings :modelValue="pinned_channel_settings_modal" @update:modelValue="pinned_channel_settings_modal = $event" />
     </SettingsBase>
 </template>
 <script lang="ts">
@@ -99,6 +111,7 @@
 import { mapStores } from 'pinia';
 import { defineComponent } from 'vue';
 
+import PinnedChannelSettings from '@/components/Settings/PinnedChannelSettings.vue';
 import Message from '@/message';
 import useSettingsStore from '@/stores/SettingsStore';
 import Utils from '@/utils';
@@ -107,6 +120,7 @@ import SettingsBase from '@/views/Settings/Base.vue';
 export default defineComponent({
     name: 'Settings-General',
     components: {
+        PinnedChannelSettings,
         SettingsBase,
     },
     data() {
