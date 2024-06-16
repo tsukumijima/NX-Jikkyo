@@ -11,6 +11,7 @@ from fastapi import (
     Path,
     Query,
 )
+from pydantic import TypeAdapter
 from starlette.websockets import (
     WebSocket,
     WebSocketDisconnect,
@@ -25,6 +26,7 @@ from app.constants import REDIS_CLIENT, REDIS_VIEWER_COUNT_KEY
 from app.models.comment import (
     Comment,
     CommentCounter,
+    CommentResponse,
     Thread,
 )
 
@@ -423,7 +425,7 @@ async def CommentSessionAPI(
     # 接続を受け入れる
     await websocket.accept()
 
-    async def SendCommentToClient(thread: Thread, thread_key: str, comment: Comment):
+    async def SendCommentToClient(thread: Thread, thread_key: str, comment: Comment | CommentResponse):
         """ 受信コメントをクライアント側に送信する """
         response = {
             'chat': {
@@ -564,8 +566,7 @@ async def CommentSessionAPI(
                         comments = await Comment.filter(thread_id=thread.id, date__lt=when).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
                     else:
                         comments = await Comment.filter(thread_id=thread.id).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
-
-                    # コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
+                    ## コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
                     comments.reverse()
 
                     # 取得したコメントの最後のコメ番を取得 (なければ -1)
@@ -629,14 +630,35 @@ async def CommentSessionAPI(
             last_sent_comment_id (int): 最後にクライアントに送信したコメントの ID
         """
 
+        # list[CommentResponse] のシリアライズやダンプを行える TypeAdapter
+        type_adapter = TypeAdapter(list[CommentResponse])
+
         while True:
 
-            # 最後に取得したコメント ID 以降のコメントを最大 10 件まで取得
-            ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？
-            comments = await Comment.filter(thread_id=thread.id, id__gt=last_sent_comment_id).order_by('-id').limit(10)
+            # キャッシュキーを定義
+            ## last_send_comment_id はループごとに変更されるので、ループごとに再定義する必要がある
+            cache_key = f"thread:{thread.id}:comments:after:{last_sent_comment_id}"
 
-            # コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
-            comments.reverse()
+            # Redis からキャッシュを取得
+            cached_comments = await REDIS_CLIENT.get(cache_key)
+
+            if cached_comments is not None:
+                # キャッシュがある場合は、取得したキャッシュを list[CommentResponse] に変換
+                comments = type_adapter.validate_json(cached_comments)
+                logging.debug_simple(f'[Client ID: {comment_session_client_id}]: Use cached comments.')
+            else:
+                # キャッシュがまだない場合は、最後に取得したコメント ID 以降のコメントを最大 10 件まで取得
+                ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？
+                comments_dict = await Comment.filter(thread_id=thread.id, id__gt=last_sent_comment_id).order_by('-id').limit(10).values()
+                ## コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
+                comments_dict.reverse()
+
+                # list[dict] のままだと扱いづらいので list[CommentResponse] に変換
+                ## それでも敢えて ORM から list[dict] で取得しているのは、モデルクラスのインスタンス生成コストが高そうなため
+                comments = type_adapter.validate_python(comments_dict)
+
+                # 取得結果をキャッシュに保存 (TTL: 100ms)
+                await REDIS_CLIENT.set(cache_key, type_adapter.dump_json(comments).decode('utf-8'), px=100)
 
             # 取得したコメントを随時送信
             for comment in comments:
@@ -649,8 +671,8 @@ async def CommentSessionAPI(
                 return
 
             # 少し待機してから次のループへ
-            ## 0.1 秒間隔だと SQL クエリの負荷が高すぎるので、当面 0.25 秒間隔にする
-            await asyncio.sleep(0.25)
+            ## 待機秒数はキャッシュ期間の TTL と同じ値に合わせる (合わせないとキャッシュがうまく使われないっぽい)
+            await asyncio.sleep(0.1)
 
     try:
 
