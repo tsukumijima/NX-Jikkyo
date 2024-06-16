@@ -47,9 +47,9 @@ class Thread(TortoiseModel):
     channel = fields.ForeignKeyField('models.Channel', related_name='threads')
     channel_id: int
     # スレッド開始日時
-    start_at = fields.DatetimeField(auto_now_add=True)
+    start_at = fields.DatetimeField()
     # スレッド終了日時
-    end_at = fields.DatetimeField(null=True)
+    end_at = fields.DatetimeField()
     # スレッドの放送時間長
     duration = fields.IntField()
     # スレッドのタイトル
@@ -70,8 +70,8 @@ class Comment(TortoiseModel):
     # ID は自動でインクリメントされる
     id = fields.IntField(pk=True)
     # コメントのスレッド ID
-    thread = fields.ForeignKeyField('models.Thread', related_name='comments')
-    thread_id: int
+    # パフォーマンス向上のため敢えて外部キーを設定しない
+    thread_id = fields.IntField()
     # コメント番号（コメ番）
     # ex: 46712
     no = fields.IntField()
@@ -81,7 +81,7 @@ class Comment(TortoiseModel):
     # コメント投稿日時
     # ex: 1717426821.46713 (UNIX タイムスタンプ換算)
     # 実際にニコ生互換のレスポンスで返す際は数値の date と小数点以下の date_usec に分割される
-    date = fields.DatetimeField(auto_now=True)
+    date = fields.DatetimeField(auto_now_add=True)
     # コメントのコマンド（184, red naka big など / 歴史的経緯で mail というフィールドながらコマンドが入る）
     # ex: 184 white naka medium
     mail = fields.CharField(255, default='')
@@ -106,7 +106,7 @@ class CommentCounter(TortoiseModel):
         table: str = 'comment_counters'
 
     # スレッド ID
-    thread_id = fields.IntField(pk=True)
+    thread_id = fields.IntField(pk=True, generated=False)
     # スレッド内の最大コメ番
     max_no = fields.IntField(default=0)
 

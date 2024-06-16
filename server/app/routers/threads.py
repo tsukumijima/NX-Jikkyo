@@ -49,7 +49,7 @@ async def ThreadAPI(thread_id: Annotated[int, Path(description='スレッド ID 
         status = 'PAST'
 
     # スレッドの全コメントをコメ番順に取得
-    comments = await Comment.filter(thread_id=thread_id).order_by('no').all()
+    comments = await Comment.filter(thread_id=thread.id).order_by('no').all()
 
     # コメントを変換
     comment_responses: list[CommentResponse] = []

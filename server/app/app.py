@@ -285,7 +285,7 @@ async def AddThreads():
     # 念のため、定期的に採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
     threads = await Thread.all()
     for thread in threads:
-        comment_count = await Comment.filter(thread=thread).count()
+        comment_count = await Comment.filter(thread_id=thread.id).count()
         await CommentCounter.update_or_create(
             thread_id = thread.id,
             defaults = {'max_no': comment_count}

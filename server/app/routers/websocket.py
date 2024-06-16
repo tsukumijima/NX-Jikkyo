@@ -248,7 +248,7 @@ async def WatchSessionAPI(
 
                         # 新しいコメントを作成
                         comment = await Comment.create(
-                            thread = thread,
+                            thread_id = thread.id,
                             no = new_no,
                             vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
                             mail = ' '.join(comment_commands),  # コメントコマンド (mail) は空白区切りの文字列として組み立てる
@@ -423,11 +423,11 @@ async def CommentSessionAPI(
     # 接続を受け入れる
     await websocket.accept()
 
-    async def SendCommentToClient(active_thread: Thread, thread_key: str, comment: Comment):
+    async def SendCommentToClient(thread: Thread, thread_key: str, comment: Comment):
         """ 受信コメントをクライアント側に送信する """
         response = {
             'chat': {
-                'thread': str(active_thread.id),
+                'thread': str(thread.id),
                 'no': comment.no,
                 'vpos': comment.vpos,
                 'date': int(comment.date.timestamp()),
@@ -473,14 +473,6 @@ async def CommentSessionAPI(
         ]
         """
 
-        # スレッド ID
-        thread_id: int | None = None
-        # スレッドキー
-        thread_key: str | None = None
-        # 初回にクライアントに送信する最新コメントの数
-        res_from: int | None = None
-        # 取得するコメントの投稿日時の下限
-        when: datetime | None = None
         # コマンドのカウント
         command_count: int = 0
         # 指定されたスレッドの新着コメントがあれば随時送信するタスク
@@ -547,6 +539,8 @@ async def CommentSessionAPI(
                         ## res_from 件分だけコメント投稿時刻順に後ろから遡ってコメントを取得する
                         if 'when' in message['thread']:
                             when = datetime.fromtimestamp(message['thread']['when'])
+                        else:
+                            when = None
 
                     except Exception:
                         # 送られてきたスレッドコマンドの形式が不正
@@ -557,8 +551,8 @@ async def CommentSessionAPI(
                         return
 
                     # ここまできたらスレッド ID と res_from が取得できているので、当該スレッドの情報を取得
-                    active_thread = await Thread.filter(id=thread_id).first()
-                    if not active_thread:
+                    thread = await Thread.filter(id=thread_id).first()
+                    if not thread:
                         # 指定された ID と一致するスレッドが見つからない
                         logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
                         await websocket.close(code=4404)
@@ -567,9 +561,9 @@ async def CommentSessionAPI(
                     # 当該スレッドの最新 res_from 件のコメントを取得して送信
                     ## when が設定されている場合のみ、when より前のコメントを取得して送信
                     if when is not None:
-                        comments = await Comment.filter(thread=active_thread, date__lt=when).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
+                        comments = await Comment.filter(thread_id=thread.id, date__lt=when).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
                     else:
-                        comments = await Comment.filter(thread=active_thread).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
+                        comments = await Comment.filter(thread_id=thread.id).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
 
                     # コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
                     comments.reverse()
@@ -597,7 +591,7 @@ async def CommentSessionAPI(
                     await websocket.send_json({'ping': {'content': f'rs:{command_count}'}})
                     await websocket.send_json({'ping': {'content': f'ps:{command_count}'}})
                     for comment in comments:
-                        await SendCommentToClient(active_thread, thread_key, comment)
+                        await SendCommentToClient(thread, thread_key, comment)
                     await websocket.send_json({'ping': {'content': f'pf:{command_count}'}})
                     await websocket.send_json({'ping': {'content': f'rf:{command_count}'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
                     command_count += 5  # 新着コメントを全て送ったので、次送信要求が来た場合は5増やす
@@ -615,22 +609,22 @@ async def CommentSessionAPI(
                     # スレッドが放送中の場合のみ、指定されたスレッドの新着コメントがあれば随時送信するタスクを非同期で実行開始
                     ## このとき、既に他のスレッド用にタスクが起動していた場合はキャンセルして停止させてから実行する
                     ## 過去ログの場合はすでに放送が終わっているのでこの処理は行わない
-                    if active_thread.start_at.timestamp() < time.time() < active_thread.end_at.timestamp():
+                    if thread.start_at.timestamp() < time.time() < thread.end_at.timestamp():
                         if sender_task is not None:
                             sender_task.cancel()
-                        sender_task = asyncio.create_task(RunSenderTask(active_thread, thread_key, last_sent_comment_id))
+                        sender_task = asyncio.create_task(RunSenderTask(thread, thread_key, last_sent_comment_id))
 
             # 接続が切れたらタスクを終了
             if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
                 return
 
-    async def RunSenderTask(active_thread: Thread, thread_key: str, last_sent_comment_id: int):
+    async def RunSenderTask(thread: Thread, thread_key: str, last_sent_comment_id: int):
         """
         指定されたスレッドの新着コメントがあれば随時送信するタスク
         スレッドコマンドで指定されたスレッドが現在放送中の場合のみ、初回に送ったコメントの続きをリアルタイムに送信する
 
         Args:
-            active_thread (Thread): スレッド
+            thread (Thread): 新着コメントの取得対象のスレッド
             thread_key (str): スレッドキー
             last_sent_comment_id (int): 最後にクライアントに送信したコメントの ID
         """
@@ -639,14 +633,14 @@ async def CommentSessionAPI(
 
             # 最後に取得したコメント ID 以降のコメントを最大 10 件まで取得
             ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？
-            comments = await Comment.filter(thread=active_thread, id__gt=last_sent_comment_id).order_by('-id').limit(10)
+            comments = await Comment.filter(thread_id=thread.id, id__gt=last_sent_comment_id).order_by('-id').limit(10)
 
             # コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
             comments.reverse()
 
             # 取得したコメントを随時送信
             for comment in comments:
-                await SendCommentToClient(active_thread, thread_key, comment)
+                await SendCommentToClient(thread, thread_key, comment)
                 # 最後にクライアントに送信したコメントの ID を更新
                 last_sent_comment_id = comment.id
 
