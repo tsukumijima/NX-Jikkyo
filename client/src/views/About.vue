@@ -18,7 +18,7 @@
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://github.com/DBCTRADO/TVTest" target="_blank">TVTest</a> のニコニコ実況表示プラグイン <a class="link" href="https://github.com/xtne6f/NicoJK/releases/tag/master-240613" target="_blank">NicoJK master-240613</a> にて、ニコニコ実況の代わりに NX-Jikkyo のコメントをリアルタイム表示できるようになりました！！🎉🎊<br></strong>
                     <a class="link" href="https://github.com/DBCTRADO/TVTest" target="_blank">TVTest</a> + ニコニコ実況ユーザーの方は NicoJK.ini を編集して NX-Jikkyo を有効にすると今まで通り実況コメントを表示できるようになるのでアプデ推奨です🙏<br>
-                    <strong>NicoJK の更新方法の詳細は <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/#toc3" target="_blank">こちら</a> の記事に載せていますのでぜひ一読を🙇</strong>
+                    <strong>NicoJK の更新方法の詳細は <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/#toc4" target="_blank">こちら</a> の記事に載せていますのでぜひ一読を🙇</strong>
                     <div class="mt-1"></div>
                     また <a class="link" href="https://github.com/noriokun4649/TVTComment" target="_blank">TVTComment</a> プラグインでも v3.0.1 以降で NX-Jikkyo 対応が追加されています！
                 </blockquote>
