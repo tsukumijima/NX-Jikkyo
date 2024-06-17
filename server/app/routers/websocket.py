@@ -1,6 +1,7 @@
 
 import asyncio
 import json
+import random
 import time
 import traceback
 import uuid
@@ -22,7 +23,7 @@ from tortoise.transactions import in_transaction
 from typing import Annotated
 
 from app import logging
-from app.constants import REDIS_CLIENT, REDIS_VIEWER_COUNT_KEY
+from app.constants import REDIS_CLIENT, REDIS_KEY_JIKKYO_FORCE_COUNT, REDIS_KEY_VIEWER_COUNT
 from app.models.comment import (
     Comment,
     CommentCounter,
@@ -181,7 +182,7 @@ async def WatchSessionAPI(
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
-                        'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
+                        'viewers': int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0),
                         'comments': (await CommentCounter.get(thread_id=thread.id)).max_no,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
@@ -260,6 +261,17 @@ async def WatchSessionAPI(
                             content = message['data']['text'],
                         )
 
+                    # 実況勢いカウント用の Redis ソート済みセット型にエントリを追加
+                    ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる
+                    current_time = time.time()
+                    await REDIS_CLIENT.zadd(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', {f'comment:{comment.id}': current_time})
+
+                    # 1/10 の確率で現在時刻から 60 秒以上前のエントリを削除
+                    ## 毎回削除する必要はないが (古いエントリが残ったままでもカウントする上では影響しない) 、
+                    ## メモリ上に古いエントリが残りすぎないように、定期的に削除する
+                    if random.random() < 0.1:
+                        await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
+
                     # 投稿結果を返す
                     await websocket.send_json({
                         'type': 'postCommentResult',
@@ -315,7 +327,7 @@ async def WatchSessionAPI(
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
-                        'viewers': int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0),
+                        'viewers': int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0),
                         'comments': (await CommentCounter.get(thread_id=thread.id)).max_no,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
@@ -361,7 +373,7 @@ async def WatchSessionAPI(
     try:
 
         # 同時接続数カウントを 1 増やす
-        await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, 1)
+        await REDIS_CLIENT.hincrby(REDIS_KEY_VIEWER_COUNT, channel_id, 1)
 
         # クライアントからのメッセージを受信するタスクを実行開始
         receiver_task = asyncio.create_task(RunReceiverTask())
@@ -397,9 +409,9 @@ async def WatchSessionAPI(
     finally:
         # ここまできたら確実に接続が切断されているので同時接続数カウントを 1 減らす
         ## 最低でも 0 未満にはならないようにする
-        current_count = int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, channel_id) or 0)
+        current_count = int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0)
         if current_count > 0:
-            await REDIS_CLIENT.hincrby(REDIS_VIEWER_COUNT_KEY, channel_id, -1)
+            await REDIS_CLIENT.hincrby(REDIS_KEY_VIEWER_COUNT, channel_id, -1)
 
 
 @router.websocket('/channels/{channel_id}/ws/comment')
@@ -637,7 +649,7 @@ async def CommentSessionAPI(
 
             # キャッシュキーを定義
             ## last_send_comment_id はループごとに変更されるので、ループごとに再定義する必要がある
-            cache_key = f"thread:{thread.id}:comments:after:{last_sent_comment_id}"
+            cache_key = f'nx-jikkyo:threads:{thread.id}:comments:after:{last_sent_comment_id}'
 
             # Redis からキャッシュを取得
             cached_comments = await REDIS_CLIENT.get(cache_key)
@@ -645,7 +657,7 @@ async def CommentSessionAPI(
             if cached_comments is not None:
                 # キャッシュがある場合は、取得したキャッシュを list[CommentResponse] に変換
                 comments = type_adapter.validate_json(cached_comments)
-                logging.debug_simple(f'[Client ID: {comment_session_client_id}]: Use cached comments.')
+                # logging.debug_simple(f'[Client ID: {comment_session_client_id}]: Use cached comments.')
             else:
                 # キャッシュがまだない場合は、最後に取得したコメント ID 以降のコメントを最大 10 件まで取得
                 ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？

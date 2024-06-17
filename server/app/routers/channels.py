@@ -17,7 +17,13 @@ from tortoise import timezone
 from typing import Annotated, cast, Literal
 from zoneinfo import ZoneInfo
 
-from app.constants import LOGO_DIR, REDIS_CLIENT, REDIS_VIEWER_COUNT_KEY, VERSION
+from app.constants import (
+    LOGO_DIR,
+    REDIS_CLIENT,
+    REDIS_KEY_JIKKYO_FORCE_COUNT,
+    REDIS_KEY_VIEWER_COUNT,
+    VERSION,
+)
 from app.models.comment import (
     ChannelResponse,
     ThreadResponse,
@@ -67,18 +73,14 @@ async def ChannelsAPI():
             t.duration,
             t.title,
             t.description AS thread_description,
-            cc.max_no AS comments_count,
-            SUM(CASE WHEN com.date >= NOW() - INTERVAL 60 SECOND THEN 1 ELSE 0 END) AS jikkyo_force
+            cc.max_no AS comments_count
         FROM channels c
         LEFT JOIN threads t ON c.id = t.channel_id
         LEFT JOIN comment_counters cc ON t.id = cc.thread_id
-        LEFT JOIN comments com ON t.id = com.thread_id
-        GROUP BY c.id, c.name, c.description, t.id, t.start_at, t.end_at, t.duration, t.title, t.description, cc.max_no
         ORDER BY c.id ASC, t.start_at ASC
         '''
     )
 
-    # チャンネルごとに
     response: list[ChannelResponse] = []
     current_channel_id: int | None = None
     current_channel_name: str | None = None
@@ -112,7 +114,22 @@ async def ChannelsAPI():
         else:
             status = 'PAST'
 
-        thread = ThreadResponse(
+        # ステータスが ACTIVE (放送中) のスレッドのみ、当該チャンネルに対応する実況勢いカウントを取得
+        ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる
+        if status == 'ACTIVE':
+            current_time = time.time()
+            jikkyo_force_count = await REDIS_CLIENT.zcount(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:jk{current_channel_id}', current_time - 60, current_time)
+        else:
+            jikkyo_force_count = None
+
+        # ステータスが ACTIVE (放送中) のスレッドのみ、当該チャンネルに対応する同時接続数カウントを取得
+        if status == 'ACTIVE':
+            viewer_count = int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, f'jk{current_channel_id}') or 0)
+        else:
+            viewer_count = None
+
+        # スレッド情報を追加
+        threads.append(ThreadResponse(
             id = cast(int, row['thread_id']),
             start_at = start_at,
             end_at = end_at,
@@ -120,12 +137,10 @@ async def ChannelsAPI():
             title = cast(str, row['title']),
             description = cast(str, row['thread_description']),
             status = status,
-            jikkyo_force = cast(int, row['jikkyo_force']) if status == 'ACTIVE' else None,
-            viewers = int(await REDIS_CLIENT.hget(REDIS_VIEWER_COUNT_KEY, f'jk{current_channel_id}') or 0) if status == 'ACTIVE' else None,
+            jikkyo_force = jikkyo_force_count,
+            viewers = viewer_count,
             comments = cast(int, row['comments_count']),
-        )
-
-        threads.append(thread)
+        ))
 
     if current_channel_id is not None:
         response.append(ChannelResponse(

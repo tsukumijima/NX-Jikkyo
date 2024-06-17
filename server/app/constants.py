@@ -170,5 +170,8 @@ HTTPX_CLIENT = lambda: httpx.AsyncClient(
 # Redis クライアント
 REDIS_CLIENT = Redis.from_url('redis://nx-jikkyo-redis', encoding='utf-8', decode_responses=True)
 
-# Redis 上の視聴者数カウントのキー
-REDIS_VIEWER_COUNT_KEY = 'viewer_counts'
+# Redis 上の実況勢いカウントのキー
+REDIS_KEY_JIKKYO_FORCE_COUNT = 'nx-jikkyo:jikkyo_force_counts'
+
+# Redis 上の同時接続数カウントのキー
+REDIS_KEY_VIEWER_COUNT = 'nx-jikkyo:viewer_counts'

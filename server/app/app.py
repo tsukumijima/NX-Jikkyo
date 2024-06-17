@@ -17,7 +17,7 @@ from app.constants import (
     CLIENT_DIR,
     DATABASE_CONFIG,
     REDIS_CLIENT,
-    REDIS_VIEWER_COUNT_KEY,
+    REDIS_KEY_VIEWER_COUNT,
     VERSION,
 )
 from app.models.comment import (
@@ -201,7 +201,7 @@ async def ResetViewerCount():
 
     # チャンネルごとに保存された同時接続数カウントをリセット
     for channel in await Channel.all():
-        await REDIS_CLIENT.hset(REDIS_VIEWER_COUNT_KEY, f'jk{channel.id}', 0)
+        await REDIS_CLIENT.hset(REDIS_KEY_VIEWER_COUNT, f'jk{channel.id}', 0)
         logging.info(f'Viewer count for {channel.name} has been reset.')
 
 # 1時間に1回、明日分の全実況チャンネルのスレッド予定が DB に登録されているかを確認し、もしなければ登録する
