@@ -77,8 +77,6 @@ async def ThreadAPI(thread_id: Annotated[int, Path(description='スレッド ID 
         title = thread.title,
         description = thread.description,
         status = status,
-        jikkyo_force = None,
-        viewers = None,
         comments = comment_responses,
     )
 

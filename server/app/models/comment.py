@@ -147,8 +147,6 @@ class ThreadWithCommentsResponse(BaseModel):
     title: str
     description: str
     status: Literal['ACTIVE', 'UPCOMING', 'PAST']
-    jikkyo_force: int | None
-    viewers: int | None
     comments: list[CommentResponse]
 
 class CommentResponse(BaseModel):
