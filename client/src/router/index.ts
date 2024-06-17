@@ -20,7 +20,7 @@ const router = createRouter({
             name: 'TV Home',
             component: () => import('@/views/TV/Home.vue'),
             meta: {
-                title: 'テレビ実況 | NX-Jikkyo',
+                title: 'NX-Jikkyo : ニコニコ実況避難所',
                 description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。',
             },
         },
@@ -29,7 +29,7 @@ const router = createRouter({
             name: 'TV Watch',
             component: () => import('@/views/TV/Watch.vue'),
             meta: {
-                title: 'テレビ実況 - コメント再生 | NX-Jikkyo',
+                title: 'テレビ実況 | NX-Jikkyo : ニコニコ実況避難所',
                 description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。',
             },
         },
@@ -38,7 +38,7 @@ const router = createRouter({
             name: 'About',
             component: () => import('@/views/About.vue'),
             meta: {
-                title: 'NX-Jikkyo とは | NX-Jikkyo',
+                title: 'NX-Jikkyo とは | NX-Jikkyo : ニコニコ実況避難所',
                 description: 'NX-Jikkyo のサイトについての情報です。',
             },
         },
@@ -56,7 +56,7 @@ const router = createRouter({
                 next({path: '/settings/general/'});
             },
             meta: {
-                title: '設定 | NX-Jikkyo',
+                title: '設定 | NX-Jikkyo : ニコニコ実況避難所',
                 description: 'NX-Jikkyo の設定を変更できます。',
             },
         },
@@ -65,7 +65,7 @@ const router = createRouter({
             name: 'Settings General',
             component: () => import('@/views/Settings/General.vue'),
             meta: {
-                title: '設定 - 全般 | NX-Jikkyo',
+                title: '設定 - 全般 | NX-Jikkyo : ニコニコ実況避難所',
                 description: 'NX-Jikkyo の全般の設定を変更できます。',
             },
         },
@@ -79,7 +79,7 @@ const router = createRouter({
             name: 'Settings Jikkyo',
             component: () => import('@/views/Settings/Jikkyo.vue'),
             meta: {
-                title: '設定 - コメント/実況 | NX-Jikkyo',
+                title: '設定 - コメント/実況 | NX-Jikkyo : ニコニコ実況避難所',
                 description: 'NX-Jikkyo のコメント/実況の設定を変更できます。',
             },
         },
@@ -98,7 +98,7 @@ const router = createRouter({
             name: 'NotFound',
             component: () => import('@/views/NotFound.vue'),
             meta: {
-                title: '404 Not Found | NX-Jikkyo',
+                title: '404 Not Found | NX-Jikkyo : ニコニコ実況避難所',
                 description: 'お探しのページは存在しないか、鋭意開発中です。',
             },
         },

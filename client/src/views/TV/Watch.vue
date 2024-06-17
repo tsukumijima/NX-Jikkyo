@@ -134,7 +134,7 @@ export default defineComponent({
             // 現在表示中のチャンネルのタイトルと概要を更新
             const current_channel = this.channelsStore.channel.current;
             if (current_channel) {
-                const title = `テレビ実況 - Ch: ${current_channel.channel_number} ${current_channel.name} | NX-Jikkyo`;
+                const title = `テレビ実況 - Ch: ${current_channel.channel_number} ${current_channel.name} | NX-Jikkyo : ニコニコ実況避難所`;
                 const description = current_channel.program_present?.description || '';
                 document.title = title;
                 const description_meta = document.querySelector('meta[name="description"]');
