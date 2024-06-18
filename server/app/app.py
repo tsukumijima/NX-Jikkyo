@@ -2,14 +2,13 @@
 import tortoise.contrib.fastapi
 import tortoise.log
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_restful.tasks import repeat_every
 from pathlib import Path
 from tortoise import timezone
-from typing import Awaitable, Callable
 from zoneinfo import ZoneInfo
 
 from app import logging
@@ -63,33 +62,6 @@ app.add_middleware(
     allow_headers = CORS_ORIGINS,
     allow_credentials = True,
 )
-
-# 全てのルーティングに Accept-CH ヘッダーを追加
-## ユーザー ID 生成時のフィンガープリントの精度向上のために必要
-## 現在 Chrome で取得可能なすべてのトークンを指定する
-## ref: https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Accept-CH
-@app.middleware('http')
-async def AddAcceptCHHeader(request: Request, call_next: Callable[[Request], Awaitable[Response]]):
-    response = await call_next(request)
-    token_list = [
-        'Content-DPR',
-        'DPR',
-        'Device-Memory',
-        'Sec-CH-UA',
-        'Sec-CH-UA-Arch',
-        'Sec-CH-UA-Bitness',
-        'Sec-CH-UA-Full-Version',
-        'Sec-CH-UA-Full-Version-List',
-        'Sec-CH-UA-Model',
-        'Sec-CH-UA-WoW64',
-        'Sec-CH-UA-Form-Factor',
-        'Sec-CH-UA-Platform',
-        'Sec-CH-UA-Platform-Version',
-        'Viewport-Width',
-        'Width',
-    ]
-    response.headers['Accept-CH'] = ', '.join(token_list)
-    return response
 
 # 静的ファイルの配信
 app.mount('/assets', StaticFiles(directory=CLIENT_DIR / 'assets', html=True))
