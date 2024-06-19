@@ -28,6 +28,8 @@ from app.models.comment import (
     ChannelResponse,
     ThreadResponse,
 )
+from app.utils import GetNowONAirProgramInfos
+from app.utils.TSInformation import TSInformation
 
 
 # ルーター
@@ -81,10 +83,12 @@ async def ChannelsAPI():
         '''
     )
 
+    # 現在放送中の番組情報を取得
+    now_onair_program_info = await GetNowONAirProgramInfos()
+
     response: list[ChannelResponse] = []
     current_channel_id: int | None = None
     current_channel_name: str | None = None
-    current_channel_description: str | None = None
     threads: list[ThreadResponse] = []
     for row in channels:
         if current_channel_id != row['id']:
@@ -92,12 +96,10 @@ async def ChannelsAPI():
                 response.append(ChannelResponse(
                     id = f'jk{current_channel_id}',
                     name = cast(str, current_channel_name),
-                    description = cast(str, current_channel_description),
                     threads = threads,
                 ))
             current_channel_id = cast(int, row['id'])
             current_channel_name = cast(str, row['name'])
-            current_channel_description = cast(str, row['description'])
             threads = []
 
         # タイムゾーン情報を付加した datetime に変換する
@@ -128,6 +130,20 @@ async def ChannelsAPI():
         else:
             viewer_count = None
 
+        # ステータスが ACTIVE (放送中) のスレッドのみ、当該スレッドの概要に現在放送中の番組タイトルを付け足す
+        if status == 'ACTIVE':
+            jikkyo_id = f'jk{current_channel_id}'
+            if jikkyo_id in now_onair_program_info:
+                description = (
+                    f'<b>📺 現在放送中の番組: {TSInformation.formatString(now_onair_program_info[jikkyo_id]["title"])}\n'
+                    f'({now_onair_program_info[jikkyo_id]["start_at"].strftime("%H:%M")} ～ {now_onair_program_info[jikkyo_id]["end_at"].strftime("%H:%M")} / {now_onair_program_info[jikkyo_id]["duration_minutes"]}分)</b><br>'
+                    f'{row["thread_description"]}'
+                )
+            else:
+                description = row["thread_description"]
+        else:
+            description = cast(str, row['thread_description'])
+
         # スレッド情報を追加
         threads.append(ThreadResponse(
             id = cast(int, row['thread_id']),
@@ -135,7 +151,7 @@ async def ChannelsAPI():
             end_at = end_at,
             duration = cast(int, row['duration']),
             title = cast(str, row['title']),
-            description = cast(str, row['thread_description']),
+            description = description,
             status = status,
             jikkyo_force = jikkyo_force_count,
             viewers = viewer_count,
@@ -146,7 +162,6 @@ async def ChannelsAPI():
         response.append(ChannelResponse(
             id = f'jk{current_channel_id}',
             name = cast(str, current_channel_name),
-            description = cast(str, current_channel_description),
             threads = threads,
         ))
 
