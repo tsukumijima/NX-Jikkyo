@@ -184,19 +184,21 @@ async def RegisterMasterChannels():
     existing_channel_ids = {channel.id for channel in existing_channels}
 
     # マスタデータのチャンネル情報を登録または更新
+    description = ''  # 当面未使用
     for channel_id, channel_info in master_channels.items():
         master_channel_id = int(channel_id.replace('jk', ''))
         if master_channel_id not in existing_channel_ids:
             await Channel.create(
                 id = master_channel_id,
                 name = channel_info['name'],
-                description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
+                description = description
             )
             logging.info(f'Channel {channel_info["name"]} has been registered.')
         else:
             existing_channel = next(channel for channel in existing_channels if channel.id == master_channel_id)
-            if existing_channel.name != channel_info['name']:
+            if existing_channel.name != channel_info['name'] or existing_channel.description != description:
                 existing_channel.name = channel_info['name']
+                existing_channel.description = description
                 await existing_channel.save()
                 logging.info(f'Channel {channel_info["name"]} has been updated.')
     logging.info('Master channels have been registered or updated.')

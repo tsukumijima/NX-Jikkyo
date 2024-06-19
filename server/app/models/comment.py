@@ -117,7 +117,6 @@ class ChannelResponse(BaseModel):
     """
     id: str
     name: str
-    description: str
     threads: list[ThreadResponse]
 
 class ThreadResponse(BaseModel):
