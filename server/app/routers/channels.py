@@ -135,7 +135,7 @@ async def ChannelsAPI():
             jikkyo_id = f'jk{current_channel_id}'
             if jikkyo_id in now_onair_program_info:
                 description = (
-                    f'<b>📺 現在放送中の番組: {TSInformation.formatString(now_onair_program_info[jikkyo_id]["title"])}\n'
+                    f'<b>🗼 現在放送中の番組: 📺 {TSInformation.formatString(now_onair_program_info[jikkyo_id]["title"])}\n'
                     f'({now_onair_program_info[jikkyo_id]["start_at"].strftime("%H:%M")} ～ {now_onair_program_info[jikkyo_id]["end_at"].strftime("%H:%M")} / {now_onair_program_info[jikkyo_id]["duration_minutes"]}分)</b><br>'
                     f'{row["thread_description"]}'
                 )
