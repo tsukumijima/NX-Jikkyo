@@ -9,7 +9,8 @@
                     <strong>NX-Jikkyo は、<a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">サイバー攻撃で最低7月末まで鯖落ち中</a> のニコニコ実況に代わる、ニコニコ実況民のための避難所であり、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/blob/master/server/app/routers/websocket.py" target="_blank">ニコニコ生放送互換の WebSocket API</a> を備えるコメントサーバーです。</strong><br>
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
-                    <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏</strong>
+                    <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏<br>
+                    また <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフ</a> をいただけると大変モチベが上がるのでよければぜひ🙇🙏 <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋のリスト</a> は不定期で更新してます。<br></strong>
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer v2.3.7.3</a> 以降で、ニコニコ実況の代わりに NX-Jikkyo のコメントをリアルタイム表示できるようになりました！！🎉🎊<br></strong>
@@ -101,7 +102,7 @@
                     </ul>
                 </div>
                 <p class="mt-5 text-text-darken-1 text-right">
-                    2024/06/10 (Last Update: 2024/06/16)<br>
+                    2024/06/10 (Last Update: 2024/06/20)<br>
                     <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a> (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a>)
                 </p>
             </div>
