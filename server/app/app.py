@@ -160,6 +160,7 @@ async def RegisterMasterChannels():
         'jk11': {'name': 'tvk'},
         'jk12': {'name': 'チバテレビ'},
         'jk101': {'name': 'NHK BS'},
+        'jk103': {'name': 'NHK BSプレミアム'},
         'jk141': {'name': 'BS日テレ'},
         'jk151': {'name': 'BS朝日'},
         'jk161': {'name': 'BS-TBS'},
@@ -178,17 +179,27 @@ async def RegisterMasterChannels():
         'jk333': {'name': 'AT-X'},
     }
 
-    # チャンネルが1件も登録されていないか確認
-    if await Channel.all().count() == 0:
+    # 既存のチャンネル情報を取得
+    existing_channels = await Channel.all()
+    existing_channel_ids = {channel.id for channel in existing_channels}
 
-        # チャンネル情報を登録
-        for channel_id, channel_info in master_channels.items():
+    # マスタデータのチャンネル情報を登録または更新
+    for channel_id, channel_info in master_channels.items():
+        master_channel_id = int(channel_id.replace('jk', ''))
+        if master_channel_id not in existing_channel_ids:
             await Channel.create(
-                id = int(channel_id.replace('jk', '')),
+                id = master_channel_id,
                 name = channel_info['name'],
                 description = 'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。'
             )
-        logging.info('Master channels have been registered.')
+            logging.info(f'Channel {channel_info["name"]} has been registered.')
+        else:
+            existing_channel = next(channel for channel in existing_channels if channel.id == master_channel_id)
+            if existing_channel.name != channel_info['name']:
+                existing_channel.name = channel_info['name']
+                await existing_channel.save()
+                logging.info(f'Channel {channel_info["name"]} has been updated.')
+    logging.info('Master channels have been registered or updated.')
 
 # サーバー起動時にチャンネルごとに同時接続数カウントを 0 にリセット
 ## サーバーは再起動しても Redis サーバーは再起動しない場合があり、そうした状況でカウントの整合性を保つために必要
