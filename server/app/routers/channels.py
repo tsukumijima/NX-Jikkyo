@@ -28,8 +28,8 @@ from app.models.comment import (
     ChannelResponse,
     ThreadResponse,
 )
-from app.utils import GetNowONAirProgramInfos
-from app.utils.TSInformation import TSInformation
+# from app.utils import GetNowONAirProgramInfos
+# from app.utils.TSInformation import TSInformation
 
 
 # ルーター
@@ -84,7 +84,7 @@ async def ChannelsAPI():
     )
 
     # 現在放送中の番組情報を取得
-    now_onair_program_info = await GetNowONAirProgramInfos()
+    # now_onair_program_info = await GetNowONAirProgramInfos()
 
     response: list[ChannelResponse] = []
     current_channel_id: int | None = None
@@ -131,18 +131,19 @@ async def ChannelsAPI():
             viewer_count = None
 
         # ステータスが ACTIVE (放送中) のスレッドのみ、当該スレッドの概要に現在放送中の番組タイトルを付け足す
-        if status == 'ACTIVE':
-            jikkyo_id = f'jk{current_channel_id}'
-            if jikkyo_id in now_onair_program_info:
-                description = (
-                    f'<b>🗼 現在放送中の番組: 📺 {TSInformation.formatString(now_onair_program_info[jikkyo_id]["title"])}\n'
-                    f'({now_onair_program_info[jikkyo_id]["start_at"].strftime("%H:%M")} ～ {now_onair_program_info[jikkyo_id]["end_at"].strftime("%H:%M")} / {now_onair_program_info[jikkyo_id]["duration_minutes"]}分)</b><br>'
-                    f'{row["thread_description"]}'
-                )
-            else:
-                description = row["thread_description"]
-        else:
-            description = cast(str, row['thread_description'])
+        # if status == 'ACTIVE':
+        #     jikkyo_id = f'jk{current_channel_id}'
+        #     if jikkyo_id in now_onair_program_info:
+        #         description = (
+        #             f'<b>🗼 現在放送中の番組: 📺 {TSInformation.formatString(now_onair_program_info[jikkyo_id]["title"])}\n'
+        #             f'({now_onair_program_info[jikkyo_id]["start_at"].strftime("%H:%M")} ～ {now_onair_program_info[jikkyo_id]["end_at"].strftime("%H:%M")} / {now_onair_program_info[jikkyo_id]["duration_minutes"]}分)</b><br>'
+        #             f'{row["thread_description"]}'
+        #         )
+        #     else:
+        #         description = row["thread_description"]
+        # else:
+        #     description = cast(str, row['thread_description'])
+        description = cast(str, row['thread_description'])
 
         # スレッド情報を追加
         threads.append(ThreadResponse(
@@ -165,9 +166,9 @@ async def ChannelsAPI():
             threads = threads,
         ))
 
-    # キャッシュを更新 (10秒間有効)
+    # キャッシュを更新 (15秒間有効)
     __channels_cache = response
-    __channels_cache_expiry = time.time() + 10
+    __channels_cache_expiry = time.time() + 15
 
     return response
 

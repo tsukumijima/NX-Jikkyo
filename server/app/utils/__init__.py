@@ -83,7 +83,7 @@ async def GetNowONAirProgramInfos() -> dict[str, ProgramInfo]:
             response.raise_for_status()
             return response.json()
 
-    async def get_current_program(programs: list[dict[str, Any]]) -> ProgramInfo | None:
+    def get_current_program(programs: list[dict[str, Any]]) -> ProgramInfo | None:
         for program in programs:
             start_at = datetime.fromtimestamp(program['startAt'], ZoneInfo('Asia/Tokyo'))
             end_at = datetime.fromtimestamp(program['endAt'], ZoneInfo('Asia/Tokyo'))
@@ -121,7 +121,7 @@ async def GetNowONAirProgramInfos() -> dict[str, ProgramInfo]:
             broadcaster_id = int(content['broadcaster']['id'])
             for jk_id, info in JIKKYO_ID_TO_TVER_BROADCASTER_INFO.items():
                 if info['broadcaster_id'] == broadcaster_id:
-                    current_program = await get_current_program(content['programs'])
+                    current_program = get_current_program(content['programs'])
                     if current_program:
                         results[jk_id] = current_program
 
