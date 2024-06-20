@@ -70,6 +70,7 @@ export default defineComponent({
             await Utils.sleep(0.1);
             const display_date = kakolog_start_dayjs.hour() < 4 ? kakolog_start_dayjs.subtract(1, 'day') : kakolog_start_dayjs;
             const recorded_program = structuredClone(IRecordedProgramDefault);
+            recorded_program.id = -100;
             recorded_program.channel = channel;
             recorded_program.recorded_video.recording_start_time = kakolog_start_dayjs.toISOString();
             recorded_program.recorded_video.recording_end_time = kakolog_end_dayjs.toISOString();
@@ -95,6 +96,8 @@ export default defineComponent({
 
         // 再生セッションを破棄する
         async destroy() {
+
+            this.playerStore.recorded_program = IRecordedProgramDefault;
 
             // PlayerController を破棄
             if (player_controller !== null) {
