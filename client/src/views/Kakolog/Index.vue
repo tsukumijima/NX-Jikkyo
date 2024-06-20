@@ -8,6 +8,18 @@
                 <p class="mt-4 text-text-darken-1">
                     <strong><a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログから、チャンネルと日付時刻を選択して再生できます。</strong><br>
                 </p>
+                <div class="mt-8" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
+                    <v-text-field type="date" color="primary" variant="outlined" label="日付" class="datetime-field">
+                    </v-text-field>
+                    <v-text-field type="time" color="primary" variant="outlined" label="時刻" class="datetime-field">
+                    </v-text-field>
+                </div>
+                <div class="mt-6" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
+                    <v-text-field type="date" color="primary" variant="outlined" label="日付" class="datetime-field">
+                    </v-text-field>
+                    <v-text-field type="time" color="primary" variant="outlined" label="時刻" class="datetime-field">
+                    </v-text-field>
+                </div>
             </div>
         </main>
     </div>
@@ -18,6 +30,19 @@ import HeaderBar from '@/components/HeaderBar.vue';
 import Navigation from '@/components/Navigation.vue';
 
 </script>
+<style lang="scss">
+
+.datetime-field input[type="date"]::-webkit-calendar-picker-indicator,
+.datetime-field input[type="time"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 17px;
+    right: 16px;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+}
+
+</style>
 <style lang="scss" scoped>
 
 blockquote {
