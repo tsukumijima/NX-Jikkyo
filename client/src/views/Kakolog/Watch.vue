@@ -7,6 +7,7 @@ import { mapStores } from 'pinia';
 import { defineComponent } from 'vue';
 
 import Watch from '@/components/Watch/Watch.vue';
+import Message from '@/message';
 import { IChannel } from '@/services/Channels';
 import PlayerController from '@/services/player/PlayerController';
 import { IRecordedProgramDefault } from '@/services/Videos';
@@ -49,6 +50,13 @@ export default defineComponent({
             // それぞれ過去ログ開始日時と終了日時の dayjs に変換
             const kakolog_start_dayjs = dayjs(kakolog_period_id.split('-')[0]);
             const kakolog_end_dayjs = dayjs(kakolog_period_id.split('-')[1]);
+
+            // 終了日時が開始日時より前の場合はエラー
+            if (kakolog_end_dayjs < kakolog_start_dayjs) {
+                Message.error('指定された終了日時が開始日時より前です。');
+                this.$router.push({path: '/not-found/'});
+                return;
+            }
 
             // 再生対象の過去ログの実況チャンネル情報を取得
             const channels_store = useChannelsStore();
