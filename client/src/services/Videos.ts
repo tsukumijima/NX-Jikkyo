@@ -209,7 +209,7 @@ class Videos {
             const chat_date = parseInt(raw_jikkyo_comment.chat.date);
             const chat_date_usec = parseInt(raw_jikkyo_comment.chat.date_usec || '0', 10);
             const comment_time = parseFloat(`${chat_date - start_time}.${chat_date_usec}`);
-            return {
+            const comment_data = {
                 time: comment_time,
                 type: position,
                 size: size,
@@ -217,6 +217,11 @@ class Videos {
                 author: raw_jikkyo_comment.chat.user_id || '',
                 text: comment,
             };
+            // ミュート対象のコメントをここで除外
+            if (CommentUtils.isMutedComment(comment_data.text, comment_data.author, comment_data.color, comment_data.type, comment_data.size)) {
+                return null;
+            }
+            return comment_data;
         }).filter((comment): comment is IJikkyoComment => comment !== null);
 
         return {
