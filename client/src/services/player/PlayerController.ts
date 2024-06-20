@@ -181,51 +181,9 @@ class PlayerController {
         // 無音の音声ファイルを生成
         let audio_url = '';
         if (player_store.recorded_program.id == -100) {
-            const sample_rate = 44100;
-            const frame_count = Math.floor(player_store.recorded_program.duration * sample_rate);
-            const num_channels = 1;
-            const audio_buffer = new AudioBuffer({
-                length: frame_count,
-                sampleRate: sample_rate,
-                numberOfChannels: num_channels,
-            });
-            for (let channel = 0; channel < num_channels; channel++) {
-                const channel_data = audio_buffer.getChannelData(channel);
-                for (let i = 0; i < frame_count; i++) {
-                    channel_data[i] = 0;
-                }
-            }
-            const audio_blob = await new Promise<Blob>((resolve) => {
-                const wav_header = new Uint8Array(44);
-                const data_view = new DataView(wav_header.buffer);
-                data_view.setUint32(0, 0x52494646, false); // "RIFF"
-                data_view.setUint32(4, 36 + frame_count * num_channels * 2, true);
-                data_view.setUint32(8, 0x57415645, false); // "WAVE"
-                data_view.setUint32(12, 0x666d7420, false); // "fmt "
-                data_view.setUint32(16, 16, true);
-                data_view.setUint16(20, 1, true);
-                data_view.setUint16(22, num_channels, true);
-                data_view.setUint32(24, sample_rate, true);
-                data_view.setUint32(28, sample_rate * num_channels * 2, true);
-                data_view.setUint16(32, num_channels * 2, true);
-                data_view.setUint16(34, 16, true);
-                data_view.setUint32(36, 0x64617461, false); // "data"
-                data_view.setUint32(40, frame_count * num_channels * 2, true);
-                const wav_buffer = new ArrayBuffer(wav_header.length + frame_count * num_channels * 2);
-                const wav_view = new DataView(wav_buffer);
-                wav_view.setUint8(0, wav_header[0]);
-                for (let i = 0; i < wav_header.length; i++) {
-                    wav_view.setUint8(i, wav_header[i]);
-                }
-                for (let channel = 0; channel < num_channels; channel++) {
-                    const channel_data = audio_buffer.getChannelData(channel);
-                    for (let i = 0; i < frame_count; i++) {
-                        wav_view.setInt16(wav_header.length + (i * num_channels + channel) * 2, channel_data[i] * 0x7FFF, true);
-                    }
-                }
-                resolve(new Blob([wav_buffer], { type: 'audio/wav' }));
-            });
-            audio_url = URL.createObjectURL(audio_blob);
+            // データ量を削減するためにできるだけサンプルレートを抑えるのが重要
+            // 3000Hz が Web Audio API の限界
+            audio_url = this.createSilentAudioBuffer(player_store.recorded_program.duration, 3000, 1);
             console.log('\u001b[31m[PlayerController] audio_url:', audio_url);
         }
 
@@ -745,6 +703,76 @@ class PlayerController {
         player_store.is_video_buffering = false;
 
         console.log('\u001b[31m[PlayerController] Initialized.');
+    }
+
+
+    /**
+     * 指定された秒数分の無音 WAV を作成し、Blob URL を返す
+     * @param duration 秒数
+     * @param sample_rate サンプルレート
+     * @param num_channels チャンネル数
+     * @returns 無音 WAV の Blob URL
+     */
+    private createSilentAudioBuffer(duration: number, sample_rate: number, num_channels: number): string {
+
+        // 最大1時間 (3600秒) ごとに無音バッファを作成する
+        const max_duration = 3600;
+        const audio_buffers: AudioBuffer[] = [];
+
+        for (let start = 0; start < duration; start += max_duration) {
+            const current_duration = Math.min(max_duration, duration - start);
+            const frame_count = Math.floor(current_duration * sample_rate);
+            const audio_buffer = new AudioBuffer({
+                length: frame_count,
+                sampleRate: sample_rate,
+                numberOfChannels: num_channels,
+            });
+
+            for (let channel = 0; channel < num_channels; channel++) {
+                const channel_data = audio_buffer.getChannelData(channel);
+                for (let i = 0; i < frame_count; i++) {
+                    channel_data[i] = 0;
+                }
+            }
+
+            audio_buffers.push(audio_buffer);
+        }
+
+        const wav_header = new Uint8Array(44);
+        const data_view = new DataView(wav_header.buffer);
+        data_view.setUint32(0, 0x52494646, false); // "RIFF"
+        data_view.setUint32(4, 36 + duration * sample_rate * num_channels * 2, true);
+        data_view.setUint32(8, 0x57415645, false); // "WAVE"
+        data_view.setUint32(12, 0x666d7420, false); // "fmt "
+        data_view.setUint32(16, 16, true);
+        data_view.setUint16(20, 1, true);
+        data_view.setUint16(22, num_channels, true);
+        data_view.setUint32(24, sample_rate, true);
+        data_view.setUint32(28, sample_rate * num_channels * 2, true);
+        data_view.setUint16(32, num_channels * 2, true);
+        data_view.setUint16(34, 16, true);
+        data_view.setUint32(36, 0x64617461, false); // "data"
+        data_view.setUint32(40, duration * sample_rate * num_channels * 2, true);
+
+        const wav_buffer = new ArrayBuffer(wav_header.length + duration * sample_rate * num_channels * 2);
+        const wav_view = new DataView(wav_buffer);
+        wav_view.setUint8(0, wav_header[0]);
+        for (let i = 0; i < wav_header.length; i++) {
+            wav_view.setUint8(i, wav_header[i]);
+        }
+
+        let offset = wav_header.length;
+        for (const buffer of audio_buffers) {
+            for (let channel = 0; channel < num_channels; channel++) {
+                const channel_data = buffer.getChannelData(channel);
+                for (let i = 0; i < buffer.length; i++) {
+                    wav_view.setInt16(offset, channel_data[i] * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+        }
+
+        return URL.createObjectURL(new Blob([wav_buffer], { type: 'audio/wav' }));
     }
 
 
