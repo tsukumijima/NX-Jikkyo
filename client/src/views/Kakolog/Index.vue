@@ -19,22 +19,27 @@
                 </div>
                 <div class="d-flex justify-space-around">
                     <div class="d-flex" style="column-gap: 8px;">
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;">
+                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                            @click="addMinutes(-30)">
                             －30分
                         </v-btn>
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;">
+                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                            @click="addMinutes(-5)">
                             －5分
                         </v-btn>
                     </div>
                     <v-btn variant="flat" color="secondary" width="54" height="46"
-                        v-tooltip.top="'開始日時を終了日時に反映する'">
+                        v-tooltip.top="'開始日時を終了日時に反映する'"
+                        @click="end_date = start_date; end_time = start_time">
                         <Icon icon="fluent:chevron-double-down-16-filled" height="40px" />
                     </v-btn>
                     <div class="d-flex" style="column-gap: 8px;">
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;">
+                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                            @click="addMinutes(5)">
                             ＋5分
                         </v-btn>
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;">
+                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                            @click="addMinutes(30)">
                             ＋30分
                         </v-btn>
                     </div>
@@ -62,6 +67,7 @@ import { ref } from 'vue';
 import HeaderBar from '@/components/HeaderBar.vue';
 import Navigation from '@/components/Navigation.vue';
 import useChannelsStore from '@/stores/ChannelsStore';
+import { dayjs } from '@/utils';
 
 // 実況チャンネルの選択肢を生成
 const jikkyo_channel_items = ref<{ title: string; value: string }[]>([]);
@@ -74,17 +80,42 @@ channels_store.update().then(() => {
     }));
 });
 
-// フォームで受け取る値
+// 実況チャンネル ID
 const jikkyo_channel_id = ref('jk1');
-// 開始日時
-const start_date = ref('2024-01-01');
-const start_time = ref('00:00');
-// 終了日時
-const end_date = ref('2024-01-01');
-const end_time = ref('00:00');
+
+// 現在日時を取得し、分と秒を0に設定
+const now = dayjs().minute(0).second(0);
+
+// 開始日時（終了日時の1時間前）
+const start_date = ref(now.subtract(1, 'hour').format('YYYY-MM-DD'));
+const start_time = ref(now.subtract(1, 'hour').format('HH:mm'));
+
+// 終了日時（現在日時の分と秒を0にしたもの）
+const end_date = ref(now.format('YYYY-MM-DD'));
+const end_time = ref(now.format('HH:mm'));
+
+// -30分/-5分/+5分/+30分 を終了日時両方に反映する
+// もちろん日付の繰り上がり/繰り下がりに対応する
+function addMinutes(minutes: number) {
+
+    // 現在の終了日時を取得
+    const current_end = dayjs(`${end_date.value} ${end_time.value}`);
+
+    // 指定された分数を加算
+    const new_end = current_end.add(minutes, 'minute');
+
+    // 新しい終了日時を設定
+    end_date.value = new_end.format('YYYY-MM-DD');
+    end_time.value = new_end.format('HH:mm');
+}
 
 </script>
 <style lang="scss">
+
+.datetime-field input[type="date"],
+.datetime-field input[type="time"] {
+    font-size: 18.5px;
+}
 
 .datetime-field input[type="date"]::-webkit-calendar-picker-indicator,
 .datetime-field input[type="time"]::-webkit-calendar-picker-indicator {
