@@ -9,15 +9,15 @@
                     <strong><a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログから、チャンネルと日付時刻を選択して再生できます。</strong><br>
                 </p>
                 <div class="mt-8" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
-                    <v-text-field type="date" color="primary" variant="outlined" label="日付" class="datetime-field">
+                    <v-text-field type="date" color="primary" variant="outlined" label="開始日時" class="datetime-field">
                     </v-text-field>
-                    <v-text-field type="time" color="primary" variant="outlined" label="時刻" class="datetime-field">
+                    <v-text-field type="time" color="primary" variant="outlined" label="開始時刻" class="datetime-field">
                     </v-text-field>
                 </div>
                 <div class="mt-6" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
-                    <v-text-field type="date" color="primary" variant="outlined" label="日付" class="datetime-field">
+                    <v-text-field type="date" color="primary" variant="outlined" label="終了日時" class="datetime-field">
                     </v-text-field>
-                    <v-text-field type="time" color="primary" variant="outlined" label="時刻" class="datetime-field">
+                    <v-text-field type="time" color="primary" variant="outlined" label="終了時刻" class="datetime-field">
                     </v-text-field>
                 </div>
             </div>
