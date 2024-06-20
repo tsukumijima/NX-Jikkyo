@@ -14,7 +14,7 @@ import PlayerManager from '@/services/player/PlayerManager';
 import Videos from '@/services/Videos';
 import useChannelsStore from '@/stores/ChannelsStore';
 import usePlayerStore from '@/stores/PlayerStore';
-import useSettingsStore, { LiveStreamingQuality, LIVE_STREAMING_QUALITIES, VideoStreamingQuality, VIDEO_STREAMING_QUALITIES } from '@/stores/SettingsStore';
+import useSettingsStore, { LiveStreamingQuality, LIVE_STREAMING_QUALITIES, VideoStreamingQuality } from '@/stores/SettingsStore';
 import Utils, { dayjs, PlayerUtils } from '@/utils';
 
 
@@ -201,7 +201,7 @@ class PlayerController {
             // スクリーンショット (こちらで制御するため無効化)
             screenshot: false,
             // CORS を有効化
-            crossOrigin: 'anonymous',
+            // crossOrigin: 'anonymous',
             // 音量の初期値
             volume: 1.0,
 
@@ -265,6 +265,7 @@ class PlayerController {
                 // ビデオ視聴: 録画番組情報がセットされているはず
                 } else {
 
+                    /*
                     // ビデオストリーミング API のベース URL
                     const streaming_api_base_url = `${Utils.api_base_url}/streams/video/${player_store.recorded_program.id}`;
 
@@ -285,6 +286,15 @@ class PlayerController {
                     return {
                         quality: qualities,
                         defaultQuality: default_quality,
+                    };*/
+
+                    return {
+                        quality: [{
+                            name: 'Silent',
+                            type: 'normal',
+                            url: 'https://github.com/anars/blank-audio/raw/master/5-minutes-of-silence.mp3',
+                        }],
+                        defaultQuality: 'Silent',
                     };
                 }
             })(),
