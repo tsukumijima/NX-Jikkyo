@@ -19,26 +19,26 @@
                 </div>
                 <div class="d-flex justify-space-around">
                     <div class="d-flex" style="column-gap: 8px;">
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                        <v-btn variant="flat" color="background-lighten-2" height="46" class="px-2" style="font-size: 15px;"
                             @click="addMinutes(-30)">
                             －30分
                         </v-btn>
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                        <v-btn variant="flat" color="background-lighten-2" height="46" class="px-2" style="font-size: 15px;"
                             @click="addMinutes(-5)">
                             －5分
                         </v-btn>
                     </div>
-                    <v-btn variant="flat" color="secondary" width="54" height="46"
+                    <v-btn variant="flat" color="secondary" height="46" class="px-2"
                         v-tooltip.top="'開始日時を終了日時に反映する'"
                         @click="end_date = start_date; end_time = start_time">
                         <Icon icon="fluent:chevron-double-down-16-filled" height="40px" />
                     </v-btn>
                     <div class="d-flex" style="column-gap: 8px;">
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                        <v-btn variant="flat" color="background-lighten-2" height="46" class="px-2" style="font-size: 15px;"
                             @click="addMinutes(5)">
                             ＋5分
                         </v-btn>
-                        <v-btn variant="flat" color="background-lighten-2" height="46" style="font-size: 16px;"
+                        <v-btn variant="flat" color="background-lighten-2" height="46" class="px-2" style="font-size: 15px;"
                             @click="addMinutes(30)">
                             ＋30分
                         </v-btn>
@@ -51,7 +51,7 @@
                     </v-text-field>
                 </div>
                 <div class="mt-2 d-flex justify-space-around">
-                    <v-btn variant="flat" color="secondary" height="46">
+                    <v-btn variant="flat" color="secondary" height="46" @click="playKakolog()">
                         <Icon icon="fluent:receipt-play-20-regular" height="32px" />
                         <span class="ml-2" style="font-size: 17px;">過去ログを再生開始</span>
                     </v-btn>
@@ -63,11 +63,14 @@
 <script lang="ts" setup>
 
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import HeaderBar from '@/components/HeaderBar.vue';
 import Navigation from '@/components/Navigation.vue';
 import useChannelsStore from '@/stores/ChannelsStore';
 import { dayjs } from '@/utils';
+
+const router = useRouter();
 
 // 実況チャンネルの選択肢を生成
 const jikkyo_channel_items = ref<{ title: string; value: string }[]>([]);
@@ -107,6 +110,12 @@ function addMinutes(minutes: number) {
     // 新しい終了日時を設定
     end_date.value = new_end.format('YYYY-MM-DD');
     end_time.value = new_end.format('HH:mm');
+}
+
+function playKakolog() {
+    // 開始日時-終了日時の ID を 20191002213500-20191002215600 のようなフォーマットで組み立てる
+    const id = `${dayjs(`${start_date.value} ${start_time.value}`).format('YYYYMMDDHHmmss')}-${dayjs(`${end_date.value} ${end_time.value}`).format('YYYYMMDDHHmmss')}`;
+    router.push({ path: `/log/${jikkyo_channel_id.value}/${id}` });
 }
 
 </script>
