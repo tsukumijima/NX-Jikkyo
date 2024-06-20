@@ -133,7 +133,6 @@ const VIDEO_SHORTCUT_LIST: IShortcutList = {
             icon_height: '20px',
             shortcuts: [
                 { name: '再生 / 一時停止の切り替え', keys: [{name: 'Space', icon: false}] },
-                { name: '再生 / 一時停止の切り替え (キャプチャタブ表示時)', keys: [{name: 'Shift', icon: false}, {name: 'Space', icon: false}] },
                 { name: '5秒早戻し', keys: [{name: 'fluent:arrow-left-12-filled', icon: true}] },
                 { name: '5秒早送り', keys: [{name: 'fluent:arrow-right-12-filled', icon: true}] },
                 { name: '15秒早戻し', keys: [{name: Utils.CtrlOrCmd(), icon: false}, {name: 'fluent:arrow-left-12-filled', icon: true}] },

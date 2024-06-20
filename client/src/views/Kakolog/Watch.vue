@@ -79,9 +79,9 @@ export default defineComponent({
             recorded_program.title = `${channel.name}【ニコニコ実況】${display_date.format('YYYY年MM月DD日')}`;
             recorded_program.description = `
                 NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。<br>
-                <div class="mt-1"></div>
+                <div class="mt-2"></div>
                 このページでは、ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo の過去ログを再生できます。
-                <div class="mt-1"></div>
+                <div class="mt-2"></div>
                 現在は Ch:${channel.channel_number} ${channel.name} に ${display_date.format('YYYY年MM月DD日')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の期間に投稿されたコメントの過去ログを時系列に再生しています。
             `;
             recorded_program.start_time = kakolog_start_dayjs.toISOString();

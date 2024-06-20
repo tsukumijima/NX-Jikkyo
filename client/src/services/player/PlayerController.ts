@@ -178,6 +178,57 @@ class PlayerController {
             localStorage.setItem('dplayer-danmaku-opacity', '1.0');
         }
 
+        // 無音の音声ファイルを生成
+        let audio_url = '';
+        if (player_store.recorded_program.id == -100) {
+            const sample_rate = 44100;
+            const frame_count = Math.floor(player_store.recorded_program.duration * sample_rate);
+            const num_channels = 1;
+            const audio_buffer = new AudioBuffer({
+                length: frame_count,
+                sampleRate: sample_rate,
+                numberOfChannels: num_channels,
+            });
+            for (let channel = 0; channel < num_channels; channel++) {
+                const channel_data = audio_buffer.getChannelData(channel);
+                for (let i = 0; i < frame_count; i++) {
+                    channel_data[i] = 0;
+                }
+            }
+            const audio_blob = await new Promise<Blob>((resolve) => {
+                const wav_header = new Uint8Array(44);
+                const data_view = new DataView(wav_header.buffer);
+                data_view.setUint32(0, 0x52494646, false); // "RIFF"
+                data_view.setUint32(4, 36 + frame_count * num_channels * 2, true);
+                data_view.setUint32(8, 0x57415645, false); // "WAVE"
+                data_view.setUint32(12, 0x666d7420, false); // "fmt "
+                data_view.setUint32(16, 16, true);
+                data_view.setUint16(20, 1, true);
+                data_view.setUint16(22, num_channels, true);
+                data_view.setUint32(24, sample_rate, true);
+                data_view.setUint32(28, sample_rate * num_channels * 2, true);
+                data_view.setUint16(32, num_channels * 2, true);
+                data_view.setUint16(34, 16, true);
+                data_view.setUint32(36, 0x64617461, false); // "data"
+                data_view.setUint32(40, frame_count * num_channels * 2, true);
+                const wav_buffer = new ArrayBuffer(wav_header.length + frame_count * num_channels * 2);
+                const wav_view = new DataView(wav_buffer);
+                wav_view.setUint8(0, wav_header[0]);
+                for (let i = 0; i < wav_header.length; i++) {
+                    wav_view.setUint8(i, wav_header[i]);
+                }
+                for (let channel = 0; channel < num_channels; channel++) {
+                    const channel_data = audio_buffer.getChannelData(channel);
+                    for (let i = 0; i < frame_count; i++) {
+                        wav_view.setInt16(wav_header.length + (i * num_channels + channel) * 2, channel_data[i] * 0x7FFF, true);
+                    }
+                }
+                resolve(new Blob([wav_buffer], { type: 'audio/wav' }));
+            });
+            audio_url = URL.createObjectURL(audio_blob);
+            console.log('\u001b[31m[PlayerController] audio_url:', audio_url);
+        }
+
         // DPlayer を初期化
         this.player = new DPlayer({
             // DPlayer を配置する要素
@@ -201,7 +252,7 @@ class PlayerController {
             // スクリーンショット (こちらで制御するため無効化)
             screenshot: false,
             // CORS を有効化
-            // crossOrigin: 'anonymous',
+            crossOrigin: 'anonymous',
             // 音量の初期値
             volume: 1.0,
 
@@ -292,7 +343,7 @@ class PlayerController {
                         quality: [{
                             name: 'Silent',
                             type: 'normal',
-                            url: 'https://github.com/anars/blank-audio/raw/master/5-minutes-of-silence.mp3',
+                            url: audio_url,
                         }],
                         defaultQuality: 'Silent',
                     };
