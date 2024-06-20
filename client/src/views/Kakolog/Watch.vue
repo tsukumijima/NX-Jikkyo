@@ -68,9 +68,13 @@ export default defineComponent({
 
             // 録画番組情報をモックして錬成
             await Utils.sleep(0.1);
+            const display_date = kakolog_start_dayjs.hour() < 4 ? kakolog_start_dayjs.subtract(1, 'day') : kakolog_start_dayjs;
             const recorded_program = structuredClone(IRecordedProgramDefault);
             recorded_program.channel = channel;
-            const display_date = kakolog_start_dayjs.hour() < 4 ? kakolog_start_dayjs.subtract(1, 'day') : kakolog_start_dayjs;
+            recorded_program.recorded_video.recording_start_time = kakolog_start_dayjs.toISOString();
+            recorded_program.recorded_video.recording_end_time = kakolog_end_dayjs.toISOString();
+            recorded_program.recording_start_margin = 0;
+            recorded_program.recording_end_margin = 0;
             recorded_program.title = `${channel.name}【ニコニコ実況】${display_date.format('YYYY年MM月DD日')}`;
             recorded_program.description = `
                 NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。<br>

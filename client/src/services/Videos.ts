@@ -1,5 +1,6 @@
 
-import APIClient from  '@/services/APIClient';
+import APIClient from './APIClient';
+
 import { IChannel } from '@/services/Channels';
 import { CommentUtils } from '@/utils';
 
@@ -140,32 +141,89 @@ export interface IJikkyoComments {
 
 class Videos {
 
-
     /**
-     * 録画番組の放送中に投稿されたニコニコ実況の過去ログコメントを取得する
-     * @param video_id 録画番組の ID
+     * ニコニコ実況の過去ログコメントを取得する
+     * KonomiTV と異なり、直接過去ログ API にアクセスさせるように適当に改造してある
+     * @param recorded_program 録画番組情報
      * @returns 過去ログコメントのリスト
      */
-    static async fetchVideoJikkyoComments(video_id: number): Promise<IJikkyoComments> {
+    static async fetchVideoJikkyoComments(recorded_program: IRecordedProgram): Promise<IJikkyoComments> {
 
         // API リクエストを実行
-        const response = await APIClient.get<IJikkyoComments>(`/videos/${video_id}/jikkyo`);
+        const start_time = new Date(recorded_program.start_time).getTime() / 1000;
+        const end_time = new Date(recorded_program.end_time).getTime() / 1000;
+        const jikkyo_id = recorded_program.channel!.id;
+        const kakolog_api_url = `https://jikkyo.tsukumijima.net/api/kakolog/${jikkyo_id}?starttime=${start_time}&endtime=${end_time}&format=json`;
+
+        const response = await APIClient.get(kakolog_api_url, { timeout: 30000 });
 
         // エラー処理
         if (response.type === 'error') {
-            APIClient.showGenericError(response, '過去ログコメントを取得できませんでした。');
+            let detail;
+            switch (response.status) {
+                case 500:
+                    detail = '過去ログ API でサーバーエラーが発生しました。過去ログ API に不具合がある可能性があります。(HTTP Error 500)';
+                    break;
+                case 503:
+                    detail = '現在、過去ログ API は一時的に利用できなくなっています。(HTTP Error 503)';
+                    break;
+                default:
+                    detail = `現在、過去ログ API でエラーが発生しています。(HTTP Error ${response.status})`;
+            }
+            APIClient.showGenericError(response, detail);
             return {
                 is_success: false,
                 comments: [],
-                detail: '過去ログコメントを取得できませんでした。',
+                detail: detail,
             };
         }
 
-        // ミュート対象のコメントを除外して返す
-        response.data.comments = response.data.comments.filter((comment) => {
-            return CommentUtils.isMutedComment(comment.text, comment.author, comment.color, comment.type, comment.size) === false;
-        });
-        return response.data;
+        const kakolog_api_response_json = await response.data as { error?: string; packet: any[] };
+        if ('error' in kakolog_api_response_json) {
+            return {
+                is_success: false,
+                comments: [],
+                detail: kakolog_api_response_json.error || '過去ログコメントを取得できませんでした。',
+            };
+        }
+
+        const raw_jikkyo_comments = kakolog_api_response_json.packet as { chat: { content: string; date: string; date_usec: string; deleted: string; mail: string; user_id: string; } }[];
+        if (raw_jikkyo_comments.length === 0) {
+            return {
+                is_success: false,
+                comments: [],
+                detail: 'この録画番組の過去ログコメントは存在しないか、現在取得中です。',
+            };
+        }
+
+        const jikkyo_comments = raw_jikkyo_comments.map((raw_jikkyo_comment) => {
+            const comment = raw_jikkyo_comment.chat.content;
+            if (typeof comment !== 'string' || comment === '' || raw_jikkyo_comment.chat.deleted === '1' || /\/[a-z]+ /.test(comment)) {
+                return null;
+            }
+
+            const parsed_comment_command = CommentUtils.parseCommentCommand(raw_jikkyo_comment.chat.mail);
+            const color = parsed_comment_command.color;
+            const position = parsed_comment_command.position;
+            const size = parsed_comment_command.size;
+            const chat_date = parseInt(raw_jikkyo_comment.chat.date);
+            const chat_date_usec = parseInt(raw_jikkyo_comment.chat.date_usec || '0', 10);
+            const comment_time = parseFloat(`${chat_date - start_time}.${chat_date_usec}`);
+            return {
+                time: comment_time,
+                type: position,
+                size: size,
+                color: color,
+                author: raw_jikkyo_comment.chat.user_id || '',
+                text: comment,
+            };
+        }).filter((comment): comment is IJikkyoComment => comment !== null);
+
+        return {
+            is_success: true,
+            comments: jikkyo_comments,
+            detail: '過去ログコメントを取得しました。',
+        };
     }
 }
 
