@@ -9,6 +9,9 @@
 <script lang="ts" setup>
 
 import Snackbars from '@/components/Snackbars.vue';
+import { provideKakologState } from '@/views/Kakolog/KakologState';
+
+provideKakologState();
 
 </script>
 <style lang="scss">

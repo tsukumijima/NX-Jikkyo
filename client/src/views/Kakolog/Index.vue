@@ -69,6 +69,7 @@ import HeaderBar from '@/components/HeaderBar.vue';
 import Navigation from '@/components/Navigation.vue';
 import useChannelsStore from '@/stores/ChannelsStore';
 import { dayjs } from '@/utils';
+import { useKakologState } from '@/views/Kakolog/KakologState';
 
 const router = useRouter();
 
@@ -83,19 +84,14 @@ channels_store.update().then(() => {
     }));
 });
 
-// 実況チャンネル ID
-const jikkyo_channel_id = ref('jk1');
-
-// 現在日時を取得し、分と秒を0に設定
-const now = dayjs().minute(0).second(0);
-
-// 開始日時（終了日時の1時間前）
-const start_date = ref(now.subtract(1, 'hour').format('YYYY-MM-DD'));
-const start_time = ref(now.subtract(1, 'hour').format('HH:mm'));
-
-// 終了日時（現在日時の分と秒を0にしたもの）
-const end_date = ref(now.format('YYYY-MM-DD'));
-const end_time = ref(now.format('HH:mm'));
+// useKakologState から状態を取得
+const {
+    jikkyo_channel_id,
+    start_date,
+    start_time,
+    end_date,
+    end_time,
+} = useKakologState();
 
 // -30分/-5分/+5分/+30分 を終了日時両方に反映する
 // もちろん日付の繰り上がり/繰り下がりに対応する
