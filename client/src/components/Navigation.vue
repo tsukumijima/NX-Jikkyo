@@ -8,6 +8,11 @@
                         <Icon class="navigation__link-icon" icon="fluent:tv-20-regular" width="26px" />
                         <span class="navigation__link-text">テレビ実況</span>
                     </router-link>
+                    <router-link v-ripple class="navigation__link" active-class="navigation__link--active" to="/log/"
+                        :class="{'navigation__link--active': $route.path.startsWith('/log')}">
+                        <Icon class="navigation__link-icon" icon="fluent:receipt-play-20-regular" width="26px" />
+                        <span class="navigation__link-text">過去ログ再生</span>
+                    </router-link>
                     <a v-ripple class="navigation__link" active-class="navigation__link--active"
                         href="https://jikkyo.tsukumijima.net" target="_blank">
                         <Icon class="navigation__link-icon" icon="fluent:slide-text-multiple-20-regular" width="26px" />

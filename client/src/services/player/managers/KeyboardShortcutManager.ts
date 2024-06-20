@@ -138,6 +138,46 @@ class KeyboardShortcutManager implements PlayerManager {
                 this.player.toggle();
             }},
 
+            // ←: ビデオ視聴: 5秒早戻し
+            {mode: 'Video', key: 'ArrowLeft', repeat: true, ctrl: false, shift: false, alt: false, handler: () => {
+                this.player.seek(this.player.video.currentTime - 5);
+            }},
+
+            // →: ビデオ視聴: 5秒早送り
+            {mode: 'Video', key: 'ArrowRight', repeat: true, ctrl: false, shift: false, alt: false, handler: () => {
+                this.player.seek(this.player.video.currentTime + 5);
+            }},
+
+            // Ctrl + ←: ビデオ視聴: 15秒早戻し
+            {mode: 'Video', key: 'ArrowLeft', repeat: true, ctrl: true, shift: false, alt: false, handler: () => {
+                this.player.seek(this.player.video.currentTime - 15);
+            }},
+
+            // Ctrl + →: ビデオ視聴: 15秒早送り
+            {mode: 'Video', key: 'ArrowRight', repeat: true, ctrl: true, shift: false, alt: false, handler: () => {
+                this.player.seek(this.player.video.currentTime + 15);
+            }},
+
+            // Shift + ←: ビデオ視聴: 30秒早戻し
+            {mode: 'Video', key: 'ArrowLeft', repeat: true, ctrl: false, shift: true, alt: false, handler: () => {
+                this.player.seek(this.player.video.currentTime - 30);
+            }},
+
+            // Shift + →: ビデオ視聴: 30秒早送り
+            {mode: 'Video', key: 'ArrowRight', repeat: true, ctrl: false, shift: true, alt: false, handler: () => {
+                this.player.seek(this.player.video.currentTime + 30);
+            }},
+
+            // Alt + ←: ビデオ視聴: 60秒早戻し
+            {mode: 'Video', key: 'ArrowLeft', repeat: true, ctrl: false, shift: false, alt: true, handler: () => {
+                this.player.seek(this.player.video.currentTime - 60);
+            }},
+
+            // Alt + →: ビデオ視聴: 60秒早送り
+            {mode: 'Video', key: 'ArrowRight', repeat: true, ctrl: false, shift: false, alt: true, handler: () => {
+                this.player.seek(this.player.video.currentTime + 60);
+            }},
+
             // F: フルスクリーンの切り替え
             {mode: 'Both', key: 'KeyF', repeat: false, ctrl: false, shift: false, alt: false, handler: () => {
                 this.player.fullScreen.toggle();
@@ -179,6 +219,11 @@ class KeyboardShortcutManager implements PlayerManager {
             // K: ライブ視聴: 番組情報タブを表示する
             {mode: 'Live', key: 'KeyK', repeat: false, ctrl: false, shift: false, alt: false, handler: () => {
                 player_store.tv_panel_active_tab = 'Program';
+            }},
+
+            // K: ビデオ視聴: 録画番組情報タブを表示する
+            {mode: 'Video', key: 'KeyK', repeat: false, ctrl: false, shift: false, alt: false, handler: () => {
+                player_store.video_panel_active_tab = 'RecordedProgram';
             }},
 
             // L: ライブ視聴: チャンネルタブを表示する

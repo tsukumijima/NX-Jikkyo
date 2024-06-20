@@ -52,13 +52,23 @@
                 </v-select>
             </div>
             <div class="settings__item">
-                <div class="settings__item-heading">デフォルトで表示されるパネルのタブ</div>
+                <div class="settings__item-heading">テレビ実況時にデフォルトで表示されるパネルのタブ</div>
                 <div class="settings__item-label">
                     実況画面を開いたときに、右側のパネルで最初に表示されるタブを設定します。<br>
                 </div>
                 <v-select class="settings__item-form" color="primary" variant="outlined" hide-details
                     :density="is_form_dense ? 'compact' : 'default'"
                     :items="tv_panel_active_tab" v-model="settingsStore.settings.tv_panel_active_tab">
+                </v-select>
+            </div>
+            <div class="settings__item">
+                <div class="settings__item-heading">過去ログ再生時にデフォルトで表示されるパネルのタブ</div>
+                <div class="settings__item-label">
+                    過去ログ再生画面を開いたときに、右側のパネルで最初に表示されるタブを設定します。<br>
+                </div>
+                <v-select class="settings__item-form" color="primary" variant="outlined" hide-details
+                    :density="is_form_dense ? 'compact' : 'default'"
+                    :items="video_panel_active_tab" v-model="settingsStore.settings.video_panel_active_tab">
                 </v-select>
             </div>
             <v-divider class="mt-6"></v-divider>
@@ -153,9 +163,9 @@ export default defineComponent({
             // ビデオをみるときにデフォルトで表示されるパネルのタブの選択肢
             video_panel_active_tab: [
                 {title: '番組情報タブ', value: 'RecordedProgram'},
-                {title: 'シリーズタブ', value: 'Series'},
+                // {title: 'シリーズタブ', value: 'Series'},
                 {title: 'コメントタブ', value: 'Comment'},
-                {title: 'Twitter タブ', value: 'Twitter'},
+                // {title: 'Twitter タブ', value: 'Twitter'},
             ],
 
             // 選択された設定データ (NX-Jikkyo-Settings.json) が入る

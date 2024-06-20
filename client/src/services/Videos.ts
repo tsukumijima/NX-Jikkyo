@@ -140,25 +140,6 @@ export interface IJikkyoComments {
 
 class Videos {
 
-    /**
-     * 録画番組情報を取得する
-     * @param video_id 録画番組の ID
-     * @returns 録画番組情報 or 録画番組情報の取得に失敗した場合は null
-     */
-    static async fetchVideo(video_id: number): Promise<IRecordedProgram | null> {
-
-        // API リクエストを実行
-        const response = await APIClient.get<IRecordedProgram>(`/videos/${video_id}`);
-
-        // エラー処理
-        if (response.type === 'error') {
-            APIClient.showGenericError(response, '録画番組情報を取得できませんでした。');
-            return null;
-        }
-
-        return response.data;
-    }
-
 
     /**
      * 録画番組の放送中に投稿されたニコニコ実況の過去ログコメントを取得する

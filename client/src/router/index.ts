@@ -34,6 +34,24 @@ const router = createRouter({
             },
         },
         {
+            path: '/log/',
+            name: 'Kakolog',
+            component: () => import('@/views/Kakolog/Index.vue'),
+            meta: {
+                title: '過去ログ再生 | NX-Jikkyo : ニコニコ実況避難所',
+                description: 'ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログから、チャンネルと日付時刻を選択して再生できます。',
+            },
+        },
+        {
+            path: '/log/:display_channel_id/:kakolog_period_id',
+            name: 'Kakolog Watch',
+            component: () => import('@/views/Kakolog/Watch.vue'),
+            meta: {
+                title: '過去ログ再生 | NX-Jikkyo : ニコニコ実況避難所',
+                description: 'ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログから、チャンネルと日付時刻を選択して再生できます。',
+            },
+        },
+        {
             path: '/about/',
             name: 'About',
             component: () => import('@/views/About.vue'),

@@ -16,6 +16,8 @@
         <div class="watch-panel__content-container">
             <Program class="watch-panel__content" v-if="playback_mode === 'Live'"
                 :class="{'watch-panel__content--active': panel_active_tab === 'Program'}" />
+            <RecordedProgram class="watch-panel__content" v-if="playback_mode === 'Video'"
+                :class="{'watch-panel__content--active': panel_active_tab === 'RecordedProgram'}" />
             <Channel class="watch-panel__content" v-if="playback_mode === 'Live'"
                 :class="{'watch-panel__content--active': panel_active_tab === 'Channel'}" />
             <Comment class="watch-panel__content" :playback_mode="playback_mode"
@@ -25,6 +27,12 @@
             <div v-ripple class="panel-navigation-button" v-if="playback_mode === 'Live'"
                  :class="{'panel-navigation-button--active': panel_active_tab === 'Program'}"
                  @click="playerStore.tv_panel_active_tab = 'Program'">
+                <Icon class="panel-navigation-button__icon" icon="fa-solid:info-circle" width="33px" />
+                <span class="panel-navigation-button__text">情報</span>
+            </div>
+            <div v-ripple class="panel-navigation-button" v-if="playback_mode === 'Video'"
+                 :class="{'panel-navigation-button--active': panel_active_tab === 'RecordedProgram'}"
+                 @click="playerStore.video_panel_active_tab = 'RecordedProgram'">
                 <Icon class="panel-navigation-button__icon" icon="fa-solid:info-circle" width="33px" />
                 <span class="panel-navigation-button__text">情報</span>
             </div>
@@ -51,6 +59,7 @@ import { defineComponent, PropType } from 'vue';
 import Channel from '@/components/Watch/Panel/Channel.vue';
 import Comment from '@/components/Watch/Panel/Comment.vue';
 import Program from '@/components/Watch/Panel/Program.vue';
+import RecordedProgram from '@/components/Watch/Panel/RecordedProgram.vue';
 import useChannelsStore from '@/stores/ChannelsStore';
 import usePlayerStore from '@/stores/PlayerStore';
 import Utils from '@/utils';
@@ -61,6 +70,7 @@ export default defineComponent({
         Channel,
         Comment,
         Program,
+        RecordedProgram,
     },
     props: {
         playback_mode: {

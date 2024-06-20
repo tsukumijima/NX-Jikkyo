@@ -22,7 +22,7 @@ export interface ILocalClientSettings extends IClientSettings {
     pinned_channel_ids: string[];
     panel_display_state: 'RestorePreviousState' | 'AlwaysDisplay' | 'AlwaysFold';
     tv_panel_active_tab: 'Program' | 'Channel' | 'Comment';
-    video_panel_active_tab: 'RecordedProgram' | 'Series' | 'Comment';
+    video_panel_active_tab: 'RecordedProgram' | 'Comment';
     show_player_background_image: boolean;
     tv_channel_selection_requires_alt_key: boolean;
     tv_streaming_quality: LiveStreamingQuality;

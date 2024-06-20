@@ -5,10 +5,10 @@
             <Icon icon="fluent:tv-20-regular" width="30px" />
             <span class="mt-1">テレビ実況</span>
         </v-btn>
-        <v-btn class="bottom-navigation-button"
-            href="https://jikkyo.tsukumijima.net" target="_blank">
-            <Icon icon="fluent:slide-text-multiple-20-regular" width="26px" />
-            <span class="mt-1">過去ログ API</span>
+        <v-btn class="bottom-navigation-button" to="/log/"
+            :class="{'v-btn--active': $route.path.startsWith('/log')}">
+            <Icon icon="fluent:receipt-play-20-regular" width="30px" />
+            <span class="mt-1">過去ログ再生</span>
         </v-btn>
         <v-btn class="bottom-navigation-button" to="/about/"
             :class="{'v-btn--active': $route.path.startsWith('/about')}">
