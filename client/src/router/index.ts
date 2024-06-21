@@ -168,7 +168,6 @@ router.beforeResolve((to, from, next) => {
     // to と from の両方のパスがこの prefix で始まる場合は View Transition API を適用しない
     const no_transition_routes = [
         '/watch/',
-        '/videos/watch/',
     ];
     if (document.startViewTransition && !no_transition_routes.some((route) => to.path.startsWith(route) && from.path.startsWith(route))) {
         document.startViewTransition(() => {

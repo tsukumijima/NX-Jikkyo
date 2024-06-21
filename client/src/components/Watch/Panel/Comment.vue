@@ -590,7 +590,7 @@ export default defineComponent({
                     margin-left: auto;
                     padding-left: 8px;
                     color: rgb(var(--v-theme-text-darken-1));
-                    font-family: 'Open Sans', sans-serif;
+                    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
                     font-size: 13px;
                 }
 

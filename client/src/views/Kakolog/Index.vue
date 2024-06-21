@@ -8,13 +8,19 @@
                 <p class="mt-4 text-text-darken-1">
                     <strong><a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。</strong><br>
                 </p>
+                <p class="mt-1 text-text-darken-1">
+                    十数年分もの膨大な過去ログデータには、当時の世相が色濃く反映された、その時代を生きた「生の声」が、まるでタイムカプセルのように刻まれています。<br>
+                    たまには昔のコメントを眺めて懐かしんだり、録画番組をコメント付きで楽しんでみては？
+                </p>
                 <v-select class="mt-12 datetime-field" color="primary" variant="outlined" hide-details label="実況チャンネル"
                     :items="jikkyo_channel_items" v-model="jikkyo_channel_id">
                 </v-select>
                 <div class="mt-8" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
-                    <v-text-field type="date" color="primary" variant="outlined" label="開始日付" class="datetime-field" v-model="start_date">
+                    <v-text-field type="date" class="datetime-field" color="primary" variant="outlined" label="開始日付"
+                        min="2009-11-26" :max="dayjs().format('YYYY-MM-DD')" v-model="start_date">
                     </v-text-field>
-                    <v-text-field type="time" color="primary" variant="outlined" label="開始時刻" class="datetime-field" v-model="start_time">
+                    <v-text-field type="time" class="datetime-field" color="primary" variant="outlined" label="開始時刻"
+                        v-model="start_time">
                     </v-text-field>
                 </div>
                 <div class="d-flex justify-space-around" style="font-family: 'Open Sans','YakuHanJPs','Twemoji','Hiragino Sans','Noto Sans JP',sans-serif;">
@@ -45,9 +51,11 @@
                     </div>
                 </div>
                 <div class="mt-6" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
-                    <v-text-field type="date" color="primary" variant="outlined" label="終了日付" class="datetime-field" v-model="end_date">
+                    <v-text-field type="date" class="datetime-field" color="primary" variant="outlined" label="終了日付"
+                        min="2009-11-26" :max="dayjs().format('YYYY-MM-DD')" v-model="end_date">
                     </v-text-field>
-                    <v-text-field type="time" color="primary" variant="outlined" label="終了時刻" class="datetime-field" v-model="end_time">
+                    <v-text-field type="time" class="datetime-field" color="primary" variant="outlined" label="終了時刻"
+                        v-model="end_time">
                     </v-text-field>
                 </div>
                 <div class="mt-3 d-flex justify-space-around">
@@ -101,6 +109,11 @@ function addMinutes(minutes: number) {
     // 現在の終了日時を取得
     const current_end = dayjs(`${end_date.value} ${end_time.value}`);
 
+    // Invalid Date の場合は無視
+    if (!current_end.isValid()) {
+        return;
+    }
+
     // 指定された分数を加算
     const new_end = current_end.add(minutes, 'minute');
 
@@ -113,6 +126,12 @@ function playKakolog() {
 
     const start_datetime = dayjs(`${start_date.value} ${start_time.value}`);
     const end_datetime = dayjs(`${end_date.value} ${end_time.value}`);
+
+    // Invalid Date の場合はエラー
+    if (!start_datetime.isValid() || !end_datetime.isValid()) {
+        Message.error('開始日時または終了日時が無効です。');
+        return;
+    }
 
     // 12時間以上の場合はエラー
     if (end_datetime.diff(start_datetime, 'hour') >= 12) {
@@ -148,28 +167,20 @@ function playKakolog() {
 
 .datetime-field input[type="date"],
 .datetime-field input[type="time"] {
+    display: block !important;
     font-size: 18.5px;
-    font-family: 'Open Sans', sans-serif;
-    padding-left: 44px;
+    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
 }
 .datetime-field .v-select__selection-text {
     font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
 }
 
 .datetime-field input[type="date"]::-webkit-calendar-picker-indicator {
-    position: absolute;
-    top: 19px;
-    left: 14px;
-    bottom: 0;
     width: 20px;
     height: 20px;
     cursor: pointer;
 }
 .datetime-field input[type="time"]::-webkit-calendar-picker-indicator {
-    position: absolute;
-    top: 19px;
-    left: 4px;
-    bottom: 0;
     width: 20px;
     height: 20px;
     cursor: pointer;

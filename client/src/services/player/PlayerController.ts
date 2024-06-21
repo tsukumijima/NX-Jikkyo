@@ -200,7 +200,7 @@ class PlayerController {
             // ライブモードで同期する際の最小バッファサイズ
             liveSyncMinBufferSize: this.live_playback_buffer_seconds - 0.1,
             // ループ再生 (ライブ視聴では無効)
-            loop: this.playback_mode === 'Live' ? false : true,
+            loop: this.playback_mode === 'Live' ? false : false,
             // 自動再生
             autoplay: true,
             // AirPlay 機能 (うまく動かないため無効化)

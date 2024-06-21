@@ -77,13 +77,15 @@ export default defineComponent({
     created() {
         // 現在時刻を0.1秒おきに更新
         this.time_interval_id = window.setInterval(() => {
-            // プレイヤー停止中は時刻を更新しない
-            if ((window as any).player && (window as any).player.video && (window as any).player.video.paused) {
-                this.time = '〈コメント再生停止中〉';
-                return;
-            }
+            // ライブ視聴
             if (this.playerStore.recorded_program && this.playerStore.recorded_program.id === -1) {
+                // プレイヤー停止中は時刻を更新しない
+                if ((window as any).player && (window as any).player.video && (window as any).player.video.paused) {
+                    this.time = '〈コメント再生停止中〉';
+                    return;
+                }
                 this.time = dayjs().format('YYYY/MM/DD\nHH:mm:ss');
+            // ビデオ視聴
             } else if (this.playerStore.recorded_program) {
                 const player = (window as any).player as DPlayer | undefined;
                 if (player && player.video) {
@@ -554,7 +556,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
                 color: rgb(var(--v-theme-text));
                 opacity: 0.7;
                 font-size: 34px;
-                font-family: 'Open Sans', sans-serif;
+                font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
                 font-weight: 500;
                 line-height: 1.5;
                 text-align: center;

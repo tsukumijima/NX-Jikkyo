@@ -1,6 +1,6 @@
 <template>
     <header class="watch-header" :class="{'watch-header--video': playback_mode === 'Video'}">
-        <router-link class="watch-header__back-icon" v-ripple :to="playback_mode === 'Live' ? '/' : '/videos/'">
+        <router-link class="watch-header__back-icon" v-ripple :to="playback_mode === 'Live' ? '/' : '/log/'">
             <Icon icon="fluent:arrow-left-12-filled" width="25px" />
         </router-link>
         <img class="watch-header__broadcaster" v-if="playback_mode === 'Live'"
@@ -206,7 +206,7 @@ export default defineComponent({
     .watch-header__program-time {
         flex-shrink: 0;
         margin-left: 16px;
-        font-family: 'Open Sans', sans-serif;
+        font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
         font-size: 15px;
         font-weight: 500;
 
@@ -223,7 +223,7 @@ export default defineComponent({
     .watch-header__now {
         flex-shrink: 0;
         margin-left: 16px;
-        font-family: 'Open Sans', sans-serif;
+        font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
         font-size: 13px;
         font-weight: 500;
 
