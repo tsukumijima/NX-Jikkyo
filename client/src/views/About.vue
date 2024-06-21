@@ -104,7 +104,10 @@
                 </div>
                 <p class="mt-5 text-text-darken-1 text-right">
                     2024/06/10 (Last Update: 2024/06/20)<br>
-                    <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a> (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a>)
+                    <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a>
+                    (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> /
+                    <a class="link" href="https://blog.tsukumijima.net/" target="_blank">Blog</a> /
+                    <a class="link" href="https://github.com/tsukumijima" target="_blank">GitHub</a>)
                 </p>
             </div>
         </main>

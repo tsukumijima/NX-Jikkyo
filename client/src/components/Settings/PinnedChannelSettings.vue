@@ -17,7 +17,7 @@
                 <div class="pinned-channels-settings__label"
                     v-if="(channelsStore.channels_list_with_pinned.get('ピン留め') ?? []).length === 0">
                     <div><b>ピン留めされているチャンネルがありません。</b></div>
-                    <div class="mt-1">TV ホーム画面のチャンネルリストの <Icon style="position: relative; bottom: -5px;" icon="fluent:pin-20-filled" width="18.5px" /> アイコンから、よくみるチャンネルをピン留めできます。</div>
+                    <div class="mt-1">ホーム画面のチャンネルリストの <Icon style="position: relative; bottom: -5px;" icon="fluent:pin-20-filled" width="18.5px" /> アイコンから、よくみるチャンネルをピン留めできます。</div>
                 </div>
                 <draggable class="pinned-channels" handle=".pinned-channel__sort-handle" item-key="id"
                     v-model="pinned_channels" v-if="pinned_channels.length > 0">

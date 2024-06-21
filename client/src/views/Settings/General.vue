@@ -13,7 +13,7 @@
                 <div class="settings__item-heading">ピン留め中チャンネルの並び替え</div>
                 <div class="settings__item-label">
                     ピン留め中のチャンネルの表示順序を変更できます。よくみるチャンネルは先頭に配置しておくと便利です。<br>
-                    ピン留め中のチャンネルの追加・削除は、別途 TV ホーム画面のチャンネルリストから行えます。<br>
+                    ピン留め中のチャンネルの追加・削除は、別途ホーム画面のチャンネルリストから行えます。<br>
                 </div>
             </div>
             <v-btn class="settings__save-button mt-4" variant="flat" @click="pinned_channel_settings_modal = !pinned_channel_settings_modal">

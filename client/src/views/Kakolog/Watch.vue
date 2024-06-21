@@ -102,9 +102,9 @@ export default defineComponent({
             recorded_program.description = 'ニコニコ実況・NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。<br>';
             recorded_program.detail = {
                 '過去ログ再生について': (
-                    '過去ログ再生画面では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net/) に保存されている、' +
+                    '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
                     '2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo の過去ログコメントを再生できます。\n\n' +
-                    `現在は、Ch:${channel.channel_number} ${channel.name} に ${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の期間に投稿されたコメントの過去ログを時系列に再生しています。`
+                    `現在は、Ch:${channel.channel_number} ${channel.name} の ${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを、時系列に再生しています。`
                 ),
             };
             recorded_program.start_time = kakolog_start_dayjs.toISOString();

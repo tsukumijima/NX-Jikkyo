@@ -210,7 +210,14 @@ class Channels {
                     event_id: -1,
                     title: current_thread.title,
                     description: current_thread.description,
-                    detail: {},
+                    detail: {
+                        'NX-Jikkyo について': (
+                            'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。\n\n' +
+                            'ひとりだけど、ひとりじゃない。\n' +
+                            'テレビの映像は流れませんが、好きな番組をテレビで見ながら、プレイヤーに流れるコメントでワイワイ楽しめます。\n' +
+                            'ぜひ感想などを気軽にコメントしてお楽しみください。'
+                        ),
+                    },
                     start_time: current_thread.start_at,
                     end_time: current_thread.end_at,
                     duration: current_thread.duration,

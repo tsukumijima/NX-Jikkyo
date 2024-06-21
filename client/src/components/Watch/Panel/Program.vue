@@ -15,12 +15,12 @@
             <div class="program-info__description"
                 v-html="ProgramUtils.decorateProgramInfo(channelsStore.channel.current.program_present, 'description')">
             </div>
-            <div class="program-info__genre-container">
+            <!-- <div class="program-info__genre-container">
                 <div class="program-info__genre" :key="genre_index"
                     v-for="(genre, genre_index) in channelsStore.channel.current.program_present?.genres ?? []">
                     {{genre.major}} / {{genre.middle}}
                 </div>
-            </div>
+            </div> -->
             <div class="program-info__next">
                 <span class="program-info__next-decorate">NEXT</span>
                 <Icon class="program-info__next-icon" icon="fluent:fast-forward-20-filled" width="16px" />
