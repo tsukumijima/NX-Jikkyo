@@ -7,7 +7,7 @@
             <img class="watch-navigation__icon-image" src="/assets/images/icon.svg" width="23px">
         </router-link>
         <router-link v-ripple class="watch-navigation__link" active-class="watch-navigation__link--active"
-            :class="{'watch-navigation__link--active': $route.path == '/'}"
+            :class="{'watch-navigation__link--active': $route.path.startsWith('/watch')}"
             v-tooltip.right="'テレビ実況'" to="/">
             <Icon class="watch-navigation__link-icon" icon="fluent:tv-20-regular" width="26px" />
         </router-link>
