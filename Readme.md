@@ -1,7 +1,7 @@
 
 # NX-Jikkyo
 
-💠 **NX-Jikkyo:** Nico Nico Jikkyo Alternatives
+💠 **NX-Jikkyo:** Nico Nico Jikkyo Alternative
 
 ## Server
 

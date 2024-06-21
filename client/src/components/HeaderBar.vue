@@ -6,7 +6,7 @@
         <div class="subtitle ml-2 pt-1 d-flex align-center text-text-darken-1"
             style="font-size: 15px; user-select: none;">
             <div class="mr-2" style="font-size: 17px;">|</div>
-            ニコニコ実況避難所
+            Nico Nico Jikkyo Alternative
         </div>
         <v-spacer></v-spacer>
     </header>
@@ -65,7 +65,7 @@
 
     .subtitle {
         @include smartphone-horizontal {
-            display: none;
+            display: none !important;
         }
     }
 }

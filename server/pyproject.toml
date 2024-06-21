@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "NX-Jikkyo"
 version = "1.5.1"
-description = "NX-Jikkyo: Nico Nico Jikkyo Alternatives"
+description = "NX-Jikkyo: Nico Nico Jikkyo Alternative"
 package-mode = false
 
 [tool.taskipy.tasks]

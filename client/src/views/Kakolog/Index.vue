@@ -8,11 +8,11 @@
                 <p class="mt-4 text-text-darken-1">
                     <strong><a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。</strong><br>
                 </p>
-                <p class="mt-1 text-text-darken-1">
+                <p class="mt-2 text-text-darken-1">
                     十数年分もの膨大な過去ログデータには、当時の世相が色濃く反映された、その時代を生きた「生の声」が、まるでタイムカプセルのように刻まれています。<br>
                     たまには昔のコメントを眺めて懐かしんだり、録画番組をコメント付きで楽しんでみては？
                 </p>
-                <v-select class="mt-12 datetime-field" color="primary" variant="outlined" hide-details label="実況チャンネル"
+                <v-select class="mt-8 datetime-field" color="primary" variant="outlined" hide-details label="実況チャンネル"
                     :items="jikkyo_channel_items" v-model="jikkyo_channel_id">
                 </v-select>
                 <div class="mt-8" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
@@ -58,7 +58,7 @@
                         v-model="end_time">
                     </v-text-field>
                 </div>
-                <div class="mt-3 d-flex justify-space-around">
+                <div class="mt-2 d-flex justify-space-around">
                     <v-btn variant="flat" color="secondary" height="54" @click="playKakolog()">
                         <Icon icon="fluent:receipt-play-20-regular" height="32px" />
                         <span class="ml-2" style="font-size: 17px;">過去ログを再生</span>

@@ -36,7 +36,7 @@ from app.routers import (
 # FastAPI を初期化
 app = FastAPI(
     title = 'NX-Jikkyo',
-    description = 'NX-Jikkyo: Nico Nico Jikkyo Alternatives<br><br>'
+    description = 'NX-Jikkyo: Nico Nico Jikkyo Alternative<br><br>'
         'この API ドキュメントには WebSocket API のドキュメントは掲載されていません。ご了承ください。<br>'
         'ニコ生互換の視聴セッション WebSocket の URL は wss://nx-jikkyo.tsukumijima.net/api/v1/channels/(実況ID, ex: jk211)/ws/watch です。<br>'
         'ニコ生統合後の新ニコニコ実況対応クライアントであれば、ニコ生視聴ページに埋め込まれている JSON (embedded-data) 内の site.relive.webSocketUrl から取得していた接続先 WebSocket の URL を、上記 URL に差し替えるだけで対応できるはずです。',

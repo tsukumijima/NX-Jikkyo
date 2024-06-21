@@ -38,7 +38,7 @@ def version(value: bool):
         typer.echo(f'NX-Jikkyo version {VERSION}')
         raise typer.Exit()
 
-@cli.command(help='NX-Jikkyo: Nico Nico Jikkyo Alternatives')
+@cli.command(help='NX-Jikkyo: Nico Nico Jikkyo Alternative')
 def main(
     port: int = typer.Option(CONFIG.SERVER_PORT, '--port', help='Server port number.'),
     reload: bool = typer.Option(False, '--reload', help='Start Uvicorn in auto-reload mode.'),
