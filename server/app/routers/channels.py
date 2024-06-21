@@ -12,6 +12,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
+from pydantic import TypeAdapter
 from tortoise import connections
 from tortoise import timezone
 from typing import Annotated, cast, Literal
@@ -20,6 +21,7 @@ from zoneinfo import ZoneInfo
 from app.constants import (
     LOGO_DIR,
     REDIS_CLIENT,
+    REDIS_KEY_CHANNEL_INFOS_CACHE,
     REDIS_KEY_JIKKYO_FORCE_COUNT,
     REDIS_KEY_VIEWER_COUNT,
     VERSION,
@@ -38,10 +40,6 @@ router = APIRouter(
     prefix = '/api/v1',
 )
 
-# チャンネル情報のキャッシュ
-__channels_cache: list[ChannelResponse] | None = None
-__channels_cache_expiry: float | None = None
-
 
 @router.get(
     '/channels',
@@ -54,12 +52,11 @@ async def ChannelsAPI():
     全チャンネルの情報と、各チャンネルごとの全スレッドの情報を一括で取得する。
     """
 
-    global __channels_cache, __channels_cache_expiry
-
-    # キャッシュが有効であればそれを返す
+    # Redis からキャッシュを取得
     ## 下記クエリはかなり重いので、できるだけキャッシュを返したい
-    if __channels_cache is not None and __channels_cache_expiry is not None and time.time() < __channels_cache_expiry:
-        return __channels_cache
+    cached_channels = await REDIS_CLIENT.get(REDIS_KEY_CHANNEL_INFOS_CACHE)
+    if cached_channels is not None:
+        return TypeAdapter(list[ChannelResponse]).validate_json(cached_channels)
 
     # ID 昇順、スレッドは新しい順でチャンネルを取得
     connection = connections.get('default')
@@ -167,8 +164,7 @@ async def ChannelsAPI():
         ))
 
     # キャッシュを更新 (15秒間有効)
-    __channels_cache = response
-    __channels_cache_expiry = time.time() + 15
+    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(response).decode('utf-8'), ex=15)
 
     return response
 

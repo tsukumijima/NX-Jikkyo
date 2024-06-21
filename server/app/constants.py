@@ -170,6 +170,9 @@ HTTPX_CLIENT = lambda: httpx.AsyncClient(
 # Redis クライアント
 REDIS_CLIENT = Redis.from_url('redis://nx-jikkyo-redis', encoding='utf-8', decode_responses=True)
 
+# Redis 上のチャンネル情報キャッシュのキー
+REDIS_KEY_CHANNEL_INFOS_CACHE = 'nx-jikkyo:channel_infos_cache'
+
 # Redis 上の実況勢いカウントのキー
 REDIS_KEY_JIKKYO_FORCE_COUNT = 'nx-jikkyo:jikkyo_force_counts'
 
