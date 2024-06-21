@@ -3,6 +3,7 @@
         <router-link v-ripple class="nx-jikkyo-logo ml-3 ml-md-6" to="/">
             <img class="nx-jikkyo-logo__image" src="/assets/images/logo.svg" height="35">
         </router-link>
+        <div class="subtitle ml-3 pt-1 text-text-darken-1" style="font-size: 14px;">ニコニコ実況避難所</div>
         <v-spacer></v-spacer>
     </header>
 </template>
@@ -55,6 +56,12 @@
             @include smartphone-horizontal {
                 height: 19.5px;
             }
+        }
+    }
+
+    .subtitle {
+        @include smartphone-horizontal {
+            display: none;
         }
     }
 }
