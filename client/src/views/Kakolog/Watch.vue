@@ -58,6 +58,20 @@ export default defineComponent({
                 return;
             }
 
+            // 終了日時が未来の日付の場合はエラー
+            if (kakolog_end_dayjs > dayjs()) {
+                Message.error('指定された終了日時が未来の日付です。');
+                this.$router.push({path: '/not-found/'});
+                return;
+            }
+
+            // 開始日時と終了日時が同じ場合はエラー
+            if (kakolog_start_dayjs.isSame(kakolog_end_dayjs)) {
+                Message.error('指定された開始日時と終了日時が同じです。');
+                this.$router.push({path: '/not-found/'});
+                return;
+            }
+
             // 再生対象の過去ログの実況チャンネル情報を取得
             const channels_store = useChannelsStore();
             await channels_store.update();
@@ -84,14 +98,15 @@ export default defineComponent({
             recorded_program.recorded_video.recording_end_time = kakolog_end_dayjs.toISOString();
             recorded_program.recording_start_margin = 0;
             recorded_program.recording_end_margin = 0;
-            recorded_program.title = `${channel.name}【ニコニコ実況】${display_date.format('YYYY年MM月DD日')}`;
-            recorded_program.description = `
-                NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。<br>
-                <div class="mt-2"></div>
-                このページでは、ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo の過去ログを再生できます。
-                <div class="mt-2"></div>
-                現在は Ch:${channel.channel_number} ${channel.name} に ${display_date.format('YYYY年MM月DD日')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の期間に投稿されたコメントの過去ログを時系列に再生しています。
-            `;
+            recorded_program.title = `${channel.name}【ニコニコ実況・NX-Jikkyo】${display_date.format('YYYY年MM月DD日')}`;
+            recorded_program.description = 'ニコニコ実況・NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。<br>';
+            recorded_program.detail = {
+                '過去ログ再生について': (
+                    '過去ログ再生画面では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net/) に保存されている、' +
+                    '2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo の過去ログコメントを再生できます。\n\n' +
+                    `現在は、Ch:${channel.channel_number} ${channel.name} に ${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の期間に投稿されたコメントの過去ログを時系列に再生しています。`
+                ),
+            };
             recorded_program.start_time = kakolog_start_dayjs.toISOString();
             recorded_program.end_time = kakolog_end_dayjs.toISOString();
             recorded_program.duration = kakolog_end_dayjs.diff(kakolog_start_dayjs, 'second');

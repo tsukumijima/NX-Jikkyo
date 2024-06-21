@@ -554,7 +554,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
                 color: rgb(var(--v-theme-text));
                 opacity: 0.7;
                 font-size: 34px;
-                font-family: 'Open Sans';
+                font-family: 'Open Sans', sans-serif;
                 font-weight: 500;
                 line-height: 1.5;
                 text-align: center;
