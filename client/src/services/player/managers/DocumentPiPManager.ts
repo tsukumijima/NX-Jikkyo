@@ -60,6 +60,8 @@ class DocumentPiPManager implements PlayerManager {
 
         // Document Picture-in-Picture API がサポートされていない場合は何もしない
         if (('documentPictureInPicture' in window) === false) {
+            // プレイヤー上の PiP ボタンを非表示にする
+            this.player.template.pipButton.style.display = 'none';
             console.log('[DocumentPiPManager] Initialized. (Document Picture-in-Picture API is not supported.)');
             return;
         }
