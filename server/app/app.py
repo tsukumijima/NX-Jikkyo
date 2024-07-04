@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_restful.tasks import repeat_every
 from pathlib import Path
+from pydantic import TypeAdapter
 from tortoise import timezone
 from zoneinfo import ZoneInfo
 
@@ -17,11 +18,13 @@ from app.constants import (
     CLIENT_DIR,
     DATABASE_CONFIG,
     REDIS_CLIENT,
+    REDIS_KEY_CHANNEL_INFOS_CACHE,
     REDIS_KEY_VIEWER_COUNT,
     VERSION,
 )
 from app.models.comment import (
     Channel,
+    ChannelResponse,
     Comment,
     CommentCounter,
     Thread,
@@ -138,6 +141,7 @@ tortoise.contrib.fastapi.register_tortoise(
     add_exception_handlers = True,
 )
 
+
 # サーバーの初回起動時のみ、チャンネル情報をマスタデータとして登録
 @app.on_event('startup')
 async def RegisterMasterChannels():
@@ -203,6 +207,7 @@ async def RegisterMasterChannels():
                 logging.info(f'Channel {channel_info["name"]} has been updated.')
     logging.info('Master channels have been registered or updated.')
 
+
 # サーバー起動時にチャンネルごとに同時接続数カウントを 0 にリセット
 ## サーバーは再起動しても Redis サーバーは再起動しない場合があり、そうした状況でカウントの整合性を保つために必要
 @app.on_event('startup')
@@ -216,6 +221,47 @@ async def ResetViewerCount():
     for channel in await Channel.all():
         await REDIS_CLIENT.hset(REDIS_KEY_VIEWER_COUNT, f'jk{channel.id}', 0)
         logging.info(f'Viewer count for {channel.name} has been reset.')
+
+
+# 10秒に1回、現在のチャンネル情報を DB から取得し、Redis にキャッシュとして格納する
+## wait_first を指定していないので起動時にも実行される
+@app.on_event('startup')
+@repeat_every(seconds=10, logger=logging.logger)
+async def CacheChannelResponses():
+
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
+    if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
+        return
+
+    # 最新のチャンネル情報を取得
+    channel_responses = await channels.GetChannelResponses()
+
+    # キャッシュを更新
+    ## このキャッシュは次回の実行で上書きされるまで永続する
+    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(channel_responses).decode('utf-8'))
+    logging.info('Channel responses cache has been updated.')
+
+
+# 念のため、1時間に1回採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
+## wait_first を指定していないので起動時にも実行される
+@app.on_event('startup')
+@repeat_every(seconds=60 * 60, logger=logging.logger)
+async def SyncCommentCounters():
+
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
+    if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
+        return
+
+    threads = await Thread.all()
+    for thread in threads:
+        comment_count = await Comment.filter(thread_id=thread.id).count()
+        await CommentCounter.update_or_create(
+            thread_id = thread.id,
+            defaults = {'max_no': comment_count}
+        )
+
+    logging.info('Comment counters have been synchronized.')
+
 
 # 1時間に1回、明日分の全実況チャンネルのスレッド予定が DB に登録されているかを確認し、もしなければ登録する
 # スレッドは同じ実況チャンネル内では絶対に放送時間が被ってはならないし、基本放送時間は 04:00 〜 翌朝 04:00 の 24 時間
@@ -294,13 +340,3 @@ async def AddThreads():
                 )
                 await CommentCounter.create(thread_id=thread.id, max_no=0)
                 logging.info(f'Thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
-
-    # 念のため、定期的に採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
-    threads = await Thread.all()
-    for thread in threads:
-        comment_count = await Comment.filter(thread_id=thread.id).count()
-        await CommentCounter.update_or_create(
-            thread_id = thread.id,
-            defaults = {'max_no': comment_count}
-        )
-    logging.info('Comment counters have been synchronized.')

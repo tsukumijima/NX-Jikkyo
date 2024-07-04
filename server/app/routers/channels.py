@@ -18,6 +18,7 @@ from tortoise import timezone
 from typing import Annotated, cast, Literal
 from zoneinfo import ZoneInfo
 
+from app import logging
 from app.constants import (
     LOGO_DIR,
     REDIS_CLIENT,
@@ -41,22 +42,7 @@ router = APIRouter(
 )
 
 
-@router.get(
-    '/channels',
-    summary = 'チャンネル情報 API',
-    response_description = 'チャンネル情報。',
-    response_model = list[ChannelResponse],
-)
-async def ChannelsAPI():
-    """
-    全チャンネルの情報と、各チャンネルごとの全スレッドの情報を一括で取得する。
-    """
-
-    # Redis からキャッシュを取得
-    ## 下記クエリはかなり重いので、できるだけキャッシュを返したい
-    cached_channels = await REDIS_CLIENT.get(REDIS_KEY_CHANNEL_INFOS_CACHE)
-    if cached_channels is not None:
-        return TypeAdapter(list[ChannelResponse]).validate_json(cached_channels)
+async def GetChannelResponses() -> list[ChannelResponse]:
 
     # ID 昇順、スレッドは新しい順でチャンネルを取得
     connection = connections.get('default')
@@ -83,14 +69,14 @@ async def ChannelsAPI():
     # 現在放送中の番組情報を取得
     # now_onair_program_info = await GetNowONAirProgramInfos()
 
-    response: list[ChannelResponse] = []
+    channel_responses: list[ChannelResponse] = []
     current_channel_id: int | None = None
     current_channel_name: str | None = None
     threads: list[ThreadResponse] = []
     for row in channels:
         if current_channel_id != row['id']:
             if current_channel_id is not None:
-                response.append(ChannelResponse(
+                channel_responses.append(ChannelResponse(
                     id = f'jk{current_channel_id}',
                     name = cast(str, current_channel_name),
                     threads = threads,
@@ -157,16 +143,38 @@ async def ChannelsAPI():
         ))
 
     if current_channel_id is not None:
-        response.append(ChannelResponse(
+        channel_responses.append(ChannelResponse(
             id = f'jk{current_channel_id}',
             name = cast(str, current_channel_name),
             threads = threads,
         ))
 
-    # キャッシュを更新 (15秒間有効)
-    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(response).decode('utf-8'), ex=15)
+    return channel_responses
 
-    return response
+
+@router.get(
+    '/channels',
+    summary = 'チャンネル情報 API',
+    response_description = 'チャンネル情報。',
+    response_model = list[ChannelResponse],
+)
+async def ChannelsAPI():
+    """
+    全チャンネルの情報と、各チャンネルごとの全スレッドの情報を一括で取得する。
+    """
+
+    # Redis からキャッシュを取得
+    ## キャッシュは app.py で定義のスケジューラーで定期更新されているので、基本常に新鮮なキャッシュが存在するはず
+    cached_channels = await REDIS_CLIENT.get(REDIS_KEY_CHANNEL_INFOS_CACHE)
+    if cached_channels is not None:
+        return TypeAdapter(list[ChannelResponse]).validate_json(cached_channels)
+
+    # 万が一キャッシュが存在しない場合のみ、直接取得し一時的にキャッシュしてから返す (フェイルセーフ)
+    ## この時に作成される一時キャッシュの有効期限は 10 秒とし、万が一スケジューラーが動作していない場合でも最新のデータが返されることを保証する
+    channel_responses = await GetChannelResponses()
+    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(channel_responses).decode('utf-8'), ex=10)
+    logging.warning('[ChannelsAPI] Channel responses cache is missing. Temporary cache is created.')
+    return channel_responses
 
 
 @router.get(
