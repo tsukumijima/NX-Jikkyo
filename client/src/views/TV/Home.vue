@@ -4,12 +4,19 @@
         <main>
             <Navigation />
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
-                <p class="mt-5 mb-2 mx-4 text-center font-weight-bold">
-                    ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！<br>
-                    <a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> / <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/#toc4" target="_blank">TVTest (NicoJK)</a> / <a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV</a> 最新版で NX-Jikkyo に対応しました！！🎉🎊<br>
-                    <!-- eslint-disable-next-line no-irregular-whitespace -->
-                    最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣　<a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフいただけると大変モチベ上がるのでぜひ🙇🙏</a>
-                </p>
+                <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
+                    <div>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</div>
+                    <div class="mt-1"><a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> / <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/#toc4" target="_blank">TVTest (NicoJK)</a> / <a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV</a> 最新版で NX-Jikkyo に対応しました！！🎉🎊</div>
+                    <div class="mt-1">
+                        <!-- eslint-disable-next-line no-irregular-whitespace -->
+                        最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣　
+                        <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフいただけると大変モチベ上がるのでぜひ🙇🙏</a>
+                    </div>
+                    <div class="mt-1">
+                        <a class="link" href="https://x.com/TVRemotePlus/status/1807923274061697127" target="_blank">サーバーをスペックアップしました！🎉</a>
+                        ぜひ <a class="link" href="https://www.amazon.co.jp/dp/B08MTGFV39/?tag=tsukumijima-22" target="_blank">このアフィリンク</a> から Amazon で何かお買い物して頂けると助かります🙏
+                    </div>
+                </div>
                 <div class="channels-tab">
                     <div class="channels-tab__buttons" :style="{
                         '--tab-length': Array.from(channelsStore.channels_list_with_pinned).length,
