@@ -3,9 +3,9 @@
 
 **NX-Jikkyo:** Nico Nico Jikkyo Alternative
 
-## Server
+## Development
 
-### Development
+### Server
 
 ```bash
 # .env を作成
