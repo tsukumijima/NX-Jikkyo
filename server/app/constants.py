@@ -1,7 +1,6 @@
 
 import httpx
 import pkgutil
-from passlib.context import CryptContext
 from pathlib import Path
 from redis.asyncio.client import Redis
 from typing import Any
@@ -144,12 +143,6 @@ LOGGING_CONFIG: dict[str, Any] = {
     },
 }
 
-# パスワードハッシュ化のための設定
-PASSWORD_CONTEXT = CryptContext(
-    schemes = ['bcrypt'],
-    deprecated = 'auto',
-)
-
 # 外部 API に送信するリクエストヘッダー
 ## NX-Jikkyo の User-Agent を指定
 API_REQUEST_HEADERS: dict[str, str] = {
@@ -169,12 +162,9 @@ HTTPX_CLIENT = lambda: httpx.AsyncClient(
 
 # Redis クライアント
 REDIS_CLIENT = Redis.from_url('redis://nx-jikkyo-redis', encoding='utf-8', decode_responses=True)
-
 # Redis 上のチャンネル情報キャッシュのキー
 REDIS_KEY_CHANNEL_INFOS_CACHE = 'nx-jikkyo:channel_infos_cache'
-
 # Redis 上の実況勢いカウントのキー
 REDIS_KEY_JIKKYO_FORCE_COUNT = 'nx-jikkyo:jikkyo_force_counts'
-
 # Redis 上の同時接続数カウントのキー
 REDIS_KEY_VIEWER_COUNT = 'nx-jikkyo:viewer_counts'

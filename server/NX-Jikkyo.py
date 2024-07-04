@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import asyncio
-import logging
 import time
 import typer
 import uvicorn
@@ -23,10 +22,6 @@ from app.constants import (
     VERSION,
 )
 
-
-# passlib が送出する bcrypt のバージョン差異による警告を無視
-# ref: https://github.com/pyca/bcrypt/issues/684
-logging.getLogger('passlib').setLevel(logging.ERROR)
 
 # aerich テーブルが既に存在する警告を無視
 warnings.filterwarnings('ignore', message='Table \'aerich\' already exists')
