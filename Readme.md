@@ -5,7 +5,7 @@
 
 ## Server
 
-## Development
+### Development
 
 ```bash
 # .env を作成
