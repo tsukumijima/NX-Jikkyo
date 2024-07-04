@@ -1,7 +1,7 @@
 
 # NX-Jikkyo
 
-💠 **NX-Jikkyo:** Nico Nico Jikkyo Alternative
+**NX-Jikkyo:** Nico Nico Jikkyo Alternative
 
 ## Server
 
@@ -39,5 +39,9 @@ poetry run task aerich --help
 ./mysqldump.sh
 
 # MySQLTuner を実行する場合 (別途 MySQLTuner のダウンロードが必要)
-~/mysqltuner.pl --host $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' nx-jikkyo-mysql) --user root --pass nx-jikkyo_password --forcemem 4096 --forceswap 2048
+~/mysqltuner.pl --host $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' nx-jikkyo-mysql) --user root --pass nx-jikkyo_password --forcemem 8192 --forceswap 2048
 ```
+
+## License
+
+[MIT License](License.txt)
