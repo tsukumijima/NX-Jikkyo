@@ -501,7 +501,7 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
         aspect-ratio: 16 / 9;
     }
     @include smartphone-vertical {
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 4 / 3;
     }
 
     &.watch-player--video {
