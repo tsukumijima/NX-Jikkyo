@@ -112,6 +112,32 @@ export default defineComponent({
             recorded_program.duration = kakolog_end_dayjs.diff(kakolog_start_dayjs, 'second');
             this.playerStore.recorded_program = recorded_program;
 
+            // 現在表示中の過去ログのタイトルと概要を更新
+            const title = `過去ログ再生 - Ch:${channel.channel_number} ${channel.name} ${display_date.format('YYYY年MM月DD日')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} | NX-Jikkyo : ニコニコ実況避難所`;
+            const description = '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
+                '2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo の過去ログコメントを再生できます。';
+            document.title = title;
+            const description_meta = document.querySelector('meta[name="description"]');
+            if (description_meta) {
+                description_meta.setAttribute('content', description);
+            }
+            const og_title_meta = document.querySelector('meta[property="og:title"]');
+            if (og_title_meta) {
+                og_title_meta.setAttribute('content', title);
+            }
+            const og_description_meta = document.querySelector('meta[property="og:description"]');
+            if (og_description_meta) {
+                og_description_meta.setAttribute('content', description);
+            }
+            const twitter_title_meta = document.querySelector('meta[name="twitter:title"]');
+            if (twitter_title_meta) {
+                twitter_title_meta.setAttribute('content', title);
+            }
+            const twitter_description_meta = document.querySelector('meta[name="twitter:description"]');
+            if (twitter_description_meta) {
+                twitter_description_meta.setAttribute('content', description);
+            }
+
             // PlayerController を初期化
             player_controller = new PlayerController('Video');
             await player_controller.init();
