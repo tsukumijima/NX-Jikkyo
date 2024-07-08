@@ -7,6 +7,7 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Path,
+    Query,
     Request,
     Response,
     status,
@@ -42,12 +43,12 @@ router = APIRouter(
 )
 
 
-async def GetChannelResponses() -> list[ChannelResponse]:
+async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
 
-    # ID 昇順、スレッドは新しい順でチャンネルを取得
-    connection = connections.get('default')
-    channels = await connection.execute_query_dict(
-        '''
+    # ID 昇順、スレッドは古い順でチャンネルを取得
+    ## full が False の時は、最新4日分のスレッドだけ取得する
+    ## WHERE 1=1 は動的に WHERE 句を組み立てるためのダミー句
+    query = '''
         SELECT
             c.id,
             c.name,
@@ -62,9 +63,12 @@ async def GetChannelResponses() -> list[ChannelResponse]:
         FROM channels c
         LEFT JOIN threads t ON c.id = t.channel_id
         LEFT JOIN comment_counters cc ON t.id = cc.thread_id
-        ORDER BY c.id ASC, t.start_at ASC
-        '''
-    )
+        WHERE 1=1
+    '''
+    if not full:
+        query += ' AND t.start_at >= DATE_SUB(NOW(), INTERVAL 4 DAY)'
+    query += ' ORDER BY c.id ASC, t.start_at ASC'
+    channels = await connections.get('default').execute_query_dict(query)
 
     # 現在放送中の番組情報を取得
     # now_onair_program_info = await GetNowONAirProgramInfos()
@@ -158,10 +162,16 @@ async def GetChannelResponses() -> list[ChannelResponse]:
     response_description = 'チャンネル情報。',
     response_model = list[ChannelResponse],
 )
-async def ChannelsAPI():
+async def ChannelsAPI(
+    full: Annotated[bool, Query(description='チャンネルに紐づく全スレッドの情報を取得するかどうか。省略時は最新4日分のスレッドだけ取得する。')] = False,
+):
     """
     全チャンネルの情報と、各チャンネルごとの全スレッドの情報を一括で取得する。
     """
+
+    # 全チャンネルの情報を取得する場合のみ、キャッシュを使わずデータベースから直接取得する
+    if full is True:
+        return await GetChannelResponses(full=True)
 
     # Redis からキャッシュを取得
     ## キャッシュは app.py で定義のスケジューラーで定期更新されているので、基本常に新鮮なキャッシュが存在するはず
