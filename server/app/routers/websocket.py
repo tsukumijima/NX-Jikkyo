@@ -767,8 +767,8 @@ async def CommentSessionAPI(
                 ## それでも敢えて ORM から list[dict] で取得しているのは、モデルクラスのインスタンス生成コストが高そうなため
                 comments = type_adapter.validate_python(comments_dict)
 
-                # 取得結果をキャッシュに保存 (TTL: 100ms)
-                await REDIS_CLIENT.set(cache_key, type_adapter.dump_json(comments).decode('utf-8'), px=100)
+                # 取得結果をキャッシュに保存 (TTL: 250ms)
+                await REDIS_CLIENT.set(cache_key, type_adapter.dump_json(comments).decode('utf-8'), px=250)
 
             # 取得したコメントを随時送信
             for comment in comments:
@@ -782,7 +782,7 @@ async def CommentSessionAPI(
 
             # 少し待機してから次のループへ
             ## 待機秒数はキャッシュ期間の TTL と同じ値に合わせる (合わせないとキャッシュがうまく使われないっぽい)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.25)
 
     try:
 
