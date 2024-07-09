@@ -14,7 +14,7 @@
                     </div>
                     <div class="mt-1">
                         <a class="link" href="https://x.com/TVRemotePlus/status/1807923274061697127" target="_blank">サーバーをスペックアップしました！🎉</a>
-                        ぜひ <a class="link" href="https://www.amazon.co.jp/dp/B08MTGFV39/?tag=tsukumijima-22" target="_blank">このアフィリンク</a> から Amazon で何かお買い物して頂けると助かります🙏
+                        ぜひ <a class="link" href="https://www.amazon.co.jp/dp/B0C1YY8GSB/?tag=tsukumijima-22" target="_blank">このアフィリンク</a> から Amazon で何かお買い物して頂けると助かります🙏
                     </div>
                 </div>
                 <div class="channels-tab">
