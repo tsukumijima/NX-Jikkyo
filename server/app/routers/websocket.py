@@ -195,6 +195,9 @@ async def WatchSessionAPI(
     async def RunReceiverTask():
         """ クライアントからのメッセージを受信するタスク """
 
+        # 最後にコメントを投稿した時刻
+        last_comment_time: float = 0
+
         while True:
 
             # クライアントから JSON 形式のメッセージを受信
@@ -331,6 +334,30 @@ async def WatchSessionAPI(
                     if 'font' in message['data']:
                         comment_commands.append(message['data']['font'])
 
+                    # 現在のサーバー時刻
+                    current_time = time.time()
+
+                    # 最後のコメント投稿時刻を更新
+                    ## コメント投稿処理の成功 or 失敗に関わらず一律で更新する
+                    ## これにより、0.5 秒以内の機械的な連投が続く場合に最初の1回以外の全コメントをサイレントに弾ける
+                    last_comment_time = current_time
+
+                    # 0.5 秒以内の連投チェック
+                    ## 連投とみなされた場合、レスポンス上はコメント投稿が成功したように見せかけるが実際には何もしない
+                    if (current_time - last_comment_time) < 0.5:
+                        await websocket.send_json({
+                            'type': 'postCommentResult',
+                            'data': {
+                                'chat': {
+                                    'mail': ' '.join(comment_commands),
+                                    'anonymity': 1 if message['data']['isAnonymous'] else 0,
+                                    'content': message['data']['text'],
+                                    'restricted': False,
+                                },
+                            },
+                        })
+                        continue
+
                     # コメントを DB に登録
                     async with in_transaction() as connection:
 
@@ -361,7 +388,6 @@ async def WatchSessionAPI(
 
                     # 実況勢いカウント用の Redis ソート済みセット型にエントリを追加
                     ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる
-                    current_time = time.time()
                     await REDIS_CLIENT.zadd(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', {f'comment:{comment.id}': current_time})
 
                     # 1/10 の確率で現在時刻から 60 秒以上前のエントリを削除
