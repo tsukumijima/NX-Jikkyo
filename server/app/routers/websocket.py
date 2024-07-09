@@ -337,14 +337,14 @@ async def WatchSessionAPI(
                     # 現在のサーバー時刻
                     current_time = time.time()
 
-                    # 最後のコメント投稿時刻を更新
-                    ## コメント投稿処理の成功 or 失敗に関わらず一律で更新する
-                    ## これにより、0.5 秒以内の機械的な連投が続く場合に最初の1回以外の全コメントをサイレントに弾ける
-                    last_comment_time = current_time
-
                     # 0.5 秒以内の連投チェック
                     ## 連投とみなされた場合、レスポンス上はコメント投稿が成功したように見せかけるが実際には何もしない
                     if (current_time - last_comment_time) < 0.5:
+
+                        # 最後のコメント投稿時刻を更新
+                        last_comment_time = current_time
+
+                        # ダミーのコメント投稿結果を返す
                         await websocket.send_json({
                             'type': 'postCommentResult',
                             'data': {
@@ -356,7 +356,13 @@ async def WatchSessionAPI(
                                 },
                             },
                         })
+                        logging.warning(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} posted a comment too quickly.')
                         continue
+
+                    # 最後のコメント投稿時刻を更新
+                    ## コメント投稿処理の成功 or 失敗に関わらず一律で更新する
+                    ## これにより、0.5 秒以内の機械的な連投が続く場合に最初の1回以外の全コメントをサイレントに弾ける
+                    last_comment_time = current_time
 
                     # コメントを DB に登録
                     async with in_transaction() as connection:
