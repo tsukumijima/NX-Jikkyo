@@ -342,6 +342,8 @@ async def WatchSessionAPI(
                     if (current_time - last_comment_time) < 0.5:
 
                         # 最後のコメント投稿時刻を更新
+                        ## コメント投稿処理の成功 or 失敗に関わらず一律で更新する
+                        ## これにより、0.5 秒以内の機械的な連投が続く場合に最初の1回以外の全コメントをサイレントに弾ける
                         last_comment_time = current_time
 
                         # ダミーのコメント投稿結果を返す
