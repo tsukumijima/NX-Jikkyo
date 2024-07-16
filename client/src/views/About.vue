@@ -4,7 +4,15 @@
         <main>
             <Navigation />
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
-                <h1>NX-Jikkyo とは</h1>
+                <blockquote class="font-weight-bold">
+                    【重要なお知らせ】ニコニコ公式から「仮復旧」と称して <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> がリリースされましたが、<br>
+                    <a class="link" href="https://x.com/TVRemotePlus/status/1813121242565656577" target="_blank">
+                    「過去ログが残らず古いコメントから消えていく」<br class="d-inline d-sm-none">
+                    「技術的にニコ生との API 互換性が皆無」<br>
+                    「コメント書き込み時に Captcha が入ってるため TVTest などのサードパーティーソフトで対応不可」<br>
+                    な使い捨ての劣化版クソサービス</a> なので、何卒引き続きこの NX-Jikkyo 避難所でのコメントをお願いいたします…🙏🙏
+                </blockquote>
+                <h1 class="mt-5">NX-Jikkyo とは</h1>
                 <p class="mt-4 text-text-darken-1">
                     <strong>NX-Jikkyo は、<a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">サイバー攻撃で最低7月末まで鯖落ち中</a> のニコニコ実況に代わる、ニコニコ実況民のための避難所であり、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/blob/master/server/app/routers/websocket.py" target="_blank">ニコニコ生放送互換の WebSocket API</a> を備えるコメントサーバーです。</strong><br>
                     お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。<br>
@@ -124,16 +132,3 @@ import HeaderBar from '@/components/HeaderBar.vue';
 import Navigation from '@/components/Navigation.vue';
 
 </script>
-<style lang="scss" scoped>
-
-blockquote {
-    border-left: 3px solid rgb(var(--v-theme-secondary));
-    background-color: rgb(var(--v-theme-background-lighten-1));
-    padding: 12px 16px;
-    border-radius: 4px;
-}
-hr {
-    border-color: rgb(var(--v-theme-text-darken-2));
-}
-
-</style>

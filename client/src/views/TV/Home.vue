@@ -5,11 +5,19 @@
             <Navigation />
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
-                    <div>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</div>
+                    <blockquote class="text-left mx-auto" style="max-width: 850px">
+                        【重要なお知らせ】ニコニコ公式から「仮復旧」と称して <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> がリリースされましたが、<br>
+                        <a class="link" href="https://x.com/TVRemotePlus/status/1813121242565656577" target="_blank">
+                        「過去ログが残らず古いコメントから消えていく」<br class="d-inline d-sm-none">
+                        「技術的にニコ生との API 互換性が皆無」<br>
+                        「コメント書き込み時に Captcha が入ってるため TVTest などのサードパーティーソフトで対応不可」<br>
+                        な使い捨ての劣化版クソサービス</a> なので、何卒引き続きこの NX-Jikkyo 避難所でのコメントをお願いいたします…🙏🙏
+                    </blockquote>
+                    <div class="mt-2">ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</div>
                     <div class="mt-1"><a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> / <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/#toc4" target="_blank">TVTest (NicoJK)</a> / <a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV</a> 最新版で NX-Jikkyo に対応しました！！🎉🎊</div>
                     <div class="mt-1">
                         <!-- eslint-disable-next-line no-irregular-whitespace -->
-                        最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣　
+                        最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣
                         <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフいただけると大変モチベ上がるのでぜひ🙇🙏</a>
                     </div>
                     <div class="mt-1">

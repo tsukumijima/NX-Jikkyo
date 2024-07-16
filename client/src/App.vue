@@ -296,4 +296,14 @@ body .route-container {
     cursor: pointer;
 }
 
+blockquote {
+    border-left: 3px solid rgb(var(--v-theme-secondary));
+    background-color: rgb(var(--v-theme-background-lighten-1));
+    padding: 12px 16px;
+    border-radius: 4px;
+}
+hr {
+    border-color: rgb(var(--v-theme-text-darken-2));
+}
+
 </style>
