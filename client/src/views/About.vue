@@ -10,8 +10,11 @@
                     「過去ログが残らず古いコメントから消えていく」
                     「技術的にニコ生との API 互換性が皆無」<br class="d-none d-sm-inline">
                     「コメント書き込み時に Captcha が入ってるため TVTest などのサードパーティーソフトで対応不可 (!!!)」<br class="d-none d-sm-inline">
-                    「当然 NHK BS・BS11 以外の BS チャンネルには非対応」</a><br class="d-inline d-sm-none"> …とお世辞にも劣化版のため、<br>何卒引き続きこの NX-Jikkyo 避難所でのコメントをお願いいたします…🙏🙏
-                    <div class="mt-1">なお <a class="link" href="https://x.com/TVRemotePlus/status/1813149934373466396" target="_blank">NX-Jikkyo ではデフォルトでいくつかのコメントミュート設定がオンになっている</a> ので、完全に以前の使い勝手に戻したい方は適宜オフに設定してください！</div>
+                    「当然 NHK BS・BS11 以外の BS チャンネルには非対応」</a><br class="d-inline d-sm-none"> …とお世辞にも問題点が多すぎるため、<br>何卒引き続きこの NX-Jikkyo 避難所でのコメントをお願いいたします…🙏🙏
+                    <div class="mt-1">
+                        なお <a class="link" href="https://x.com/TVRemotePlus/status/1813149934373466396" target="_blank">NX-Jikkyo ではデフォルトでいくつかのコメントミュート設定がオンになっている</a> ので、完全に以前の使い勝手に戻したい方は適宜 <router-link class="link" to="/settings/jikkyo">コメントのミュート設定</router-link> からオフにしてみてください！<br>
+                        またコメントプレイヤーの背景写真がわずらわしい方は <router-link class="link" to="/settings/general">全般設定</router-link> からオフにできます！
+                    </div>
                 </blockquote>
                 <h1 class="mt-5">NX-Jikkyo とは</h1>
                 <p class="mt-4 text-text-darken-1">
