@@ -1,128 +1,103 @@
 
-import asyncio
-from datetime import datetime, timedelta
-from typing import Any, Literal, TypedDict
-from zoneinfo import ZoneInfo
-
-from app.constants import HTTPX_CLIENT
+import hashlib
+from starlette.websockets import WebSocket
 
 
-class TVerBroadcasterInfo(TypedDict):
-    # ota: 地上波 / bs: BS
-    type: Literal['ota', 'bs']
-    # area: 放送範囲 (東京なら 23 など)
-    area: int
-    # ブロードキャスター ID
-    broadcaster_id: int
-
-
-# ニコニコ実況 ID から Tver API 上の放送局情報への変換マップ
-JIKKYO_ID_TO_TVER_BROADCASTER_INFO: dict[str, TVerBroadcasterInfo] = {
-    'jk1': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=120),
-    'jk2': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=124),
-    'jk4': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=128),
-    'jk5': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=138),
-    'jk6': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=131),
-    'jk7': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=142),
-    'jk8': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=134),
-    'jk9': TVerBroadcasterInfo(type='ota', area=23, broadcaster_id=399),
-    'jk10': TVerBroadcasterInfo(type='ota', area=29, broadcaster_id=426),
-    'jk11': TVerBroadcasterInfo(type='ota', area=24, broadcaster_id=404),
-    'jk12': TVerBroadcasterInfo(type='ota', area=27, broadcaster_id=417),
-    'jk101': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=1),
-    'jk141': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=5),
-    'jk151': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=8),
-    'jk161': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=11),
-    'jk171': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=14),
-    'jk181': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=17),
-    'jk191': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=20),
-    'jk192': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=21),
-    'jk193': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=22),
-    'jk211': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=26),
-    'jk222': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=27),
-    'jk236': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=31),
-    'jk252': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=39),
-    'jk260': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=260),
-    'jk263': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=263),
-    'jk265': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=265),
-}
-
-class ProgramInfo(TypedDict):
-    # TVer から取得したタイトル (フル)
-    title: str
-    # 番組開始時刻 (常に Asia/Tokyo の datetime)
-    start_at: datetime
-    # 番組終了時刻 (常に Asia/Tokyo の datetime)
-    end_at: datetime
-    # 番組長 (分単位)
-    duration_minutes: int
-
-
-async def GetNowONAirProgramInfos() -> dict[str, ProgramInfo]:
+def GenerateClientID(websocket: WebSocket) -> str:
     """
-    TVer の番組表 API から、実況 ID に対応する現在放送中の番組情報を取得する
+    WebSocket 接続時の HTTP リクエストヘッダーに含まれる情報からフィンガープリントを生成し、
+    ある程度一意にユーザーを特定できるクライアント ID を生成する
+
+    基本荒らしや不快なコメントをコメント ID 単位で一発ミュートできるようにするためのもの
+    User-Agent はブラウザやソフト更新で変更されうるので、持続期間は数週間〜遅くとも数ヶ月程度のはず (したがって一定の匿名性が維持される)
+
+    Args:
+        websocket (WebSocket): WebSocket 接続情報
 
     Returns:
-        dict[str, ProgramInfo]: 実況 ID に対応する現在放送中の番組情報
+        str: クライアント ID
     """
 
-    # 5:00 より前は前日の番組表を取得する
-    now = datetime.now(ZoneInfo('Asia/Tokyo'))
-    if now.hour < 5:
-        date = (now - timedelta(days=1)).strftime('%Y/%m/%d')
-    else:
-        date = now.strftime('%Y/%m/%d')
+    # まずは HTTP リクエスト元の IP アドレスを取得
+    ## NX-Jikkyo は Cloudflare と nginx を挟んでのデプロイを想定しているので、
+    ## cf-connecting-ip, x-real-ip, x-forwarded-for (一番左側) の順で取得を試し、
+    ## どのヘッダーも設定されていなければ何もリバースプロキシを挟んでいないものと判断して直接取得する
+    ip_address: str = ''
+    if websocket.headers.get('cf-connecting-ip') is not None:
+        ip_address = websocket.headers.get('cf-connecting-ip', '')
+    elif websocket.headers.get('x-real-ip') is not None:
+        ip_address = websocket.headers.get('x-real-ip', '')
+    elif websocket.headers.get('x-forwarded-for') is not None:
+        # X-Forwarded-For は複数の IP アドレスが含まれる場合があるので、最左端の IP アドレスを取得する
+        ip_address = websocket.headers.get('x-forwarded-for', '').split(',')[0]
+    elif websocket.client is not None:
+        ip_address = websocket.client.host
 
-    async def fetch_programs(area: int, type_: str) -> dict[str, Any]:
-        url = f'https://service-api.tver.jp/api/v1/callEPGv2?date={date}&area={area}&type={type_}'
-        async with HTTPX_CLIENT() as client:
-            response = await client.get(url, headers={
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-                'x-tver-platform-type': 'web',
-            })
-            response.raise_for_status()
-            return response.json()
+    # Cookie に _ga キーが含まれていればそれを取得
+    ## Google アナリティクスによって設定される _ga という名前の Cookie はユーザー識別用の ID で、
+    ## ユーザーが Cookie を消去するか有効期限に達するまで永続的に設定される
+    ## なお _ga_MK1R3QRD5D のような名前の Cookie はリロードごとに変更されるので、
+    ## Cookie 全体をフィンガープリントに突っ込むと一意性が失われるため注意
+    ## https://www.bbccss.com/explanation-of-cookie-values-used-by-ga4.html
+    google_analytics_user_id: str = ''
+    if '_ga' in websocket.cookies:
+        google_analytics_user_id = websocket.cookies['_ga']
 
-    def get_current_program(programs: list[dict[str, Any]]) -> ProgramInfo | None:
-        for program in programs:
-            start_at = datetime.fromtimestamp(program['startAt'], ZoneInfo('Asia/Tokyo'))
-            end_at = datetime.fromtimestamp(program['endAt'], ZoneInfo('Asia/Tokyo'))
-            title = program['title']
-            # もし programs['icon']['new'] が True なら "[新]" を title の先頭に付け足す
-            if program['icon']['new']:
-                title = f'[新]{title}'
-            # もし programs['icon']['revival'] が True なら "[再]" を title の先頭に付け足す
-            if program['icon']['revival']:
-                title = f'[再]{title}'
-            # もし programs['icon']['last'] が True なら "[終]" を title の先頭に付け足す
-            if program['icon']['last']:
-                title = f'[終]{title}'
-            # 分単位の番組長を算出
-            duration_minutes = int((end_at - start_at).total_seconds() / 60)
-            if start_at <= now < end_at:
-                return ProgramInfo(
-                    title=title,
-                    start_at=start_at,
-                    end_at=end_at,
-                    duration_minutes=duration_minutes,
-                )
-        return None
+    # User-Agent が指定されていればそれを取得
+    user_agent: str = ''
+    if websocket.headers.get('user-agent') is not None:
+        user_agent = websocket.headers.get('user-agent', '')
 
-    results = {}
-    tasks = []
-    for type_ in ['ota', 'bs']:
-        areas = {info['area'] for info in JIKKYO_ID_TO_TVER_BROADCASTER_INFO.values() if info['type'] == type_}
-        for area in areas:
-            tasks.append(fetch_programs(area, type_))
+    # CF-Ray が指定されていれば、- 区切りの右側の3レターコードを取得
+    ##  Cloudflare が設定するヘッダーで、CF-Ray は 8957e991ee938d28-KIX のような値になる
+    ## - 以降の文字列は Cloudflare のデータセンターの位置を示す  日本の場合、NRT が東京、KIX が大阪を示しているらしい
+    ## これを使うことでユーザーが大まかに関東と関西どちらに住んでいるかが分かる
+    cf_ray_data_center: str = ''
+    if websocket.headers.get('cf-ray') is not None:
+        cf_ray = websocket.headers.get('cf-ray', '')
+        if '-' in cf_ray:
+            cf_ray_data_center = cf_ray.split('-')[1]
 
-    responses = await asyncio.gather(*tasks)
-    for response in responses:
-        for content in response['result']['contents']:
-            broadcaster_id = int(content['broadcaster']['id'])
-            for jk_id, info in JIKKYO_ID_TO_TVER_BROADCASTER_INFO.items():
-                if info['broadcaster_id'] == broadcaster_id:
-                    current_program = get_current_program(content['programs'])
-                    if current_program:
-                        results[jk_id] = current_program
+    # CF-IPCountry が指定されていればそれを取得
+    ## Cloudflare が設定するヘッダーで、値は ISO 3166-1 のコードで表される
+    ## JP は日本、US は米国、CN は中国、KR は韓国など
+    cf_ip_country: str = ''
+    if websocket.headers.get('cf-ipcountry') is not None:
+        cf_ip_country = websocket.headers.get('cf-ipcountry', '')
 
-    return results
+    # Accept-Encoding が指定されていればそれを取得
+    ## Accept-Encoding の値はブラウザや HTTP クライアントによって微妙に異なるため、
+    ## 単体では意味をなさないが、他の情報と組み合わせるとフィンガープリントの精度を向上できる
+    accept_encoding: str = ''
+    if websocket.headers.get('accept-encoding') is not None:
+        accept_encoding = websocket.headers.get('accept-encoding', '')
+
+    # Accept-Language が指定されていればそれを取得
+    ## Accept-Language の値はユーザーのブラウザ設定次第で異なるため、
+    ## 単体では意味をなさないが、他の情報と組み合わせるとフィンガープリントの精度を向上できる
+    accept_language: str = ''
+    if websocket.headers.get('accept-language') is not None:
+        accept_language = websocket.headers.get('accept-language', '')
+
+    # Sec-WebSocket-Extensions が指定されていればそれを取得
+    ## 通常のブラウザは "permessage-deflate; client_max_window_bits" という値を設定する
+    ## 外部ソフトからのアクセスの場合、WebSocket クライアントの実装次第ではこの値が設定されないことを識別に利用する
+    sec_websocket_extensions: str = ''
+    if websocket.headers.get('sec-websocket-extensions') is not None:
+        sec_websocket_extensions = websocket.headers.get('sec-websocket-extensions', '')
+
+    # 取得した情報を : で結合してフィンガープリントを生成
+    fingerprint: str = ':'.join([
+        ip_address,
+        google_analytics_user_id,
+        user_agent,
+        cf_ray_data_center,
+        cf_ip_country,
+        accept_encoding,
+        accept_language,
+        sec_websocket_extensions,
+    ])
+
+    # フィンガープリントを SHA-1 でハッシュ化して返す
+    ## MD5 よりかは安全にしたいが、SHA-256 は桁が長すぎるため
+    return hashlib.sha1(fingerprint.encode('utf-8')).hexdigest()

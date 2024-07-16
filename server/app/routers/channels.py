@@ -32,8 +32,8 @@ from app.models.comment import (
     ChannelResponse,
     ThreadResponse,
 )
-# from app.utils import GetNowONAirProgramInfos
 # from app.utils.TSInformation import TSInformation
+# from app.utils.TVer import GetNowONAirProgramInfos
 
 
 # ルーター
