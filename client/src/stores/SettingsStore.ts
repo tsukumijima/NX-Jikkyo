@@ -169,7 +169,7 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     // ***** 設定 → ニコニコ実況 (ミュート設定) *****
 
     // 露骨な表現を含むコメントをミュートする (Default: ミュートする)
-    mute_vulgar_comments: true,
+    mute_vulgar_comments: false,
     // 罵倒や誹謗中傷、差別的な表現、政治的に偏った表現を含むコメントをミュートする (Default: ミュートする)
     mute_abusive_discriminatory_prejudiced_comments: true,
     // 文字サイズが大きいコメントをミュートする (Default: ミュートする)
