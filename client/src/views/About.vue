@@ -10,7 +10,7 @@
                     「過去ログが残らず古いコメントから消えていく」<br class="d-inline d-sm-none">
                     「技術的にニコ生との API 互換性が皆無」<br>
                     「コメント書き込み時に Captcha が入ってるため TVTest などのサードパーティーソフトで対応不可」<br>
-                    「当然 NHK BS・BS11 以外の BS チャンネルには非対応」な使い捨ての劣化版クソサービス</a> なので、<br>何卒引き続きこの NX-Jikkyo 避難所でのコメントをお願いいたします…🙏🙏
+                    「当然 NHK BS・BS11 以外の BS チャンネルには非対応」な使い捨ての最悪な劣化版サービス</a> なので、<br>何卒引き続きこの NX-Jikkyo 避難所でのコメントをお願いいたします…🙏🙏
                 </blockquote>
                 <h1 class="mt-5">NX-Jikkyo とは</h1>
                 <p class="mt-4 text-text-darken-1">
