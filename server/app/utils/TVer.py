@@ -1,5 +1,6 @@
 
 import asyncio
+import traceback
 from functools import lru_cache
 from pydantic import BaseModel
 from datetime import datetime, timedelta
@@ -7,6 +8,7 @@ from time import time
 from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
+from app import logging
 from app.constants import HTTPX_CLIENT
 from app.utils.TSInformation import TSInformation
 
@@ -106,13 +108,18 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
 
         @lru_cache(maxsize=128)
         async def cached_fetch(key: float) -> dict[str, Any]:
-            async with HTTPX_CLIENT() as client:
-                response = await client.get(url, headers={
-                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-                    'x-tver-platform-type': 'web',
-                })
-                response.raise_for_status()
-                return response.json()
+            try:
+                async with HTTPX_CLIENT() as client:
+                    response = await client.get(url, headers={
+                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                        'x-tver-platform-type': 'web',
+                    })
+                    response.raise_for_status()
+                    return response.json()
+            except Exception as e:
+                logging.error(f'An error occurred while calling the TVer API: {e}')
+                logging.error(traceback.format_exc())
+                return {}
 
         return await cached_fetch(cache_key)
 
@@ -121,44 +128,49 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
         next_program: ProgramInfo | None = None
 
         for program in programs:
-            start_at = datetime.fromtimestamp(program['startAt'], ZoneInfo('Asia/Tokyo'))
-            end_at = datetime.fromtimestamp(program['endAt'], ZoneInfo('Asia/Tokyo'))
+            try:
+                start_at = datetime.fromtimestamp(program['startAt'], ZoneInfo('Asia/Tokyo'))
+                end_at = datetime.fromtimestamp(program['endAt'], ZoneInfo('Asia/Tokyo'))
 
-            if start_at <= now < end_at or (now < start_at and next_program is None):
-                title = TSInformation.formatString(program['title'])
+                if start_at <= now < end_at or (now < start_at and next_program is None):
+                    title = TSInformation.formatString(program['title'])
 
-                # アイコン情報を追加
-                icons = []
-                if program['icon']['new']:
-                    icons.append('[新]')
-                if program['icon']['revival']:
-                    icons.append('[再]')
-                if program['icon']['last']:
-                    icons.append('[終]')
-                if icons:
-                    title = f"{''.join(icons)}{title}"
+                    # アイコン情報を追加
+                    icons = []
+                    if program['icon']['new']:
+                        icons.append('[新]')
+                    if program['icon']['revival']:
+                        icons.append('[再]')
+                    if program['icon']['last']:
+                        icons.append('[終]')
+                    if icons:
+                        title = f"{''.join(icons)}{title}"
 
-                # ジャンルは "0xA" のようになぜか16進数表記の文字列で入っているので、適切に int に変換してからジャンル名にする
-                genre = None
-                if 'genre' in program and program['genre']:
-                    genre_id = int(program['genre'], 16)
-                    genre = GENRE_ID_TO_GENRE_NAME_MAP.get(genre_id)
+                    # ジャンルは "0xA" のようになぜか16進数表記の文字列で入っているので、適切に int に変換してからジャンル名にする
+                    genre = None
+                    if 'genre' in program and program['genre']:
+                        genre_id = int(program['genre'], 16)
+                        genre = GENRE_ID_TO_GENRE_NAME_MAP.get(genre_id)
 
-                program_info = ProgramInfo(
-                    title=title,
-                    start_at=start_at,
-                    end_at=end_at,
-                    duration_minutes=int((end_at - start_at).total_seconds() / 60),
-                    genre=genre,
-                )
+                    program_info = ProgramInfo(
+                        title=title,
+                        start_at=start_at,
+                        end_at=end_at,
+                        duration_minutes=int((end_at - start_at).total_seconds() / 60),
+                        genre=genre,
+                    )
 
-                if start_at <= now < end_at:
-                    current_program = program_info
-                else:
-                    next_program = program_info
+                    if start_at <= now < end_at:
+                        current_program = program_info
+                    else:
+                        next_program = program_info
 
-            if current_program and next_program:
-                break
+                if current_program and next_program:
+                    break
+            except Exception as e:
+                logging.error(f'An error occurred while processing the program information: {e}')
+                logging.error(traceback.format_exc())
+                continue
 
         return current_program, next_program
 
@@ -170,11 +182,16 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
 
     responses = await asyncio.gather(*tasks)
     for response in responses:
-        for content in response['result']['contents']:
-            broadcaster_id = int(content['broadcaster']['id'])
-            for jk_id, info in JIKKYO_ID_TO_TVER_BROADCASTER_INFO_MAP.items():
-                if info.broadcaster_id == broadcaster_id:
-                    results[jk_id] = get_current_and_next_programs(content['programs'])
+        try:
+            for content in response.get('result', {}).get('contents', []):
+                broadcaster_id = int(content['broadcaster']['id'])
+                for jk_id, info in JIKKYO_ID_TO_TVER_BROADCASTER_INFO_MAP.items():
+                    if info.broadcaster_id == broadcaster_id:
+                        results[jk_id] = get_current_and_next_programs(content.get('programs', []))
+        except Exception as e:
+            logging.error(f'An error occurred while processing the response: {e}')
+            logging.error(traceback.format_exc())
+            continue
 
     return results
 

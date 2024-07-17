@@ -9,6 +9,8 @@ from tortoise import fields
 from tortoise.models import Model as TortoiseModel
 from typing import Literal
 
+from app.utils.TVer import ProgramInfo
+
 
 class Channel(TortoiseModel):
     """
@@ -117,6 +119,8 @@ class ChannelResponse(BaseModel):
     """
     id: str
     name: str
+    program_present: ProgramInfo | None = None
+    program_following: ProgramInfo | None = None
     threads: list[ThreadResponse]
 
 class ThreadResponse(BaseModel):

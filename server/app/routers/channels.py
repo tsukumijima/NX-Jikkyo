@@ -32,6 +32,7 @@ from app.models.comment import (
     ChannelResponse,
     ThreadResponse,
 )
+from app.utils.TVer import GetNowAndNextProgramInfos
 
 
 # ルーター
@@ -68,8 +69,8 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
     query += ' ORDER BY c.id ASC, t.start_at ASC'
     channels = await connections.get('default').execute_query_dict(query)
 
-    # 現在放送中の番組情報を取得
-    # now_onair_program_info = await GetNowONAirProgramInfos()
+    # 現在放送中・次の放送予定の番組情報を取得
+    program_infos = await GetNowAndNextProgramInfos()
 
     channel_responses: list[ChannelResponse] = []
     current_channel_id: int | None = None
@@ -81,6 +82,8 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
                 channel_responses.append(ChannelResponse(
                     id = f'jk{current_channel_id}',
                     name = cast(str, current_channel_name),
+                    program_present = program_infos.get(f'jk{current_channel_id}', (None, None))[0],
+                    program_following = program_infos.get(f'jk{current_channel_id}', (None, None))[1],
                     threads = threads,
                 ))
             current_channel_id = cast(int, row['id'])
@@ -135,6 +138,8 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
         channel_responses.append(ChannelResponse(
             id = f'jk{current_channel_id}',
             name = cast(str, current_channel_name),
+            program_present = program_infos.get(f'jk{current_channel_id}', (None, None))[0],
+            program_following = program_infos.get(f'jk{current_channel_id}', (None, None))[1],
             threads = threads,
         ))
 
