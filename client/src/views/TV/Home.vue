@@ -727,9 +727,9 @@ export default defineComponent({
                         align-items: center;
                         justify-content: center;
                         flex-shrink: 0;
-                        position: relative;
-                        top: -5px;
-                        right: -5px;
+                        position: absolute;
+                        top: 13px;
+                        right: 15px;
                         width: 34px;
                         height: 34px;
                         padding: 4px;
@@ -738,7 +738,10 @@ export default defineComponent({
                         transition: color 0.15s ease, background-color 0.15s ease;
                         user-select: none;
                         @include smartphone-horizontal {
+                            position: relative;
                             top: -1px;
+                            top: -5px;
+                            right: -5px;
                         }
 
                         &:before {
