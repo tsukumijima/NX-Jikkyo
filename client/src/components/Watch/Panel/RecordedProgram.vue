@@ -37,6 +37,11 @@
                     <span class="ml-2">{{comment_count ?? '--'}}</span>
                 </div>
             </div>
+            <v-btn class="mt-4 px-3 py-0" style="background: #1d9BF0; height: 32px; border-radius: 6px; font-size: 13.5px;"
+                @click="shareToTwitter()">
+                <Icon icon="fa-brands:twitter" height="16px" />
+                <span class="ml-1">Twitter でシェア</span>
+            </v-btn>
         </section>
         <section class="program-detail-container">
             <div class="program-detail" :key="detail_heading"
@@ -52,8 +57,9 @@
 import { mapStores } from 'pinia';
 import { defineComponent } from 'vue';
 
+import { ILiveChannelDefault } from '@/services/Channels';
 import usePlayerStore from '@/stores/PlayerStore';
-import Utils, { ProgramUtils } from '@/utils';
+import Utils, { dayjs, ProgramUtils } from '@/utils';
 
 export default defineComponent({
     name: 'Panel-RecordedProgramTab',
@@ -81,6 +87,16 @@ export default defineComponent({
     beforeUnmount() {
         // CommentReceived イベントの全てのイベントハンドラーを削除
         this.playerStore.event_emitter.off('CommentReceived');
+    },
+    methods: {
+        shareToTwitter() {
+            const channel = this.playerStore.recorded_program.channel ?? ILiveChannelDefault;
+            const kakolog_start_dayjs = dayjs(this.playerStore.recorded_program.start_time);
+            const kakolog_end_dayjs = dayjs(this.playerStore.recorded_program.end_time);
+            const display_date = kakolog_start_dayjs.hour() < 4 ? kakolog_start_dayjs.subtract(1, 'day') : kakolog_start_dayjs;
+            const tweet_text = `NX-Jikkyo で【Ch: ${channel.channel_number} ${channel.name}】${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを再生中🎧\n#NXJikkyo\nhttps://nx-jikkyo.tsukumijima.net/log/${this.$route.params.display_channel_id}/${this.$route.params.kakolog_period_id}`;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet_text)}`);
+        },
     },
 });
 
@@ -213,7 +229,7 @@ export default defineComponent({
     }
 
     .program-detail-container {
-        margin-top: 24px;
+        margin-top: 20px;
         margin-bottom: 24px;
         @include tablet-vertical {
             margin-top: 20px;

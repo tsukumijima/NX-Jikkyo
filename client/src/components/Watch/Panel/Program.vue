@@ -44,6 +44,11 @@
                     <span class="ml-1">{{channelsStore.channel.current.viewer_count}}</span>
                 </div>
             </div>
+            <v-btn class="mt-4 px-3 py-0" style="background: #1d9BF0; height: 32px; border-radius: 6px; font-size: 13.5px;"
+                @click="shareToTwitter()">
+                <Icon icon="fa-brands:twitter" height="16px" />
+                <span class="ml-1">Twitter でシェア</span>
+            </v-btn>
         </section>
         <section class="program-detail-container">
             <div class="program-detail" :key="detail_heading"
@@ -74,7 +79,14 @@ export default defineComponent({
     },
     computed: {
         ...mapStores(useChannelsStore),
-    }
+    },
+    methods: {
+        shareToTwitter() {
+            const channel = this.channelsStore.channel.current;
+            const tweet_text = `NX-Jikkyo で【Ch: ${channel.channel_number} ${channel.name}】を実況中🎧\n#NXJikkyo\nhttps://nx-jikkyo.tsukumijima.net/watch/${channel.id}`;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet_text)}`);
+        },
+    },
 });
 
 </script>
