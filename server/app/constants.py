@@ -158,6 +158,8 @@ HTTPX_CLIENT = lambda: httpx.AsyncClient(
     follow_redirects = True,
     # 3 秒応答がない場合はタイムアウトする
     timeout = 3.0,
+    # HTTP/2 を使用する
+    http2 = True,
 )
 
 # Redis クライアント

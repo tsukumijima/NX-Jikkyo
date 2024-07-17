@@ -1,11 +1,11 @@
 
 import asyncio
 import traceback
-from functools import lru_cache
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from time import time
 from typing import Any, Literal
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 from app import logging
@@ -82,6 +82,11 @@ GENRE_ID_TO_GENRE_NAME_MAP: dict[int, str] = {
     0xF: 'その他',
 }
 
+# キャッシュの TTL (秒)
+CACHE_TTL = 60 * 30  # 30分
+# キャッシュのマップ
+CACHE: dict[str, tuple[Any, float]] = {}
+
 
 async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, ProgramInfo | None]]:
     """
@@ -98,30 +103,41 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
     else:
         date = now.strftime('%Y/%m/%d')
 
-    @lru_cache(maxsize=128)
-    def get_cache_key(url: str) -> float:
-        return time() // 3600  # 1時間ごとにキャッシュを更新
-
     async def fetch_programs(area: int, type_: str) -> dict[str, Any]:
-        url = f'https://service-api.tver.jp/api/v1/callEPGv2?date={date}&area={area}&type={type_}'
-        cache_key = get_cache_key(url)
+        url = f'https://service-api.tver.jp/api/v1/callEPGv2?date={quote(date)}&area={area}&type={type_}'
 
-        @lru_cache(maxsize=128)
-        async def cached_fetch(key: float) -> dict[str, Any]:
-            try:
-                async with HTTPX_CLIENT() as client:
-                    response = await client.get(url, headers={
-                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-                        'x-tver-platform-type': 'web',
-                    })
-                    response.raise_for_status()
-                    return response.json()
-            except Exception as e:
-                logging.error(f'An error occurred while calling the TVer API: {e}')
-                logging.error(traceback.format_exc())
-                return {}
+        current_time = time()
+        if url in CACHE:
+            cached_data, expiration_time = CACHE[url]
+            if current_time < expiration_time:
+                return cached_data
 
-        return await cached_fetch(cache_key)
+        try:
+            async with HTTPX_CLIENT() as client:
+                response = await client.get(url, headers={
+                    'accept': '*/*',
+                    'accept-encoding': 'gzip, deflate, br',
+                    'accept-language': 'ja',
+                    'origin': 'https://tver.jp',
+                    'referer': 'https://tver.jp/',
+                    'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-site',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                    'x-tver-platform-type': 'web',
+                })
+                response.raise_for_status()
+                response_json = response.json()
+                logging.info(f'Successfully fetched programs from TVer API (type: {type_}, area: {area})')
+                CACHE[url] = (response_json, current_time + CACHE_TTL)
+                return response_json
+        except Exception as e:
+            logging.error(f'An error occurred while calling the TVer API: {e}')
+            logging.error(traceback.format_exc())
+            return {}
 
     def get_current_and_next_programs(programs: list[dict[str, Any]]) -> tuple[ProgramInfo | None, ProgramInfo | None]:
         current_program: ProgramInfo | None = None
