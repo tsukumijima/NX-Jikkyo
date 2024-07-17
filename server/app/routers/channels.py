@@ -32,8 +32,6 @@ from app.models.comment import (
     ChannelResponse,
     ThreadResponse,
 )
-# from app.utils.TSInformation import TSInformation
-# from app.utils.TVer import GetNowONAirProgramInfos
 
 
 # ルーター
@@ -117,19 +115,6 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
         else:
             viewer_count = None
 
-        # ステータスが ACTIVE (放送中) のスレッドのみ、当該スレッドの概要に現在放送中の番組タイトルを付け足す
-        # if status == 'ACTIVE':
-        #     jikkyo_id = f'jk{current_channel_id}'
-        #     if jikkyo_id in now_onair_program_info:
-        #         description = (
-        #             f'<b>🗼 現在放送中の番組: 📺 {TSInformation.formatString(now_onair_program_info[jikkyo_id]["title"])}\n'
-        #             f'({now_onair_program_info[jikkyo_id]["start_at"].strftime("%H:%M")} ～ {now_onair_program_info[jikkyo_id]["end_at"].strftime("%H:%M")} / {now_onair_program_info[jikkyo_id]["duration_minutes"]}分)</b><br>'
-        #             f'{row["thread_description"]}'
-        #         )
-        #     else:
-        #         description = row["thread_description"]
-        # else:
-        #     description = cast(str, row['thread_description'])
         description = cast(str, row['thread_description'])
 
         # スレッド情報を追加
