@@ -78,8 +78,22 @@ export interface IJikkyoSession {
 export interface INXJikkyoChannel {
     id: string;
     name: string;
-    description: string;
+    program_present: INXJikkyoProgramInfo | null;
+    program_following: INXJikkyoProgramInfo | null;
     threads: INXJikkyoThread[];
+}
+
+export interface INXJikkyoProgramInfo {
+    // TVer から取得したタイトル (フル)
+    title: string;
+    // 番組開始時刻 (常に Asia/Tokyo の datetime)
+    start_at: string;
+    // 番組終了時刻 (常に Asia/Tokyo の datetime)
+    end_at: string;
+    // 番組長 (秒単位)
+    duration: number;
+    // ジャンル名
+    genre: string | null;
 }
 
 export interface INXJikkyoThread {
@@ -159,6 +173,7 @@ class Channels {
                 ? channel.threads[current_thread_index + 1]
                 : null;
 
+            // 番組情報に関しては存在するならスレッド情報ではなく番組情報を優先する
             const live_channel: ILiveChannel = {
                 id: channel.id,
                 display_channel_id: channel.id,
@@ -208,8 +223,8 @@ class Channels {
                     network_id: -1,
                     service_id: -1,
                     event_id: -1,
-                    title: current_thread.title,
-                    description: current_thread.description,
+                    title: channel.program_present?.title || current_thread.title,
+                    description: `<div class="font-weight-bold text-text" style="margin-bottom: 2px">🎧実況枠: ${current_thread.title}</div>${current_thread.description}`,
                     detail: {
                         'NX-Jikkyo について': (
                             'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。\n\n' +
@@ -218,11 +233,14 @@ class Channels {
                             'ぜひ感想などを気軽にコメントしてお楽しみください。'
                         ),
                     },
-                    start_time: current_thread.start_at,
-                    end_time: current_thread.end_at,
-                    duration: current_thread.duration,
+                    start_time: channel.program_present?.start_at || current_thread.start_at,
+                    end_time: channel.program_present?.end_at || current_thread.end_at,
+                    duration: channel.program_present?.duration || current_thread.duration,
                     is_free: false,
-                    genres: [],
+                    genres: channel.program_present?.genre ? [{
+                        major: channel.program_present.genre,
+                        middle: '',
+                    }] : [],
                     video_type: '',
                     video_codec: '',
                     video_resolution: '',
@@ -239,14 +257,17 @@ class Channels {
                     network_id: -1,
                     service_id: -1,
                     event_id: -1,
-                    title: next_thread.title,
+                    title: channel.program_following?.title || next_thread.title,
                     description: next_thread.description,
                     detail: {},
-                    start_time: next_thread.start_at,
-                    end_time: next_thread.end_at,
-                    duration: next_thread.duration,
+                    start_time: channel.program_following?.start_at || next_thread.start_at,
+                    end_time: channel.program_following?.end_at || next_thread.end_at,
+                    duration: channel.program_following?.duration || next_thread.duration,
                     is_free: false,
-                    genres: [],
+                    genres: channel.program_following?.genre ? [{
+                        major: channel.program_following.genre,
+                        middle: '',
+                    }] : [],
                     video_type: '',
                     video_codec: '',
                     video_resolution: '',

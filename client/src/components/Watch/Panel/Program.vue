@@ -83,7 +83,7 @@ export default defineComponent({
     methods: {
         shareToTwitter() {
             const channel = this.channelsStore.channel.current;
-            const tweet_text = `NX-Jikkyo で【Ch: ${channel.channel_number} ${channel.name}】を実況中🎧\n#NXJikkyo\nhttps://nx-jikkyo.tsukumijima.net/watch/${channel.id}`;
+            const tweet_text = `NX-Jikkyo で【Ch: ${channel.channel_number} ${channel.name}】「${channel.program_present?.title}」を実況中🎧  #NXJikkyo\nhttps://nx-jikkyo.tsukumijima.net/watch/${channel.id}`;
             window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet_text)}`);
         },
     },

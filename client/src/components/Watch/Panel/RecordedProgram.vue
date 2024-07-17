@@ -94,7 +94,7 @@ export default defineComponent({
             const kakolog_start_dayjs = dayjs(this.playerStore.recorded_program.start_time);
             const kakolog_end_dayjs = dayjs(this.playerStore.recorded_program.end_time);
             const display_date = kakolog_start_dayjs.hour() < 4 ? kakolog_start_dayjs.subtract(1, 'day') : kakolog_start_dayjs;
-            const tweet_text = `NX-Jikkyo で【Ch: ${channel.channel_number} ${channel.name}】${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを再生中🎧\n#NXJikkyo\nhttps://nx-jikkyo.tsukumijima.net/log/${this.$route.params.display_channel_id}/${this.$route.params.kakolog_period_id}`;
+            const tweet_text = `NX-Jikkyo で【Ch: ${channel.channel_number} ${channel.name}】${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを再生中🎧  #NXJikkyo\nhttps://nx-jikkyo.tsukumijima.net/log/${this.$route.params.display_channel_id}/${this.$route.params.kakolog_period_id}`;
             window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet_text)}`);
         },
     },
