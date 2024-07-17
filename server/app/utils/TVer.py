@@ -20,8 +20,8 @@ class ProgramInfo(BaseModel):
     start_at: datetime
     # 番組終了時刻 (常に Asia/Tokyo の datetime)
     end_at: datetime
-    # 番組長 (分単位)
-    duration_minutes: int
+    # 番組長 (秒単位)
+    duration: int
     # ジャンル名
     genre: str | None = None
 
@@ -156,7 +156,7 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
                         title=title,
                         start_at=start_at,
                         end_at=end_at,
-                        duration_minutes=int((end_at - start_at).total_seconds() / 60),
+                        duration=int((end_at - start_at).total_seconds()),
                         genre=genre,
                     )
 
@@ -208,14 +208,14 @@ if __name__ == '__main__':
             if current_program:
                 print(f'現在の番組: {current_program.title}')
                 print(f'  開始時刻: {current_program.start_at.strftime("%Y-%m-%d %H:%M:%S")} 終了時刻: {current_program.end_at.strftime("%Y-%m-%d %H:%M:%S")}')
-                print(f'  長さ: {current_program.duration_minutes}分 ジャンル: {current_program.genre or "不明"}')
+                print(f'  長さ: {current_program.duration // 60}分 ジャンル: {current_program.genre or "不明"}')
             else:
                 print('現在の番組: なし')
             print('-' * terminal_width)
             if next_program:
                 print(f'次の番組: {next_program.title}')
                 print(f'  開始時刻: {next_program.start_at.strftime("%Y-%m-%d %H:%M:%S")} 終了時刻: {next_program.end_at.strftime("%Y-%m-%d %H:%M:%S")}')
-                print(f'  長さ: {next_program.duration_minutes}分 ジャンル: {next_program.genre or "不明"}')
+                print(f'  長さ: {next_program.duration // 60}分 ジャンル: {next_program.genre or "不明"}')
             else:
                 print('次の番組: なし')
             print('=' * terminal_width)
