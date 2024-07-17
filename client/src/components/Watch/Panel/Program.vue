@@ -94,7 +94,7 @@ export default defineComponent({
 
 .program-container {
     padding-left: 16px;
-    padding-right: 16px;
+    padding-right: 15px;
     overflow-y: auto;
     @include tablet-vertical {
         padding-left: 24px;
