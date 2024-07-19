@@ -16,7 +16,8 @@ aiomysql = "^0.2.0"
 cryptography = "^42.0.5"
 fastapi = "^0.109.1"
 fastapi-restful = "^0.5.0"
-httpx = {version = "^0.25.2", extras = ["http2"]}
+httpx = {version = "^0.27.0", extras = ["http2"]}
+ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "949a731d626bbbf800a484e6bf638e78d6d54612" }
 pydantic = "^2.5.2"
 pydantic-settings = "^2.2.1"
 python-multipart = "^0.0.9"
@@ -24,7 +25,7 @@ redis = "==4.6.0"
 rich = "^13.7.0"
 taskipy = "^1.12.2"
 tortoise-orm = "^0.20.0"
-typer = "^0.9.0"
+typer = "^0.12.3"
 types-redis = "^4.6.0.20240425"
 typing-inspect = "^0.9.0"
 uvicorn = {version = "^0.24.0.post1", extras = ["standard"]}
