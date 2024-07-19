@@ -66,7 +66,8 @@ async def WatchSessionAPI(
             end_at__gte = now,
         ).first()
         if not thread:
-            logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
+            # 存在しないチャンネル ID を指定された場合にも発生して頻度が多すぎるのでログをコメントアウト中
+            # logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
             await websocket.close(code=4404)
             return
 
