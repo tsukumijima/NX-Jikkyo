@@ -476,6 +476,11 @@ class LiveCommentManager implements PlayerManager {
                 return;
             }
 
+            // ユーザー ID に rekari: の prefix がつく場合はコメント内容の先頭に [Re:仮] を付与
+            if (comment.user_id.startsWith('rekari:')) {
+                comment.content = `[Re:仮] ${comment.content}`;
+            }
+
             // コメントリストへ追加するオブジェクト
             const comment_data: ICommentData = {
                 id: comment.no,
