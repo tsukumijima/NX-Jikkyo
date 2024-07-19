@@ -259,7 +259,7 @@ async def StartRekariStreaming():
         channel_id = f'jk{channel_id_int}'
 
         # NDGRClient を初期化
-        ndgr_client = NDGRClient(channel_id)
+        ndgr_client = NDGRClient(channel_id, show_log=True)
 
         # コメント受信時に実行されるコールバック関数
         async def callback(ndgr_comment: NDGRComment) -> None:
