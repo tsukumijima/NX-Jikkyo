@@ -259,7 +259,8 @@ async def StartStreamRekariComments():
         channel_id = f'jk{channel_id_int}'
 
         # NDGRClient を初期化
-        ndgr_client = NDGRClient(channel_id, show_log=True)
+        ## デバッグ時のみログを表示
+        ndgr_client = NDGRClient(channel_id, show_log=CONFIG.ENVIRONMENT == 'Develop')
 
         # コメント受信時に実行されるコールバック関数
         async def callback(ndgr_comment: NDGRComment) -> None:
@@ -344,16 +345,23 @@ async def StartStreamRekariComments():
                 logging.error(traceback.format_exc())
 
         # コメントのストリーミング処理を開始
-        ## 予期せぬエラー発生時はログを出力する
-        try:
-            await ndgr_client.streamComments(callback)
-        except Exception:
-            logging.error(f'StreamRekariComments [{channel_id}]: Unexpected error occurred while streaming.')
-            logging.error(traceback.format_exc())
+        ## 予期せぬエラー発生時はログを出力し、15秒後にリトライする
+        while True:
+            try:
+                await ndgr_client.streamComments(callback)
+            except Exception:
+                logging.error(f'StreamRekariComments [{channel_id}]: Unexpected error occurred while streaming.')
+                logging.error(traceback.format_exc())
+                logging.info(f'StreamRekariComments [{channel_id}]: Retrying in 15 seconds...')
+                await asyncio.sleep(15)
+            else:
+                break  # エラーが発生しなかった場合はループを抜ける
 
     # ニコニコ実況 (Re:仮) の各実況チャンネルに対し、バックグラウンドでストリーミングを開始
+    ## 一度にアクセスするとアクセス規制を喰らう可能性があるので、0.5 秒ずつ遅らせてタスクを起動する
     for rekari_jikkyo_channel_id_int in REKARI_JIKKYO_CHANNELS:
         asyncio.create_task(StreamRekariComments(rekari_jikkyo_channel_id_int))
+        await asyncio.sleep(0.5)
         logging.info(f'StartStreamRekariComments [jk{rekari_jikkyo_channel_id_int}]: Streaming started.')
 
 
