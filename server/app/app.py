@@ -240,20 +240,20 @@ async def ResetViewerCount():
 # ストリーミングで取得したコメントは随時 NX-Jikkyo のコメントとして「投稿」する
 ## この処理はサーバー起動時に 1 回だけ実行される
 @app.on_event('startup')
-async def StartRekariStreaming():
+async def StartStreamRekariComments():
 
     # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
     if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
         return
 
     # ニコニコ実況 (Re:仮) で実装されている実況チャンネル (jk の prefix なし)
-    rekari_jikkyo_channels = [1, 2, 4, 5, 6, 7, 8, 9, 101, 211]
+    REKARI_JIKKYO_CHANNELS = [1, 2, 4, 5, 6, 7, 8, 9, 101, 211]
 
     # 現在アクティブなスレッドの情報を保存する辞書
     active_threads: dict[int, Thread] = {}
 
-    # ニコニコ実況 (Re:仮) の各実況チャンネルに対してストリーミングを開始
-    for channel_id_int in rekari_jikkyo_channels:
+    # ニコニコ実況 (Re:仮) のコメントをリアルタイムに受信する非同期関数
+    async def StreamRekariComments(channel_id_int: int) -> None:
 
         # jk の prefix つきのチャンネル ID
         channel_id = f'jk{channel_id_int}'
@@ -279,9 +279,10 @@ async def StartRekariStreaming():
                     end_at__gte = current_time_datetime,
                 ).first()
                 if not thread:
-                    logging.error(f'Thread for channel {channel_id_int} not found.')
+                    logging.error(f'StreamRekariComments [{channel_id}]: Active thread not found.')
                     return
                 active_threads[channel_id_int] = thread
+                logging.info(f'StreamRekariComments [{channel_id}]: Active thread has been updated.')
 
             # 現在アクティブなスレッドの情報を取得
             thread = active_threads[channel_id_int]
@@ -335,16 +336,25 @@ async def StartRekariStreaming():
                     await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
 
                 # ニコニコ実況 (Re:仮) からのコメントのインポート完了
-                logging.info(f'StartRekariStreaming [{channel_id}]: Rekari user {comment.user_id} posted a comment.')
+                logging.info(f'StreamRekariComments [{channel_id}]: Rekari user {comment.user_id} posted a comment.')
 
             # 何らかの理由でコメント投稿に失敗した場合はエラーログを出力
             except Exception:
-                logging.error(f'StartRekariStreaming [{channel_id}]: Failed to import comment.')
+                logging.error(f'StreamRekariComments [{channel_id}]: Failed to import comment.')
                 logging.error(traceback.format_exc())
 
-        # ストリーミング処理をバックグラウンドで開始
-        asyncio.create_task(ndgr_client.streamComments(callback))
-        logging.info(f'StartRekariStreaming [{channel_id}]: Streaming started.')
+        # コメントのストリーミング処理を開始
+        ## 予期せぬエラー発生時はログを出力する
+        try:
+            await ndgr_client.streamComments(callback)
+        except Exception:
+            logging.error(f'StreamRekariComments [{channel_id}]: Unexpected error occurred while streaming.')
+            logging.error(traceback.format_exc())
+
+    # ニコニコ実況 (Re:仮) の各実況チャンネルに対し、バックグラウンドでストリーミングを開始
+    for rekari_jikkyo_channel_id_int in REKARI_JIKKYO_CHANNELS:
+        asyncio.create_task(StreamRekariComments(rekari_jikkyo_channel_id_int))
+        logging.info(f'StartStreamRekariComments [jk{rekari_jikkyo_channel_id_int}]: Streaming started.')
 
 
 # 10秒に1回、現在のチャンネル情報を DB から取得し、Redis にキャッシュとして格納する
