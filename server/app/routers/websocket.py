@@ -63,7 +63,7 @@ async def WatchSessionAPI(
         thread = await Thread.filter(
             channel_id = channel_id_int,
             start_at__lte = now,
-            end_at__gte = now
+            end_at__gte = now,
         ).first()
         if not thread:
             logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')

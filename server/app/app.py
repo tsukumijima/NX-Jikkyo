@@ -1,5 +1,9 @@
 
+import asyncio
 import mimetypes
+import random
+import time
+import traceback
 import tortoise.contrib.fastapi
 import tortoise.log
 from datetime import datetime, timedelta
@@ -8,9 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_restful.tasks import repeat_every
+from ndgr_client import NDGRClient, NDGRComment
 from pathlib import Path
 from pydantic import TypeAdapter
 from tortoise import timezone
+from tortoise.transactions import in_transaction
 from zoneinfo import ZoneInfo
 
 from app import logging
@@ -20,6 +26,7 @@ from app.constants import (
     DATABASE_CONFIG,
     REDIS_CLIENT,
     REDIS_KEY_CHANNEL_INFOS_CACHE,
+    REDIS_KEY_JIKKYO_FORCE_COUNT,
     REDIS_KEY_VIEWER_COUNT,
     VERSION,
 )
@@ -227,6 +234,117 @@ async def ResetViewerCount():
     for channel in await Channel.all():
         await REDIS_CLIENT.hset(REDIS_KEY_VIEWER_COUNT, f'jk{channel.id}', 0)
         logging.info(f'Viewer count for {channel.name} has been reset.')
+
+
+# サーバー起動時にニコニコ実況 (Re:仮) の各実況チャンネルのコメントのリアルタイムストリーミングを開始
+# ストリーミングで取得したコメントは随時 NX-Jikkyo のコメントとして「投稿」する
+## この処理はサーバー起動時に 1 回だけ実行される
+@app.on_event('startup')
+async def StartRekariStreaming():
+
+    # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
+    if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
+        return
+
+    # ニコニコ実況 (Re:仮) で実装されている実況チャンネル (jk の prefix なし)
+    rekari_jikkyo_channels = [1, 2, 4, 5, 6, 7, 8, 9, 101, 211]
+
+    # 現在アクティブなスレッドの情報を保存する辞書
+    active_threads: dict[int, Thread] = {}
+
+    # ニコニコ実況 (Re:仮) の各実況チャンネルに対してストリーミングを開始
+    for channel_id_int in rekari_jikkyo_channels:
+
+        # jk の prefix つきのチャンネル ID
+        channel_id = f'jk{channel_id_int}'
+
+        # NDGRClient を初期化
+        ndgr_client = NDGRClient(channel_id)
+
+        # コメント受信時に実行されるコールバック関数
+        async def callback(ndgr_comment: NDGRComment) -> None:
+
+            # 現在のサーバー時刻 (UNIX タイムスタンプ)
+            current_time = time.time()
+
+            # 現在のサーバー時刻 (datetime)
+            current_time_datetime = timezone.now()
+
+            # 現在アクティブなスレッドの情報が保存されていないか、放送が終了している場合は、
+            # 現在アクティブなスレッドの情報を取得し、active_threads に保存する
+            if channel_id_int not in active_threads or active_threads[channel_id_int].end_at < current_time_datetime:
+                thread = await Thread.filter(
+                    channel_id = channel_id_int,
+                    start_at__lte = current_time_datetime,
+                    end_at__gte = current_time_datetime,
+                ).first()
+                if not thread:
+                    logging.error(f'Thread for channel {channel_id_int} not found.')
+                    return
+                active_threads[channel_id_int] = thread
+
+            # 現在アクティブなスレッドの情報を取得
+            thread = active_threads[channel_id_int]
+
+            try:
+
+                # コメントを DB に登録
+                async with in_transaction() as connection:
+
+                    # 採番テーブルに記録されたコメ番をインクリメント
+                    await connection.execute_query(
+                        'UPDATE comment_counters SET max_no = max_no + 1 WHERE thread_id = %s',
+                        [thread.id]
+                    )
+                    # インクリメント後のコメ番を取得
+                    ## 採番テーブルを使うことでコメ番の重複を防いでいる
+                    new_no_result = await connection.execute_query_dict(
+                        'SELECT max_no FROM comment_counters WHERE thread_id = %s',
+                        [thread.id]
+                    )
+                    new_no = new_no_result[0]['max_no']
+
+                    # vpos はスレッドの放送開始時刻から起算した秒 1/100 秒 (10ミリ秒) 単位のタイムスタンプ
+                    vpos = int((ndgr_comment.at.timestamp() - thread.start_at.timestamp()) * 100)
+
+                    # 受信したコメントデータを XML 互換コメント形式に変換
+                    xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
+
+                    # 新しいコメントを作成
+                    ## コメ番はニコニコ実況 (Re:仮) では運用されておらず齟齬も出るため、NX-Jikkyo 側に合わせている
+                    ## vpos はニコニコ実況 (Re:仮) で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
+                    comment = await Comment.create(
+                        thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
+                        no = new_no,  # NX-Jikkyo 側で算出した値を入れる
+                        vpos = vpos,  # NX-Jikkyo 側で算出した値を入れる
+                        mail = xml_compatible_comment.mail,
+                        user_id = xml_compatible_comment.user_id,
+                        premium = True if xml_compatible_comment.premium == 1 else False,
+                        anonymity = True if xml_compatible_comment.anonymity == 1 else False,
+                        content = xml_compatible_comment.content,
+                    )
+
+                # 実況勢いカウント用の Redis ソート済みセット型にエントリを追加
+                ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる
+                await REDIS_CLIENT.zadd(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', {f'comment:{comment.id}': current_time})
+
+                # 1/10 の確率で現在時刻から 60 秒以上前のエントリを削除
+                ## 毎回削除する必要はないが (古いエントリが残ったままでもカウントする上では影響しない) 、
+                ## メモリ上に古いエントリが残りすぎないように、定期的に削除する
+                if random.random() < 0.1:
+                    await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
+
+                # ニコニコ実況 (Re:仮) からのコメントのインポート完了
+                logging.info(f'StartRekariStreaming [{channel_id}]: Rekari user {comment.user_id} posted a comment.')
+
+            # 何らかの理由でコメント投稿に失敗した場合はエラーログを出力
+            except Exception:
+                logging.error(f'StartRekariStreaming [{channel_id}]: Failed to import comment.')
+                logging.error(traceback.format_exc())
+
+        # ストリーミング処理をバックグラウンドで開始
+        asyncio.create_task(ndgr_client.streamComments(callback))
+        logging.info(f'StartRekariStreaming [{channel_id}]: Streaming started.')
 
 
 # 10秒に1回、現在のチャンネル情報を DB から取得し、Redis にキャッシュとして格納する
