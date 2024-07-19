@@ -21,7 +21,7 @@ const router = createRouter({
             component: () => import('@/views/TV/Home.vue'),
             meta: {
                 title: 'NX-Jikkyo : ニコニコ実況避難所',
-                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。',
+                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。',
             },
         },
         {
@@ -30,7 +30,7 @@ const router = createRouter({
             component: () => import('@/views/TV/Watch.vue'),
             meta: {
                 title: 'テレビ実況 - コメント再生中 | NX-Jikkyo : ニコニコ実況避難所',
-                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。',
+                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。',
             },
         },
         {
@@ -39,7 +39,7 @@ const router = createRouter({
             component: () => import('@/views/Kakolog/Index.vue'),
             meta: {
                 title: '過去ログ再生 | NX-Jikkyo : ニコニコ実況避難所',
-                description: 'ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。',
+                description: 'ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・ニコニコ実況 (Re:仮)・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。',
             },
         },
         {
@@ -48,7 +48,7 @@ const router = createRouter({
             component: () => import('@/views/Kakolog/Watch.vue'),
             meta: {
                 title: '過去ログ再生 - コメント再生中 | NX-Jikkyo : ニコニコ実況避難所',
-                description: 'ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。',
+                description: 'ニコニコ実況 過去ログ API に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・ニコニコ実況 (Re:仮)・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。',
             },
         },
         {
@@ -137,7 +137,7 @@ const router = createRouter({
 // タイトルと概要を動的に変更
 router.beforeEach((to) => {
     const title = (to.meta.title || 'NX-Jikkyo') as string;
-    const description = (to.meta.description || 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。') as string;
+    const description = (to.meta.description || 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。') as string;
     document.title = title;
     const description_meta = document.querySelector('meta[name="description"]');
     if (description_meta) {

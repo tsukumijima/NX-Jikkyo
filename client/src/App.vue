@@ -302,6 +302,14 @@ blockquote {
     padding: 12px 16px;
     border-radius: 4px;
 }
+
+code {
+    background-color: rgb(var(--v-theme-background-lighten-3));
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+
 hr {
     border-color: rgb(var(--v-theme-text-darken-2));
 }

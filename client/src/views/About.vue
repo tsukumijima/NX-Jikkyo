@@ -4,14 +4,11 @@
         <main>
             <Navigation />
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
-                <blockquote class="font-weight-bold">
-                    【📢重要なお知らせ】ニコニコ公式から「仮復旧」として <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> がリリースされましたが、<br>
-                    現状<a class="link" href="https://x.com/TVRemotePlus/status/1813121242565656577" target="_blank">
-                    「過去ログが残らず古いコメントから消えていく」
-                    「技術的にニコ生との API 互換性が皆無」<br class="d-none d-sm-inline">
-                    「コメント書き込み時に Captcha が入ってるため TVTest などのサードパーティーソフトで対応不可 (!!!)」<br class="d-none d-sm-inline">
-                    「当然 NHK BS・BS11 以外の BS チャンネルには非対応」</a><br class="d-inline d-sm-none"> …とお世辞にも問題点が多すぎるため、<br>
-                    当分の間引き続きこの NX-Jikkyo 避難所でのコメントをお願いします🙏🙏
+                <blockquote class="font-weight-bold" style="font-size: 15px;">
+                    【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 仮実況から受信したコメントには <code>[Re:仮]</code> がつきます (このサイト上のみ) 。<br>
+                    <div class="mt-1">
+                        NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。仮実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 (<a class="link" href="/about/#faq" target="_blank">詳しくはこちら</a>)
+                    </div>
                     <div class="mt-1">
                         なお <a class="link" href="https://x.com/TVRemotePlus/status/1813149934373466396" target="_blank">NX-Jikkyo ではデフォルトでいくつかのコメントミュート設定がオンになっている</a> ので、完全に以前の使い勝手に戻したい方は適宜 <router-link class="link" to="/settings/jikkyo">コメントのミュート設定</router-link> からオフにしてみてください！<br>
                         またコメントプレイヤーの背景写真がわずらわしい方は <router-link class="link" to="/settings/general">全般設定</router-link> からオフにできます！
@@ -20,7 +17,7 @@
                 <h1 class="mt-5">NX-Jikkyo とは</h1>
                 <p class="mt-4 text-text-darken-1">
                     <strong>NX-Jikkyo は、<a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">サイバー攻撃で最低7月末まで鯖落ち中</a> のニコニコ実況に代わる、ニコニコ実況民のための避難所であり、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/blob/master/server/app/routers/websocket.py" target="_blank">ニコニコ生放送互換の WebSocket API</a> を備えるコメントサーバーです。</strong><br>
-                    お気に入りのソフトを使い続けながら、今まで通りテレビを楽しく実況できます。<br>
+                    お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。<br>
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏<br>
@@ -96,6 +93,30 @@
                     …ちなみに、NX-Jikkyo というサイト名は突貫開発をやる中でたまたま適当にひらめいた名前で、特に深い意味はありません。<br>
                     もう少しかっこいい名前が出てくれば良かったのですが、「Jikkyo」と入れないと何のサービスか分かりづらそうというのもあり…。
                 </blockquote>
+                <h2 class="mt-5" id="faq" style="scroll-margin-top: 70px;">FAQ</h2>
+                <ul class="pl-5 mt-3 text-text-darken-1">
+                    <li>
+                        <strong>Q. NX-Jikkyo での <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) に投稿されたコメントのリアルタイム表示について、技術的な詳細を教えてください。</strong>
+                    </li>
+                    <li class="mt-1">
+                        <strong>A. 仮実況の各チャンネルに投稿されたコメントを NX-Jikkyo のサーバー側でリアルタイムに受信し、随時 NX-Jikkyo のデータベースに通常のコメントとして「投稿」することで実現しています。</strong><br>
+                        <ul class="pl-5">
+                            <li>仮実況からインポートされたコメントかどうかは、ユーザー ID に Prefix <code>rekari:</code> が付与されているかどうかで判定できます。</li>
+                            <li>仮実況のコメントをどのように表示する (分けて表示する or 区別せずに表示する or 表示しない) かは、各 NX-Jikkyo 対応アプリの方針にお任せします。</li>
+                            <li>なお、2024/07/20 時点の仮実況では、投稿コメント毎に一意なユーザー ID が割り振られているようです。ユーザー ID ごとのミュートはほぼ機能しないと思われます。</li>
+                            <li>ニコニコ生放送 (Re:仮) のコメントサーバーからのコメント取得処理は <a class="link" href="https://github.com/tsukumijima/NDGRClient" target="_blank">NDGRClient</a> としてライブラリ化しています。コマンドラインツールも用意していますので、興味があればぜひお試しください。</li>
+                        </ul>
+                    </li>
+                    <li class="mt-2">
+                        <strong>Q. <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) からインポートされたコメントは <a class="link" href="/log/" target="_blank">過去ログ再生</a> や <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に反映されますか？</strong>
+                    </li>
+                    <li class="mt-1">
+                        <strong>A. (NX-Jikkyo や <a class="link" href="https://github.com/tsukumijima/NDGRClient" target="_blank">NDGRClient</a> の実装にバグがなければ) 随時反映されているはずです。</strong>
+                        <ul class="pl-5">
+                            <li>2024/07/19 までに仮実況に投稿されたコメントは、後日手動で過去ログ API にマージ予定です。もうしばらくお待ちください。</li>
+                        </ul>
+                    </li>
+                </ul>
                 <h2 class="mt-5">動作環境</h2>
                 <div class="mt-3">
                     <strong>PC: Google Chrome</strong><br>
@@ -121,7 +142,7 @@
                     </ul>
                 </div>
                 <p class="mt-5 text-text-darken-1 text-right">
-                    2024/06/10 (Last Update: 2024/07/04)<br>
+                    2024/06/10 (Last Update: 2024/07/20)<br>
                     <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a>
                     (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> /
                     <a class="link" href="https://blog.tsukumijima.net/" target="_blank">Blog</a> /
@@ -133,7 +154,30 @@
 </template>
 <script lang="ts" setup>
 
+import { onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+
 import HeaderBar from '@/components/HeaderBar.vue';
 import Navigation from '@/components/Navigation.vue';
+import Utils from '@/utils';
+
+
+const route = useRoute();
+
+onMounted(async () => {
+    // URLのハッシュを取得
+    const hash = route.hash;
+    if (hash) {
+        // ハッシュに対応する要素を取得
+        const element = document.querySelector(hash);
+        console.log(element);
+        if (element) {
+            // 要素が見つかった場合、その要素までスクロール
+            await Utils.sleep(0.1);
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+});
+
 
 </script>
