@@ -355,6 +355,7 @@ class PlayerController {
                                     playback_position: comment.time,
                                     user_id: comment.author,
                                     my_post: false,
+                                    rekari: false,
                                 })),
                             });
                             options.success(jikkyo_comments.comments);
