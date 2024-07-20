@@ -171,7 +171,7 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
 
     // ニコニコ実況 (Re:仮) からインポートされたコメントをミュートする (Default: ミュートしない)
     mute_rekari_comments: false,
-    // 露骨な表現を含むコメントをミュートする (Default: ミュートする)
+    // 露骨な表現を含むコメントをミュートする (Default: ミュートしない)
     mute_vulgar_comments: false,
     // 罵倒や誹謗中傷、差別的な表現、政治的に偏った表現を含むコメントをミュートする (Default: ミュートする)
     mute_abusive_discriminatory_prejudiced_comments: true,
