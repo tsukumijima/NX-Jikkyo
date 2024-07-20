@@ -203,7 +203,8 @@ class Videos {
             }
 
             const parsed_comment_command = CommentUtils.parseCommentCommand(raw_jikkyo_comment.chat.mail);
-            const color = parsed_comment_command.color;
+            // rekari が true の時は color 内の 16 進数カラーコードの末尾に C0 を付与して半透明にする
+            const color = raw_jikkyo_comment.chat.user_id.startsWith('rekari:') ? parsed_comment_command.color + 'C0' : parsed_comment_command.color;
             const position = parsed_comment_command.position;
             const size = parsed_comment_command.size;
             const chat_date = parseInt(raw_jikkyo_comment.chat.date);
