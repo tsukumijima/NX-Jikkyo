@@ -6,7 +6,7 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto" style="max-width: 780px">
-                        【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 仮実況から受信したコメントには <code>[Re:仮]</code> がつきます (このサイト上のみ) 。<br>
+                        【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 仮実況から受信したコメントは通常より薄く描画され、コメントリストでは <code>[Re:仮]</code> がつきます (このサイト上のみ・NX-Jikkyo 対応サードパーティーアプリは対象外) 。<br>
                         <div class="mt-1">
                             NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。仮実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 (<a class="link" href="/about/#faq" target="_blank">詳しくはこちら</a>)
                         </div>
