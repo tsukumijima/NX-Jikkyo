@@ -5,9 +5,9 @@
             <Navigation />
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
                 <blockquote class="font-weight-bold" style="font-size: 15px;">
-                    【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 仮実況から受信したコメントは通常より薄く描画され、コメントリストでは <code>[Re:仮]</code> がつきます (このサイト上のみ・NX-Jikkyo 対応サードパーティーアプリは対象外) 。<br>
+                    【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況 (Re:仮)</a> (仮実況) に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 仮実況から受信したコメントは通常より薄く描画され、コメントリストでは <code>[Re:仮]</code> がつきます (各 NX-Jikkyo 対応アプリでは別途対応されない限り区別されません) 。<br>
                     <div class="mt-1">
-                        NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。仮実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 (<a class="link" href="/about/#faq" target="_blank">詳しくはこちら</a>)
+                        NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。過去ログを含め、仮実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 <a class="link" href="/about/#faq" target="_blank">詳しくはこちら！</a>
                     </div>
                     <div class="mt-1">
                         なお <a class="link" href="https://x.com/TVRemotePlus/status/1813149934373466396" target="_blank">NX-Jikkyo ではデフォルトでいくつかのコメントミュート設定がオンになっている</a> ので、完全に以前の使い勝手に戻したい方は適宜 <router-link class="link" to="/settings/jikkyo">コメントのミュート設定</router-link> からオフにしてみてください！<br>
@@ -64,7 +64,7 @@
                     <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong>
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
-                    ソースコードは <a class="link" href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank">GitHub</a> で公開しています。<a class="link" href="/api/v1/docs" target="_blank">API ドキュメント</a> もあります。<br>
+                    <strong>ソースコードは <a class="link" href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank">GitHub</a> で公開しています。<a class="link" href="/api/v1/docs" target="_blank">API ドキュメント</a> もあります。</strong><br>
                     WebSocket API のドキュメントは <a class="link" href="https://github.com/tiangolo/fastapi" target="_blank">FastAPI</a> が API ドキュメントを自動生成してくれないため現状ありませんが、ニコ生の WebSocket API のドロップイン代替として機能するはずです。<br>
                     <div class="mt-1"></div>
                     勘の良い方はおそらくお気づきの通り、このサイトは私が長年開発している <a class="link" href="https://github.com/tsukumijima/KonomiTV" target="_blank">KonomiTV</a> の大半のソースコードを流用して開発しています。<br>
@@ -94,9 +94,31 @@
                     もう少しかっこいい名前が出てくれば良かったのですが、「Jikkyo」と入れないと何のサービスか分かりづらそうというのもあり…。
                 </blockquote>
                 <h2 class="mt-5" id="faq" style="scroll-margin-top: 70px;">FAQ</h2>
-                <ul class="pl-5 mt-3 text-text-darken-1">
+                <ul class="pl-5 mt-3 text-text-darken-1" style="line-height: 1.65">
                     <li>
-                        <strong>Q. NX-Jikkyo での <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) に投稿されたコメントのリアルタイム表示について、技術的な詳細を教えてください。</strong>
+                        <strong>Q. <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況 (Re:仮)</a> (仮実況) からインポートされたコメントは <a class="link" href="/log/" target="_blank">過去ログ再生</a> や <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に反映されますか？</strong>
+                    </li>
+                    <li class="mt-1">
+                        <strong>A. (NX-Jikkyo や <a class="link" href="https://github.com/tsukumijima/NDGRClient" target="_blank">NDGRClient</a> の実装にバグがなければ) 随時反映されているはずです。</strong>
+                        <ul class="pl-5">
+                            <li>2024/07/19 までに仮実況に投稿されたコメントは、後日手動で過去ログ API にマージ予定です。もうしばらくお待ちください。</li>
+                        </ul>
+                    </li>
+                    <li class="mt-3">
+                        <strong>Q. なぜ <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況 (Re:仮)</a> / <a class="link" href="https://live.nicovideo.jp/rekari/kl1" target="_blank">ニコニコ生放送 (Re:仮)</a> はコメビュなどのサードパーティーアプリでは対応していないのですか？</strong>
+                    </li>
+                    <li class="mt-1">
+                        <strong>A. サイバー攻撃以前のニコニコ生放送とはコメントサーバーの API 互換性がなく、移行するには多大な改修コストがかかるためです。</strong>
+                        <ul class="pl-5">
+                            <li>現状のニコニコ生放送 (Re:仮) は使い捨ての仮システムではなく、従来から開発が進められてきたクラウド対応の新コメントサーバー (NDGR) を前倒しで本稼働させ、既存の開発資産と組み合わせて運用されている代物です。</li>
+                            <li>そして、<strong>本復旧後のニコニコ生放送は、従来の (NX-Jikkyo で互換対応している) WebSocket API と全く互換性のない、新コメントサーバーで運用されることがほぼ確定的な情勢です。</strong></li>
+                            <li>したがって、<strong>ニコニコ実況がニコニコ生放送復旧後もサービス継続されるのであれば、いずれにせよサードパーティーアプリでは新コメントサーバーへの対応が必要になります。</strong>しかし、技術的には全くの別物で改修コストも高く、簡単に移行できるようなものではありません。</li>
+                            <li><strong><u>NX-Jikkyo では、ニコニコ実況の本復旧後も利用状況を鑑みながら、旧 WebSocket API にしか対応できていない NX-Jikkyo 対応サードパーティーアプリのために、当分の間サービスを継続する予定です。</u></strong></li>
+                            <li>ニコニコ生放送 (Re:仮) で運用されている新コメントサーバーからのコメント取得処理は <a class="link" href="https://github.com/tsukumijima/NDGRClient" target="_blank">NDGRClient</a> としてライブラリ化しています。コマンドラインツールも用意していますので、興味があればぜひお試しください。</li>
+                        </ul>
+                    </li>
+                    <li class="mt-3">
+                        <strong>Q. NX-Jikkyo での <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況 (Re:仮)</a> (仮実況) に投稿されたコメントのリアルタイム表示について、技術的な詳細を教えてください。</strong>
                     </li>
                     <li class="mt-1">
                         <strong>A. 仮実況の各チャンネルに投稿されたコメントを NX-Jikkyo のサーバー側でリアルタイムに受信し、随時 NX-Jikkyo のデータベースに通常のコメントとして「投稿」することで実現しています。</strong><br>
@@ -104,16 +126,6 @@
                             <li>仮実況からインポートされたコメントかどうかは、ユーザー ID に Prefix <code>rekari:</code> が付与されているかどうかで判定できます。</li>
                             <li>仮実況のコメントをどのように表示する (分けて表示する or 区別せずに表示する or 表示しない) かは、各 NX-Jikkyo 対応アプリの方針にお任せします。</li>
                             <li>なお、2024/07/20 時点の仮実況では、投稿コメント毎に一意なユーザー ID が割り振られているようです。ユーザー ID ごとのミュートはほぼ機能しないと思われます。</li>
-                            <li>ニコニコ生放送 (Re:仮) のコメントサーバーからのコメント取得処理は <a class="link" href="https://github.com/tsukumijima/NDGRClient" target="_blank">NDGRClient</a> としてライブラリ化しています。コマンドラインツールも用意していますので、興味があればぜひお試しください。</li>
-                        </ul>
-                    </li>
-                    <li class="mt-2">
-                        <strong>Q. <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況(Re:仮)</a> (仮実況) からインポートされたコメントは <a class="link" href="/log/" target="_blank">過去ログ再生</a> や <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に反映されますか？</strong>
-                    </li>
-                    <li class="mt-1">
-                        <strong>A. (NX-Jikkyo や <a class="link" href="https://github.com/tsukumijima/NDGRClient" target="_blank">NDGRClient</a> の実装にバグがなければ) 随時反映されているはずです。</strong>
-                        <ul class="pl-5">
-                            <li>2024/07/19 までに仮実況に投稿されたコメントは、後日手動で過去ログ API にマージ予定です。もうしばらくお待ちください。</li>
                         </ul>
                     </li>
                 </ul>
