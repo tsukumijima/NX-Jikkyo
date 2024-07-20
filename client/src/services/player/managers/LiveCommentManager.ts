@@ -517,8 +517,8 @@ class LiveCommentManager implements PlayerManager {
             if (this.player.video.paused === false) {
                 this.player.danmaku!.draw({
                     text: comment.content,
-                    // rekari が true の時は color 内の 16 進数カラーコードの末尾に A0 を付与して半透明にする
-                    color: comment_data.rekari ? `${color}A0` : color,
+                    // rekari が true の時は color 内の 16 進数カラーコードの末尾に C0 を付与して半透明にする
+                    color: comment_data.rekari ? `${color}C0` : color,
                     type: position,
                     size: size,
                 });
