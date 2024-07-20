@@ -163,6 +163,13 @@ export class CommentUtils {
             return true;
         }
 
+        // 「ニコニコ実況 (Re:仮) からインポートされたコメントをミュートする」がオンの場合
+        // コメントのユーザー ID が "rekari:" から始まるときは弾く
+        if (settings_store.settings.mute_rekari_comments === true && user_id.startsWith('rekari:')) {
+            console.log('[CommentUtils] Muted comment (rekari_comments): ' + comment);
+            return true;
+        }
+
         // ニコ生の特殊コマンド付きコメント (/nicoad, /emotion など) を一括で弾く
         if (CommentUtils.special_command_comments_pattern.test(comment)) {
             return true;

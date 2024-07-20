@@ -15,6 +15,17 @@
                     <span class="ml-2">クイック設定</span>
                 </div>
                 <div class="settings__item settings__item--switch">
+                    <label class="settings__item-heading" for="mute_rekari_comments">
+                        ニコニコ実況 (Re:仮) からインポートされたコメントをミュートする
+                    </label>
+                    <label class="settings__item-label" for="mute_rekari_comments">
+                        ニコニコ実況 (Re:仮) からインポートされたコメントを、一括でミュートするかを設定します。<br>
+                    </label>
+                    <v-switch class="settings__item-switch" color="primary" id="mute_rekari_comments" hide-details
+                        v-model="settingsStore.settings.mute_rekari_comments">
+                    </v-switch>
+                </div>
+                <div class="settings__item settings__item--switch">
                     <label class="settings__item-heading" for="mute_vulgar_comments">
                         露骨な表現を含むコメントをミュートする
                     </label>
