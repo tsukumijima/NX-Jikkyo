@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "NX-Jikkyo"
-version = "1.7.2"
+version = "1.7.3"
 description = "NX-Jikkyo: Nico Nico Jikkyo Alternative"
 package-mode = false
 
