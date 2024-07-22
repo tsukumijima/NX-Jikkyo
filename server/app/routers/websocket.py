@@ -102,6 +102,10 @@ async def WatchSessionAPI(
         # 最後にコメントを投稿した時刻
         last_comment_time: float = 0
 
+        # 短期間の荒らし連投によりサイレントにコメントを破棄する一時 BAN 処理が何回行われたかのカウント
+        silent_discard_count = 0
+        SILENT_DISCARD_COUNT_THRESHOLD = 3  # 3回以上一時 BAN されたら、この WebSocket 接続が切断されるまで永久 BAN する
+
         while True:
 
             # クライアントから JSON 形式のメッセージを受信
@@ -242,8 +246,11 @@ async def WatchSessionAPI(
                     current_time = time.time()
 
                     # 0.5 秒以内の連投チェック
-                    ## 連投とみなされた場合、レスポンス上はコメント投稿が成功したように見せかけるが実際には何もしない
-                    if (current_time - last_comment_time) < 0.5:
+                    ## 連投とみなされた場合、レスポンス上はコメント投稿が成功したように見せかけるが、
+                    ## 実際にはサイレントにコメントを破棄する (一時 BAN 処理)
+                    ## silent_discard_count が SILENT_DISCARD_COUNT_THRESHOLD を超えた場合も同様だが、
+                    ## 接続が維持されている限り永久に BAN される点が異なる
+                    if ((current_time - last_comment_time) < 0.5) or (silent_discard_count > SILENT_DISCARD_COUNT_THRESHOLD):
 
                         # 最後のコメント投稿時刻を更新
                         ## コメント投稿処理の成功 or 失敗に関わらず一律で更新する
@@ -262,7 +269,12 @@ async def WatchSessionAPI(
                                 },
                             },
                         })
-                        logging.warning(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} posted a comment too quickly.')
+
+                        silent_discard_count += 1
+                        if silent_discard_count > SILENT_DISCARD_COUNT_THRESHOLD:
+                            logging.warning(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id}\'s comment was banned for too many consecutive comments.')
+                        else:
+                            logging.warning(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} posted a comment too quickly.')
                         continue
 
                     # 最後のコメント投稿時刻を更新
