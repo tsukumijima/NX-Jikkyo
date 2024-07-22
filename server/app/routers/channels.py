@@ -180,6 +180,49 @@ async def GetRedisCachedChannelResponses() -> list[ChannelResponse]:
     return channel_responses
 
 
+@alru_cache(maxsize=1, ttl=10)
+async def GetRedisCachedChannelResponsesXML() -> Response:
+    """
+    スケジューラーによって定期的に Redis にキャッシュされた、最新のチャンネル情報リストを XML に変換したものを取得する
+    /api/v1/channels/xml の負荷軽減のため、実行結果は 10 秒間メモリ上にキャッシュされる (インメモリ -> Redis の多段キャッシュ構成)
+
+    Returns:
+        Response: XML 形式のチャンネル情報リストのレスポンス
+    """
+
+    channels_response = await GetRedisCachedChannelResponses()
+
+    root = ET.Element('channels', status='ok')
+
+    for channel in channels_response:
+        channel_id_num = int(channel.id.replace('jk', ''))
+        if channel_id_num < 100:
+            channel_element = ET.SubElement(root, 'channel')
+        else:
+            channel_element = ET.SubElement(root, 'bs_channel')
+
+        ET.SubElement(channel_element, 'id').text = str(channel_id_num)
+        if channel_id_num < 100:
+            ET.SubElement(channel_element, 'no').text = str(channel_id_num)
+        ET.SubElement(channel_element, 'name').text = channel.name
+        ET.SubElement(channel_element, 'video').text = channel.id
+
+        # アクティブな最初のスレッドの情報のみを返す
+        # 通常アクティブなスレッドは1つだけのはずだが…
+        active_threads = [thread for thread in channel.threads if thread.status == 'ACTIVE']
+        if active_threads:
+            thread = active_threads[0]
+            thread_element = ET.SubElement(channel_element, 'thread')
+            ET.SubElement(thread_element, 'id').text = str(thread.id)
+            ET.SubElement(thread_element, 'last_res').text = ''  # 常に空文字列
+            ET.SubElement(thread_element, 'force').text = str(thread.jikkyo_force)
+            ET.SubElement(thread_element, 'viewers').text = str(thread.viewers)
+            ET.SubElement(thread_element, 'comments').text = str(thread.comments)
+
+    xml_str = ET.tostring(root, encoding='utf-8', method='xml')
+    return Response(content=xml_str, media_type='application/xml; charset=UTF-8')
+
+
 @router.get(
     '/channels',
     summary = 'チャンネル情報 API',
@@ -218,37 +261,8 @@ async def ChannelsXMLAPI():
     NicoJK.ini の channelsUri= に指定する用途を想定。
     """
 
-    channels_response = await ChannelsAPI()
-
-    root = ET.Element('channels', status='ok')
-
-    for channel in channels_response:
-        channel_id_num = int(channel.id.replace('jk', ''))
-        if channel_id_num < 100:
-            channel_element = ET.SubElement(root, 'channel')
-        else:
-            channel_element = ET.SubElement(root, 'bs_channel')
-
-        ET.SubElement(channel_element, 'id').text = str(channel_id_num)
-        if channel_id_num < 100:
-            ET.SubElement(channel_element, 'no').text = str(channel_id_num)
-        ET.SubElement(channel_element, 'name').text = channel.name
-        ET.SubElement(channel_element, 'video').text = channel.id
-
-        # アクティブな最初のスレッドの情報のみを返す
-        # 通常アクティブなスレッドは1つだけのはずだが…
-        active_threads = [thread for thread in channel.threads if thread.status == 'ACTIVE']
-        if active_threads:
-            thread = active_threads[0]
-            thread_element = ET.SubElement(channel_element, 'thread')
-            ET.SubElement(thread_element, 'id').text = str(thread.id)
-            ET.SubElement(thread_element, 'last_res').text = ''  # 常に空文字列
-            ET.SubElement(thread_element, 'force').text = str(thread.jikkyo_force)
-            ET.SubElement(thread_element, 'viewers').text = str(thread.viewers)
-            ET.SubElement(thread_element, 'comments').text = str(thread.comments)
-
-    xml_str = ET.tostring(root, encoding='utf-8', method='xml')
-    return Response(content=xml_str, media_type='application/xml; charset=UTF-8')
+    # メモリから XML 形式のチャンネル情報リストを取得する
+    return await GetRedisCachedChannelResponsesXML()
 
 
 @router.get(
