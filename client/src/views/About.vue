@@ -125,7 +125,6 @@
                         <ul class="pl-5">
                             <li>仮実況からインポートされたコメントかどうかは、ユーザー ID に Prefix <code>rekari:</code> が付与されているかどうかで判定できます。</li>
                             <li>仮実況のコメントをどのように表示する (分けて表示する or 区別せずに表示する or 表示しない) かは、各 NX-Jikkyo 対応アプリの方針にお任せします。</li>
-                            <li>なお、2024/07/20 時点の仮実況では、投稿コメント毎に一意なユーザー ID が割り振られているようです。ユーザー ID ごとのミュートはほぼ機能しないと思われます。</li>
                         </ul>
                     </li>
                 </ul>
@@ -154,7 +153,7 @@
                     </ul>
                 </div>
                 <p class="mt-5 text-text-darken-1 text-right">
-                    2024/06/10 (Last Update: 2024/07/20)<br>
+                    2024/06/10 (Last Update: 2024/07/23)<br>
                     <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a>
                     (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> /
                     <a class="link" href="https://blog.tsukumijima.net/" target="_blank">Blog</a> /
