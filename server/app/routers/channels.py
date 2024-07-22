@@ -3,6 +3,7 @@ import hashlib
 import pathlib
 import time
 import xml.etree.ElementTree as ET
+from async_lru import alru_cache
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -43,6 +44,15 @@ router = APIRouter(
 
 
 async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
+    """
+    データベースから最新のチャンネル情報リストを取得する
+
+    Args:
+        full (bool, optional): チャンネルに紐づく全スレッドの情報を取得するかどうか。省略時は最新4日分のスレッドだけ取得する
+
+    Returns:
+        list[ChannelResponse]: チャンネル情報リスト
+    """
 
     # ID 昇順、スレッドは古い順でチャンネルを取得
     ## full が False の時は、最新4日分のスレッドだけ取得する
@@ -146,6 +156,30 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
     return channel_responses
 
 
+@alru_cache(maxsize=1, ttl=10)
+async def GetRedisCachedChannelResponses() -> list[ChannelResponse]:
+    """
+    スケジューラーによって定期的に Redis にキャッシュされた、最新のチャンネル情報リストを取得する
+    /api/v1/channels の負荷軽減のため、実行結果は 10 秒間メモリ上にキャッシュされる (インメモリ -> Redis の多段キャッシュ構成)
+
+    Returns:
+        list[ChannelResponse]: チャンネル情報リスト
+    """
+
+    # Redis からキャッシュを取得
+    ## キャッシュは app.py で定義のスケジューラーで 10 秒おきに定期更新されているので、基本常に新鮮なキャッシュが存在するはず
+    cached_channels = await REDIS_CLIENT.get(REDIS_KEY_CHANNEL_INFOS_CACHE)
+    if cached_channels is not None:
+        return TypeAdapter(list[ChannelResponse]).validate_json(cached_channels)
+
+    # 万が一キャッシュが存在しない場合のみ、直接取得し一時的にキャッシュしてから返す (フェイルセーフ)
+    ## この時に作成される一時キャッシュの有効期限は 10 秒とし、万が一スケジューラーが動作していない場合でも最新のデータが返されることを保証する
+    channel_responses = await GetChannelResponses()
+    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(channel_responses).decode('utf-8'), ex=10)
+    logging.warning('[GetRedisCachedChannelResponses] Channel responses cache is missing. Temporary cache is created.')
+    return channel_responses
+
+
 @router.get(
     '/channels',
     summary = 'チャンネル情報 API',
@@ -163,18 +197,8 @@ async def ChannelsAPI(
     if full is True:
         return await GetChannelResponses(full=True)
 
-    # Redis からキャッシュを取得
-    ## キャッシュは app.py で定義のスケジューラーで定期更新されているので、基本常に新鮮なキャッシュが存在するはず
-    cached_channels = await REDIS_CLIENT.get(REDIS_KEY_CHANNEL_INFOS_CACHE)
-    if cached_channels is not None:
-        return TypeAdapter(list[ChannelResponse]).validate_json(cached_channels)
-
-    # 万が一キャッシュが存在しない場合のみ、直接取得し一時的にキャッシュしてから返す (フェイルセーフ)
-    ## この時に作成される一時キャッシュの有効期限は 10 秒とし、万が一スケジューラーが動作していない場合でも最新のデータが返されることを保証する
-    channel_responses = await GetChannelResponses()
-    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(channel_responses).decode('utf-8'), ex=10)
-    logging.warning('[ChannelsAPI] Channel responses cache is missing. Temporary cache is created.')
-    return channel_responses
+    # それ以外の場合はメモリ (メモリに存在しない場合は Redis) からチャンネル情報リストを取得する
+    return await GetRedisCachedChannelResponses()
 
 
 @router.get(

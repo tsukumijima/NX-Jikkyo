@@ -13,6 +13,7 @@ aerich = "cd ../ && docker compose build && docker compose run --rm --service-po
 python = ">=3.11,<3.12"
 aerich = "^0.7.2"
 aiomysql = "^0.2.0"
+async-lru = "^2.0.4"
 cryptography = "^42.0.5"
 fastapi = "^0.109.1"
 fastapi-restful = "^0.5.0"
