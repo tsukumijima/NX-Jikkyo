@@ -97,7 +97,9 @@ export default defineComponent({
 
             // 00秒までの残り秒数を取得
             // 現在 16:01:34 なら 26 (秒) になる
-            const residue_second = 60 - new Date().getSeconds();
+            // const residue_second = 60 - new Date().getSeconds();
+            // /api/v1/channels への負荷対策のため NX-Jikkyo では当面タイマーを実質無効化する
+            const residue_second = 0;
 
             // 00秒になるまで待ってから実行するタイマー
             // 番組は基本1分単位で組まれているため、20秒や45秒など中途半端な秒数で更新してしまうと番組情報の反映が遅れてしまう
