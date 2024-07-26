@@ -307,6 +307,7 @@ async def StartStreamRekariComments():
                     new_no = new_no_result[0]['max_no']
 
                     # vpos はスレッドの放送開始時刻から起算した秒 1/100 秒 (10ミリ秒) 単位のタイムスタンプ
+                    ## NX-Jikkyo 側でのスレッド放送開始時刻と、NDGR サーバーから受信したコメント投稿時刻の差分から算出する
                     vpos = int((ndgr_comment.at.timestamp() - thread.start_at.timestamp()) * 100)
 
                     # 受信したコメントデータを XML 互換コメント形式に変換
@@ -319,6 +320,7 @@ async def StartStreamRekariComments():
                         thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
                         no = new_no,  # NX-Jikkyo 側で算出した値を入れる
                         vpos = vpos,  # NX-Jikkyo 側で算出した値を入れる
+                        date = ndgr_comment.at,  # NX-Jikkyo 側では自動生成せず、NDGR サーバーから受信したコメント投稿時刻を入れる
                         mail = xml_compatible_comment.mail,
                         user_id = xml_compatible_comment.user_id,
                         premium = True if xml_compatible_comment.premium == 1 else False,
