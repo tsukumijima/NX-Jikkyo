@@ -54,7 +54,7 @@ async def WatchSessionAPI(
         channel_id_int = int(channel_id.replace('jk', ''))
     except ValueError:
         logging.error(f'WatchSessionAPI [{channel_id}]: Invalid channel ID.')
-        await websocket.close(code=4001)
+        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
         return
 
     # スレッド ID が指定されていなければ、現在アクティブな (放送中の) スレッドを取得
@@ -68,7 +68,7 @@ async def WatchSessionAPI(
         if not thread:
             # 存在しないチャンネル ID を指定された場合にも発生して頻度が多すぎるのでログをコメントアウト中
             # logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
-            await websocket.close(code=4404)
+            await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
             return
 
     # スレッド ID が指定されていれば、そのスレッドを取得
@@ -80,11 +80,11 @@ async def WatchSessionAPI(
         ).first()
         if not thread:
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread not found.')
-            await websocket.close(code=4404)
+            await websocket.close(code=1002, reason=f'[{channel_id}]: Thread not found.')
             return
         if timezone.now() < thread.start_at:
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread is upcoming.')
-            await websocket.close(code=4404)
+            await websocket.close(code=1002, reason=f'[{channel_id}]: Thread is upcoming.')
             return
 
     # クライアント ID を生成
@@ -441,7 +441,7 @@ async def WatchSessionAPI(
         # 念のためこちらからも接続を切断しておく
         logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error.')
         logging.error(traceback.format_exc())
-        await websocket.close(code=1011)
+        await websocket.close(code=1011, reason=f'[{channel_id}]: Unexpected error.')
 
     except Exception:
         logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
@@ -452,7 +452,7 @@ async def WatchSessionAPI(
                 'reason': 'SERVICE_TEMPORARILY_UNAVAILABLE',
             },
         })
-        await websocket.close(code=1011)
+        await websocket.close(code=1011, reason=f'[{channel_id}]: Error during connection.')
 
     finally:
         # ここまできたら確実に接続が切断されているので同時接続数カウントを 1 減らす
@@ -560,7 +560,7 @@ async def CommentSessionAPI(
             # リストでなかった場合はエラーを返す
             if not isinstance(messages, list):
                 logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message ({messages} not list).')
-                await websocket.close(code=4001)
+                await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid message ({messages} not list).')
                 return
 
             # 送られてくるメッセージは必ず list[dict[str, Any]] となる
@@ -569,7 +569,7 @@ async def CommentSessionAPI(
                 # もし辞書型でなかった場合はエラーを返す
                 if not isinstance(message, dict):
                     logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message ({message} not dict).')
-                    await websocket.close(code=4001)
+                    await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid message ({message} not dict).')
                     return
 
                 # ping コマンド
@@ -590,7 +590,7 @@ async def CommentSessionAPI(
                         res_from = int(message['thread']['res_from'])
                         if res_from > 0:  # 1 以上の res_from には非対応 (本家ニコ生では正の値が来た場合コメ番換算で取得するらしい？)
                             logging.error(f'CommentSessionAPI [{channel_id}]: Invalid res_from: {res_from}')
-                            await websocket.close(code=4001)
+                            await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid res_from: {res_from}')
                             return
 
                         # threadkey: スレッドキー
@@ -616,7 +616,7 @@ async def CommentSessionAPI(
                         logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message.')
                         logging.error(message)
                         logging.error(traceback.format_exc())
-                        await websocket.close(code=4001)
+                        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid message.')
                         return
 
                     # ここまできたらスレッド ID と res_from が取得できているので、当該スレッドの情報を取得
@@ -624,7 +624,7 @@ async def CommentSessionAPI(
                     if not thread:
                         # 指定された ID と一致するスレッドが見つからない
                         logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
-                        await websocket.close(code=4404)
+                        await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
                         return
 
                     # 当該スレッドの最新 res_from 件のコメントを取得して送信
@@ -786,9 +786,9 @@ async def CommentSessionAPI(
         # 念のためこちらからも接続を切断しておく
         logging.error(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected by unexpected error.')
         logging.error(traceback.format_exc())
-        await websocket.close(code=1011)
+        await websocket.close(code=1011, reason=f'[{channel_id}]: Unexpected error.')
 
     except Exception:
         logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection.')
         logging.error(traceback.format_exc())
-        await websocket.close(code=1011)
+        await websocket.close(code=1011, reason=f'[{channel_id}]: Error during connection.')
