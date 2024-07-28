@@ -411,12 +411,12 @@ async def WatchSessionAPI(
                 await websocket.close(code=1000)  # 正常終了扱い
                 return
 
+            # 次の実行まで1秒待つ
+            await asyncio.sleep(1)
+
             # 接続が切れたらタスクを終了
             if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
                 return
-
-            # 次の実行まで1秒待つ
-            await asyncio.sleep(1)
 
     try:
 
@@ -757,19 +757,19 @@ async def CommentSessionAPI(
                 # 最後にクライアントに送信したコメントの ID を更新
                 last_sent_comment_id = comment_id
 
-            # 最新コメント配信中に当該スレッドの放送終了時刻を過ぎた場合はタスクを終了
-            if time.time() > thread_end_time:
-                logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
-                await websocket.close(code=1000)  # 正常終了扱い
-                return
+            # 少し待機してから次のループへ
+            ## 待機秒数はキャッシュ期間の TTL と同じ値に合わせる (合わせないとキャッシュがうまく使われないっぽい)
+            await asyncio.sleep(0.25)
 
             # 接続が切れたらタスクを終了
             if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
                 return
 
-            # 少し待機してから次のループへ
-            ## 待機秒数はキャッシュ期間の TTL と同じ値に合わせる (合わせないとキャッシュがうまく使われないっぽい)
-            await asyncio.sleep(0.25)
+            # 最新コメント配信中に当該スレッドの放送終了時刻を過ぎた場合は接続を切断する
+            if time.time() > thread_end_time:
+                logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
+                await websocket.close(code=1000)  # 正常終了扱い
+                return
 
     try:
 
