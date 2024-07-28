@@ -408,7 +408,7 @@ async def WatchSessionAPI(
                         'reason': 'END_PROGRAM',
                     },
                 })
-                await websocket.close(code=1011)
+                await websocket.close(code=1000)  # 正常終了扱い
                 return
 
             # 接続が切れたらタスクを終了
@@ -693,7 +693,7 @@ async def CommentSessionAPI(
 
         Args:
             thread (Thread): 新着コメントの取得対象のスレッド
-            thread_key (str): スレッドキー (互換性のためにそういう名前だが、実際には接続先クライアントの watch_session_client_id)
+            thread_key (str): スレッドキー (互換性のためにこの名前になっているが、実際には接続先クライアントの watch_session_client_id)
             last_sent_comment_id (int): 最後にクライアントに送信したコメントの ID
         """
 
@@ -743,6 +743,9 @@ async def CommentSessionAPI(
 
             return xml_compatible_comments
 
+        # スレッドの放送終了時刻の Unix 時間
+        thread_end_time = thread.end_at.timestamp()
+
         while True:
 
             # 最新コメントを取得
@@ -753,6 +756,12 @@ async def CommentSessionAPI(
                 await websocket.send_json(xml_compatible_comment)
                 # 最後にクライアントに送信したコメントの ID を更新
                 last_sent_comment_id = comment_id
+
+            # 最新コメント配信中に当該スレッドの放送終了時刻を過ぎた場合はタスクを終了
+            if time.time() > thread_end_time:
+                logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
+                await websocket.close(code=1000)  # 正常終了扱い
+                return
 
             # 接続が切れたらタスクを終了
             if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
