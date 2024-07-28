@@ -7,7 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from tortoise import fields
 from tortoise.models import Model as TortoiseModel
-from typing import Literal
+from typing import Literal, NotRequired, TypedDict
 
 from app.utils.TVer import ProgramInfo
 
@@ -123,6 +123,7 @@ class ChannelResponse(BaseModel):
     program_following: ProgramInfo | None = None
     threads: list[ThreadResponse]
 
+
 class ThreadResponse(BaseModel):
     """
     スレッド情報のレスポンスの Pydantic モデル
@@ -152,6 +153,7 @@ class ThreadWithCommentsResponse(BaseModel):
     status: Literal['ACTIVE', 'UPCOMING', 'PAST']
     comments: list[CommentResponse]
 
+
 class CommentResponse(BaseModel):
     """
     コメント情報のレスポンスの Pydantic モデル
@@ -165,4 +167,24 @@ class CommentResponse(BaseModel):
     user_id: str
     premium: bool
     anonymity: bool
+    content: str
+
+
+class XMLCompatibleCommentResponse(TypedDict):
+    """
+    コメント情報のレスポンスの TypedDict モデル
+    """
+    chat: XMLCompatibleCommentResponseChat
+
+class XMLCompatibleCommentResponseChat(TypedDict):
+    thread: str
+    no: int
+    vpos: int
+    date: int
+    date_usec: int
+    mail: str
+    user_id: str
+    premium: NotRequired[int]
+    anonymity: NotRequired[int]
+    yourpost: NotRequired[int]
     content: str

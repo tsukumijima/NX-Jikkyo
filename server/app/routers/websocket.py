@@ -5,13 +5,13 @@ import random
 import time
 import traceback
 import websockets.exceptions
+from async_lru import alru_cache
 from datetime import datetime
 from fastapi import (
     APIRouter,
     Path,
     Query,
 )
-from pydantic import TypeAdapter
 from starlette.websockets import (
     WebSocket,
     WebSocketDisconnect,
@@ -26,7 +26,7 @@ from app.constants import REDIS_CLIENT, REDIS_KEY_JIKKYO_FORCE_COUNT, REDIS_KEY_
 from app.models.comment import (
     Comment,
     CommentCounter,
-    CommentResponse,
+    XMLCompatibleCommentResponse,
     Thread,
 )
 from app.utils import GenerateClientID
@@ -88,7 +88,7 @@ async def WatchSessionAPI(
             return
 
     # クライアント ID を生成
-    ## 同一 IP 同一クライアントからなら基本同一値になるはず
+    ## 同一 IP 同一クライアントからなら UA が変更されない限り同一値になるはず
     watch_session_client_id = GenerateClientID(websocket)
     logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} connected.')
     logging.info(f'WatchSessionAPI [{channel_id}]: Thread ID: {thread.id} User-Agent: {websocket.headers.get("User-Agent", "Unknown")}')
@@ -96,7 +96,7 @@ async def WatchSessionAPI(
     # 接続を受け入れる
     await websocket.accept()
 
-    async def RunReceiverTask():
+    async def RunReceiverTask() -> None:
         """ クライアントからのメッセージを受信するタスク """
 
         # 最後にコメントを投稿した時刻
@@ -355,7 +355,7 @@ async def WatchSessionAPI(
             if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
                 return
 
-    async def RunSenderTask():
+    async def RunSenderTask() -> None:
         """ 定期的にサーバーからクライアントにメッセージを送信するタスク """
 
         # 最後に視聴統計情報を送信した時刻
@@ -478,7 +478,7 @@ async def CommentSessionAPI(
     # チャンネル ID はログ出力以外では使わない
 
     # クライアント ID を生成
-    ## 同一 IP 同一クライアントからなら基本同一値になるはず
+    ## 同一 IP 同一クライアントからなら UA が変更されない限り同一値になるはず
     comment_session_client_id = GenerateClientID(websocket)
     logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} connected.')
     logging.info(f'CommentSessionAPI [{channel_id}]: User-Agent: {websocket.headers.get("User-Agent", "Unknown")}')
@@ -486,11 +486,15 @@ async def CommentSessionAPI(
     # 接続を受け入れる
     await websocket.accept()
 
-    async def SendCommentToClient(thread: Thread, thread_key: str, comment: Comment | CommentResponse):
-        """ 受信コメントをクライアント側に送信する """
-        response = {
+    def ConvertXMLCompatibleCommentResponse(thread_id: int, thread_key: str, comment: Comment) -> XMLCompatibleCommentResponse:
+        """
+        コメント情報をニコ生 XML 互換の XMLCompatibleCommentResponse 形式に変換する
+        戻り値の辞書はそのまま await websocket.send_json() に渡してクライアントに送信できる
+        """
+
+        response: XMLCompatibleCommentResponse = {
             'chat': {
-                'thread': str(thread.id),
+                'thread': str(thread_id),
                 'no': comment.no,
                 'vpos': comment.vpos,
                 'date': int(comment.date.timestamp()),
@@ -499,21 +503,23 @@ async def CommentSessionAPI(
                 'user_id': comment.user_id,
                 'premium': 1 if comment.premium else 0,
                 'anonymity': 1 if comment.anonymity else 0,
+                # スレッドキーとユーザー ID が一致する場合のみ yourpost フラグを設定
+                'yourpost': 1 if thread_key == comment.user_id else 0,
                 'content': comment.content,
             },
         }
-        # 数値を返すフィールドは 0 の場合に省略される本家ニコ生の謎仕様に合わせる
-        if response['chat']['premium'] == 0:
-            del response['chat']['premium']
-        if response['chat']['anonymity'] == 0:
-            del response['chat']['anonymity']
-        # スレッドキーとユーザー ID が一致する場合のみ yourpost フラグを設定
-        if thread_key == comment.user_id:
-            response['chat']['yourpost'] = 1
-        # コメントを送信
-        await websocket.send_json(response)
 
-    async def RunReceiverTask():
+        # 数値を返すフィールドは 0 の場合に省略される本家ニコ生の謎仕様に合わせる
+        if 'premium' in response['chat'] and response['chat']['premium'] == 0:
+            del response['chat']['premium']
+        if 'anonymity' in response['chat'] and response['chat']['anonymity'] == 0:
+            del response['chat']['anonymity']
+        if 'yourpost' in response['chat'] and response['chat']['yourpost'] == 0:
+            del response['chat']['yourpost']
+
+        return response
+
+    async def RunReceiverTask() -> None:
         """
         クライアントからのメッセージを受信するタスク
 
@@ -653,7 +659,7 @@ async def CommentSessionAPI(
                     await websocket.send_json({'ping': {'content': f'rs:{command_count}'}})
                     await websocket.send_json({'ping': {'content': f'ps:{command_count}'}})
                     for comment in comments:
-                        await SendCommentToClient(thread, thread_key, comment)
+                        await websocket.send_json(ConvertXMLCompatibleCommentResponse(thread.id, thread_key, comment))
                     await websocket.send_json({'ping': {'content': f'pf:{command_count}'}})
                     await websocket.send_json({'ping': {'content': f'rf:{command_count}'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
                     command_count += 5  # 新着コメントを全て送ったので、次送信要求が来た場合は5増やす
@@ -680,51 +686,73 @@ async def CommentSessionAPI(
             if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
                 return
 
-    async def RunSenderTask(thread: Thread, thread_key: str, last_sent_comment_id: int):
+    async def RunSenderTask(thread: Thread, thread_key: str, last_sent_comment_id: int) -> None:
         """
         指定されたスレッドの新着コメントがあれば随時送信するタスク
         スレッドコマンドで指定されたスレッドが現在放送中の場合のみ、初回に送ったコメントの続きをリアルタイムに送信する
 
         Args:
             thread (Thread): 新着コメントの取得対象のスレッド
-            thread_key (str): スレッドキー
+            thread_key (str): スレッドキー (互換性のためにそういう名前だが、実際には接続先クライアントの watch_session_client_id)
             last_sent_comment_id (int): 最後にクライアントに送信したコメントの ID
         """
 
-        # list[CommentResponse] のシリアライズやダンプを行える TypeAdapter
-        type_adapter = TypeAdapter(list[CommentResponse])
+        @alru_cache(maxsize=128, ttl=0.25)
+        async def GetLatestComments(thread_id: int, last_sent_comment_id: int) -> list[tuple[int, XMLCompatibleCommentResponse]]:
+            """
+            指定されたスレッドの最新コメントを取得し、当該コメント ID とニコ生互換の
+            XMLCompatibleCommentResponse 形式に変換されたコメント情報のタプルのリストを返す
+            戻り値内の辞書はそのまま await websocket.send_json() に渡してクライアントに送信できる
+            この関数は、同じ引数であれば 0.25 秒の間に一回だけ実行され、二回目以降の呼び出しはメモリキャッシュを返す
+            """
+
+            # この関数の引数に (接続クライアントのユーザー ID を示す) スレッドキーを含めると alru_cache() によるキャッシュが効かなくなるため、
+            # 意図的に引数としては設定せず、上のスコープから直接参照している
+            nonlocal thread_key
+
+            # Redis のキャッシュキーを定義
+            ## スレッド ID と最後に送信したコメント ID で (0.25 秒の間) 一意なレスポンスにしている
+            CACHE_KEY = f'nx-jikkyo:threads:{thread_id}:comments:after:{last_sent_comment_id}'
+
+            # Redis からキャッシュを取得
+            cached_xml_compatible_comments_str = await REDIS_CLIENT.get(CACHE_KEY)
+
+            # Redis にまだキャッシュがセットされていない場合、データベースからコメントを取得してキャッシュを生成
+            if cached_xml_compatible_comments_str is None:
+
+                # 最後に取得したコメント ID 以降のコメントを最大 10 件まで取得
+                ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？
+                comments = await Comment.filter(thread_id=thread_id, id__gt=last_sent_comment_id).order_by('-id').limit(10)
+                ## コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
+                comments.reverse()
+
+                # キャッシュされた戻り値のリスト内の辞書を随時 await websocket.send_json() に渡すだけで済むように、
+                # 事前に XMLCompatibleCommentResponse に変換しておく (負荷削減目的)
+                ## XMLCompatibleCommentResponse には互換の関係上コメント ID が含まれないため、別途辞書の外にタプルとしてくっつけている
+                xml_compatible_comments = [
+                    (comment.id, ConvertXMLCompatibleCommentResponse(thread_id, thread_key, comment))
+                    for comment in comments
+                ]
+
+                # 取得結果を JSON エンコードして Redis キャッシュに保存 (TTL: 0.25 秒)
+                await REDIS_CLIENT.set(CACHE_KEY, json.dumps(xml_compatible_comments, ensure_ascii=False), px=int(0.25 * 1000))
+
+            # Redis にキャッシュがセットされている場合は、JSON 文字列をデコード
+            else:
+                xml_compatible_comments: list[tuple[int, XMLCompatibleCommentResponse]] = json.loads(cached_xml_compatible_comments_str)
+
+            return xml_compatible_comments
 
         while True:
 
-            # キャッシュキーを定義
-            ## last_send_comment_id はループごとに変更されるので、ループごとに再定義する必要がある
-            cache_key = f'nx-jikkyo:threads:{thread.id}:comments:after:{last_sent_comment_id}'
-
-            # Redis からキャッシュを取得
-            cached_comments = await REDIS_CLIENT.get(cache_key)
-
-            if cached_comments is not None:
-                # キャッシュがある場合は、取得したキャッシュを list[CommentResponse] に変換
-                comments = type_adapter.validate_json(cached_comments)
-            else:
-                # キャッシュがまだない場合は、最後に取得したコメント ID 以降のコメントを最大 10 件まで取得
-                ## 常に limit 句をつけた方がパフォーマンスが上がるらしい？
-                comments_dict = await Comment.filter(thread_id=thread.id, id__gt=last_sent_comment_id).order_by('-id').limit(10).values()
-                ## コメントを新しい順 (降順) に取得したので、古い順 (昇順) に並べ替える
-                comments_dict.reverse()
-
-                # list[dict] のままだと扱いづらいので list[CommentResponse] に変換
-                ## それでも敢えて ORM から list[dict] で取得しているのは、モデルクラスのインスタンス生成コストが高そうなため
-                comments = type_adapter.validate_python(comments_dict)
-
-                # 取得結果をキャッシュに保存 (TTL: 250ms)
-                await REDIS_CLIENT.set(cache_key, type_adapter.dump_json(comments).decode('utf-8'), px=250)
+            # 最新コメントを取得
+            xml_compatible_comments = await GetLatestComments(thread.id, last_sent_comment_id)
 
             # 取得したコメントを随時送信
-            for comment in comments:
-                await SendCommentToClient(thread, thread_key, comment)
+            for comment_id, xml_compatible_comment in xml_compatible_comments:
+                await websocket.send_json(xml_compatible_comment)
                 # 最後にクライアントに送信したコメントの ID を更新
-                last_sent_comment_id = comment.id
+                last_sent_comment_id = comment_id
 
             # 接続が切れたらタスクを終了
             if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
