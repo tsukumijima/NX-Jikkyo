@@ -534,7 +534,7 @@ async def CommentSessionAPI(
         """
         クライアントからのメッセージを受信するタスク
 
-        本家ニコ生では以下のような謎構造のメッセージ (スレッドコマンド) をコメントセッション (コメントサーバー) に送ることでコメント受信が始まる
+        本家ニコ生では以下のような謎構造のメッセージ (ping / thread コマンド) をコメントセッション (コメントサーバー) に送ることでコメント受信が始まる
         NX-Jikkyo でもこの挙動をなんとなく再現する (詳細な仕様は本家が死んでるのでわかりません！生放送と過去ログでも微妙に違う…)
         [
             {ping: {content: 'rs:0'}},
@@ -588,7 +588,7 @@ async def CommentSessionAPI(
                     # 仕様がよくわからないので当面無視
                     continue
 
-                # スレッドコマンド
+                # thread コマンド
                 if 'thread' in message:
                     try:
 
@@ -623,7 +623,7 @@ async def CommentSessionAPI(
                             when = None
 
                     except Exception:
-                        # 送られてきたスレッドコマンドの形式が不正
+                        # 送られてきた thread コマンドの形式が不正
                         logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message.')
                         logging.error(message)
                         logging.error(traceback.format_exc())
@@ -686,8 +686,8 @@ async def CommentSessionAPI(
                     if when is not None:
                         continue
 
-                    # スレッドが放送中の場合のみ、指定されたスレッドの新着コメントがあれば随時送信するタスクを非同期で実行開始
-                    ## このとき、既に他のスレッド用にタスクが起動していた場合はキャンセルして停止させてから実行する
+                    # スレッドが放送中の場合のみ、指定されたスレッドの新着コメントがあれば随時配信するタスクを非同期で実行開始
+                    ## このとき、既に他のスレッドの最新コメント配信タスクが起動していた場合はキャンセルして停止させてから実行する
                     ## 過去ログの場合はすでに放送が終わっているのでこの処理は行わない
                     if thread.start_at.timestamp() < time.time() < thread.end_at.timestamp():
                         if sender_task is not None:
@@ -700,16 +700,16 @@ async def CommentSessionAPI(
 
     async def RunSenderTask(thread: Thread, thread_key: str, last_sent_comment_id: int) -> None:
         """
-        指定されたスレッドの新着コメントがあれば随時送信するタスク
-        スレッドコマンドで指定されたスレッドが現在放送中の場合のみ、初回に送ったコメントの続きをリアルタイムに送信する
+        指定されたスレッドの新着コメントがあれば随時配信するタスク
+        thread コマンドで指定されたスレッドが現在放送中であることを前提に、RunReceiverTask() 側で初回送信した以降のコメントをリアルタイムに配信する
 
         Args:
-            thread (Thread): 新着コメントの取得対象のスレッド
+            thread (Thread): 新着コメントの取得対象のスレッド情報
             thread_key (str): スレッドキー (互換性のためにこの名前になっているが、実際には接続先クライアントの watch_session_client_id)
             last_sent_comment_id (int): 最後にクライアントに送信したコメントの ID
         """
 
-        @alru_cache(maxsize=128, ttl=0.25)
+        @alru_cache(maxsize=512, ttl=0.25)
         async def GetLatestComments(thread_id: int, last_sent_comment_id: int) -> list[tuple[int, XMLCompatibleCommentResponse]]:
             """
             指定されたスレッドの最新コメントを Redis キャッシュから取得し、当該コメント ID とニコ生互換の
@@ -764,10 +764,12 @@ async def CommentSessionAPI(
 
             # 取得したコメントを随時送信
             for comment_id, xml_compatible_comment in xml_compatible_comments:
+
                 # 必要に応じて yourpost フラグを設定してから送信
                 ## yourpost フラグを GetLatestComments() 内で設定しないと、キャッシュ効果により
                 ## 意図しないユーザーに yourpost = 1 が送信されてしまうため、意図的にキャッシュの取得後、送信直前に設定している
                 await websocket.send_json(SetYourPostFlag(xml_compatible_comment, thread_key))
+
                 # 最後にクライアントに送信したコメントの ID を更新
                 last_sent_comment_id = comment_id
 
@@ -789,7 +791,7 @@ async def CommentSessionAPI(
 
         # クライアントからのメッセージを受信するタスクの実行が完了するまで待機
         # サーバーからクライアントにメッセージを送信するタスクは必要に応じて起動される
-        await asyncio.create_task(RunReceiverTask())
+        await RunReceiverTask()
 
     except (WebSocketDisconnect, websockets.exceptions.ConnectionClosedOK):
         # 接続が切れた時の処理
