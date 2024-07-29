@@ -46,7 +46,7 @@ async def WatchSessionAPI(
     thread_id: Annotated[int | None, Query(description='スレッド ID 。過去の特定スレッドの過去ログコメントを取得する際に指定する。')] = None,
 ):
     """
-    ニコ生の視聴セッション Web Socket 互換 API
+    ニコ生の視聴セッション WebSocket 互換 API
     """
 
     # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得
@@ -468,7 +468,7 @@ async def CommentSessionAPI(
     channel_id: Annotated[str, Path(description='実況チャンネル ID 。ex: jk211')],
 ):
     """
-    ニコ生のコメントセッション Web Socket 互換 API の実装
+    ニコ生のコメントセッション WebSocket 互換 API の実装
     視聴セッション側と違い明確なドキュメントがないため、本家が動いてない以上手探りで実装するほかない…
     ref: https://qiita.com/pasta04/items/33da06cf3c21e34fc4d1
     ref: https://github.com/xpadev-net/niconicomments/blob/develop/src/%40types/format.legacy.ts
