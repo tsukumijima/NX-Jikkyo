@@ -486,10 +486,12 @@ async def CommentSessionAPI(
     # 接続を受け入れる
     await websocket.accept()
 
-    def ConvertXMLCompatibleCommentResponse(thread_id: int, thread_key: str, comment: Comment) -> XMLCompatibleCommentResponse:
+    def ConvertToXMLCompatibleCommentResponse(thread_id: int, comment: Comment) -> XMLCompatibleCommentResponse:
         """
         コメント情報をニコ生 XML 互換の XMLCompatibleCommentResponse 形式に変換する
-        戻り値の辞書はそのまま await websocket.send_json() に渡してクライアントに送信できる
+        戻り値の辞書は SetYourPostFlag() を通した後、await websocket.send_json() に渡してクライアントに送信できる
+
+        この関数では yourpost フラグは設定されないので、別途 SetYourPostFlag() を通して設定する必要がある
         """
 
         response: XMLCompatibleCommentResponse = {
@@ -503,8 +505,6 @@ async def CommentSessionAPI(
                 'user_id': comment.user_id,
                 'premium': 1 if comment.premium else 0,
                 'anonymity': 1 if comment.anonymity else 0,
-                # スレッドキーとユーザー ID が一致する場合のみ yourpost フラグを設定
-                'yourpost': 1 if thread_key == comment.user_id else 0,
                 'content': comment.content,
             },
         }
@@ -514,6 +514,17 @@ async def CommentSessionAPI(
             del response['chat']['premium']
         if 'anonymity' in response['chat'] and response['chat']['anonymity'] == 0:
             del response['chat']['anonymity']
+
+        return response
+
+    def SetYourPostFlag(response: XMLCompatibleCommentResponse, thread_key: str) -> XMLCompatibleCommentResponse:
+        """
+        スレッドキーとユーザー ID が一致する場合のみ、コメント情報に yourpost (自分が投稿したコメントかどうか) フラグを設定する
+        """
+
+        # スレッドキーとユーザー ID が一致する場合のみ yourpost フラグを設定
+        response['chat']['yourpost'] = (1 if thread_key == response['chat']['user_id'] else 0)
+        # 数値を返すフィールドは 0 の場合に省略される本家ニコ生の謎仕様に合わせる
         if 'yourpost' in response['chat'] and response['chat']['yourpost'] == 0:
             del response['chat']['yourpost']
 
@@ -659,7 +670,8 @@ async def CommentSessionAPI(
                     await websocket.send_json({'ping': {'content': f'rs:{command_count}'}})
                     await websocket.send_json({'ping': {'content': f'ps:{command_count}'}})
                     for comment in comments:
-                        await websocket.send_json(ConvertXMLCompatibleCommentResponse(thread.id, thread_key, comment))
+                        # XML 互換データ形式に変換した後、必要に応じて yourpost フラグを設定してから送信
+                        await websocket.send_json(SetYourPostFlag(ConvertToXMLCompatibleCommentResponse(thread.id, comment), thread_key))
                     await websocket.send_json({'ping': {'content': f'pf:{command_count}'}})
                     await websocket.send_json({'ping': {'content': f'rf:{command_count}'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
                     command_count += 5  # 新着コメントを全て送ったので、次送信要求が来た場合は5増やす
@@ -700,15 +712,13 @@ async def CommentSessionAPI(
         @alru_cache(maxsize=128, ttl=0.25)
         async def GetLatestComments(thread_id: int, last_sent_comment_id: int) -> list[tuple[int, XMLCompatibleCommentResponse]]:
             """
-            指定されたスレッドの最新コメントを取得し、当該コメント ID とニコ生互換の
+            指定されたスレッドの最新コメントを Redis キャッシュから取得し、当該コメント ID とニコ生互換の
             XMLCompatibleCommentResponse 形式に変換されたコメント情報のタプルのリストを返す
-            戻り値内の辞書はそのまま await websocket.send_json() に渡してクライアントに送信できる
-            この関数は、同じ引数であれば 0.25 秒の間に一回だけ実行され、二回目以降の呼び出しはメモリキャッシュを返す
-            """
+            戻り値内の辞書は SetYourPostFlag() を通した後、await websocket.send_json() に渡してクライアントに送信できる
 
-            # この関数の引数に (接続クライアントのユーザー ID を示す) スレッドキーを含めると alru_cache() によるキャッシュが効かなくなるため、
-            # 意図的に引数としては設定せず、上のスコープから直接参照している
-            nonlocal thread_key
+            同じ引数であれば 0.25 秒の間に一回だけ実行され、二回目以降の呼び出しはメモリキャッシュを返す
+            この関数では yourpost フラグは設定されないので、別途 SetYourPostFlag() を通して設定する必要がある
+            """
 
             # Redis のキャッシュキーを定義
             ## スレッド ID と最後に送信したコメント ID で (0.25 秒の間) 一意なレスポンスにしている
@@ -730,7 +740,7 @@ async def CommentSessionAPI(
                 # 事前に XMLCompatibleCommentResponse に変換しておく (負荷削減目的)
                 ## XMLCompatibleCommentResponse には互換の関係上コメント ID が含まれないため、別途辞書の外にタプルとしてくっつけている
                 xml_compatible_comments = [
-                    (comment.id, ConvertXMLCompatibleCommentResponse(thread_id, thread_key, comment))
+                    (comment.id, ConvertToXMLCompatibleCommentResponse(thread_id, comment))
                     for comment in comments
                 ]
 
@@ -748,12 +758,16 @@ async def CommentSessionAPI(
 
         while True:
 
-            # 最新コメントを取得
+            # 最新コメントを Redis キャッシュから取得
+            ## このメソッドの呼び出しは 0.25 秒の間に一回だけ実行され、二回目以降の呼び出しではメモリキャッシュが返る
             xml_compatible_comments = await GetLatestComments(thread.id, last_sent_comment_id)
 
             # 取得したコメントを随時送信
             for comment_id, xml_compatible_comment in xml_compatible_comments:
-                await websocket.send_json(xml_compatible_comment)
+                # 必要に応じて yourpost フラグを設定してから送信
+                ## yourpost フラグを GetLatestComments() 内で設定しないと、キャッシュ効果により
+                ## 意図しないユーザーに yourpost = 1 が送信されてしまうため、意図的にキャッシュの取得後、送信直前に設定している
+                await websocket.send_json(SetYourPostFlag(xml_compatible_comment, thread_key))
                 # 最後にクライアントに送信したコメントの ID を更新
                 last_sent_comment_id = comment_id
 
