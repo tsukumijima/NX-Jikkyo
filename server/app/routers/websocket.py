@@ -790,8 +790,8 @@ async def CommentSessionAPI(
     try:
 
         # クライアントからのメッセージを受信するタスクの実行が完了するまで待機
-        # サーバーからクライアントにメッセージを送信するタスクは必要に応じて起動される
-        await RunReceiverTask()
+        ## サーバーからクライアントにメッセージを送信するタスクは必要に応じて起動される
+        await asyncio.create_task(RunReceiverTask())
 
     except (WebSocketDisconnect, websockets.exceptions.ConnectionClosedOK):
         # 接続が切れた時の処理
