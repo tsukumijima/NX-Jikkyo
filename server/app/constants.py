@@ -9,7 +9,7 @@ from app.config import CONFIG
 
 
 # バージョン
-VERSION = '1.7.4'
+VERSION = '1.8.0'
 
 # ベースディレクトリ
 BASE_DIR = Path(__file__).resolve().parent.parent
