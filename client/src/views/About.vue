@@ -5,9 +5,9 @@
             <Navigation />
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
                 <blockquote class="font-weight-bold" style="font-size: 15px;">
-                    【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況 (Re:仮)</a> (仮実況) に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 仮実況から受信したコメントは通常より薄く描画され、コメントリストでは <code>[Re:仮]</code> がつきます (各 NX-Jikkyo 対応アプリでは別途対応されない限り区別されません) 。<br>
+                    【📢重要なお知らせ】 NX-Jikkyo で復旧後の <a class="link" href="https://originalnews.nico/464285" target="_blank">本家ニコニコ実況</a> に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 本家ニコニコ実況から受信したコメントは通常より薄く描画され、コメントリストでは <code>[ニコ実]</code> がつきます (各 NX-Jikkyo 対応アプリでは別途対応されない限り区別されません) 。<br>
                     <div class="mt-1">
-                        NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。過去ログを含め、仮実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 <a class="link" href="/about/#faq" target="_blank">詳しくはこちら！</a>
+                        NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。過去ログを含め、ニコニコ実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 <a class="link" href="/about/#faq" target="_blank">詳しくはこちら！</a>
                     </div>
                     <div class="mt-1">
                         なお <a class="link" href="https://x.com/TVRemotePlus/status/1813149934373466396" target="_blank">NX-Jikkyo ではデフォルトでいくつかのコメントミュート設定がオンになっている</a> ので、完全に以前の使い勝手に戻したい方は適宜 <router-link class="link" to="/settings/jikkyo">コメントのミュート設定</router-link> からオフにしてみてください！<br>
@@ -96,12 +96,12 @@
                 <h2 class="mt-5" id="faq" style="scroll-margin-top: 70px;">FAQ</h2>
                 <ul class="pl-5 mt-3 text-text-darken-1" style="line-height: 1.65">
                     <li>
-                        <strong>Q. <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況 (Re:仮)</a> (仮実況) からインポートされたコメントは <a class="link" href="/log/" target="_blank">過去ログ再生</a> や <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に反映されますか？</strong>
+                        <strong>Q. <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況</a> からインポートされたコメントは <a class="link" href="/log/" target="_blank">過去ログ再生</a> や <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に反映されますか？</strong>
                     </li>
                     <li class="mt-1">
                         <strong>A. (NX-Jikkyo や <a class="link" href="https://github.com/tsukumijima/NDGRClient" target="_blank">NDGRClient</a> の実装にバグがなければ) 随時反映されているはずです。</strong>
                         <ul class="pl-5">
-                            <li>2024/07/19 までに仮実況に投稿されたコメントは、後日手動で過去ログ API にマージ予定です。もうしばらくお待ちください。</li>
+                            <li>2024/07/19 までに仮実況に投稿されたコメント・2024/08/05 19:00 までにニコニコ実況に投稿されたコメントは、後日手動で過去ログ API にマージ予定です。もうしばらくお待ちください。</li>
                         </ul>
                     </li>
                     <li class="mt-3">
@@ -118,13 +118,13 @@
                         </ul>
                     </li>
                     <li class="mt-3">
-                        <strong>Q. NX-Jikkyo での <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況 (Re:仮)</a> (仮実況) に投稿されたコメントのリアルタイム表示について、技術的な詳細を教えてください。</strong>
+                        <strong>Q. NX-Jikkyo での <a class="link" href="https://originalnews.nico/464285" target="_blank">ニコニコ実況</a> に投稿されたコメントのリアルタイム表示について、技術的な詳細を教えてください。</strong>
                     </li>
                     <li class="mt-1">
-                        <strong>A. 仮実況の各チャンネルに投稿されたコメントを NX-Jikkyo のサーバー側でリアルタイムに受信し、随時 NX-Jikkyo のデータベースに通常のコメントとして「投稿」することで実現しています。</strong><br>
+                        <strong>A. ニコニコ実況の各チャンネルに投稿されたコメントを NX-Jikkyo のサーバー側でリアルタイムに受信し、随時 NX-Jikkyo のデータベースに通常のコメントとして「投稿」することで実現しています。</strong><br>
                         <ul class="pl-5">
-                            <li>仮実況からインポートされたコメントかどうかは、ユーザー ID に Prefix <code>rekari:</code> が付与されているかどうかで判定できます。</li>
-                            <li>仮実況のコメントをどのように表示する (分けて表示する or 区別せずに表示する or 表示しない) かは、各 NX-Jikkyo 対応アプリの方針にお任せします。</li>
+                            <li>ニコニコ実況からインポートされたコメントかどうかは、ユーザー ID に Prefix <code>nicolive:</code> または <code>rekari:</code> (仮実況時代) が付与されているかどうかで判定できます。</li>
+                            <li>ニコニコ実況のコメントをどのように表示する (分けて表示する or 区別せずに表示する or 表示しない) かは、各 NX-Jikkyo 対応アプリの方針にお任せします。</li>
                         </ul>
                     </li>
                 </ul>

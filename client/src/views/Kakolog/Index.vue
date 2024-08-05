@@ -6,7 +6,7 @@
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
                 <h1>過去ログ再生</h1>
                 <p class="mt-4 text-text-darken-1">
-                    <strong><a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・ニコニコ実況 (Re:仮)・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。</strong><br>
+                    <strong><a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> に保存されている、2009年11月から現在までの 旧ニコニコ実況・ニコ生統合後の新ニコニコ実況・ニコニコ実況 (Re:仮)・復旧後の新新ニコニコ実況・NX-Jikkyo のすべての過去ログを、チャンネルと日時範囲を指定して再生できます。</strong><br>
                 </p>
                 <p class="mt-2 text-text-darken-1">
                     十数年分もの膨大な過去ログデータには、当時の世相が色濃く反映された、その時代を生きた「生の声」が、まるでタイムカプセルのように刻まれています。<br>

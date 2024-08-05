@@ -236,24 +236,24 @@ async def ResetViewerCount():
         logging.info(f'Viewer count for {channel.name} has been reset.')
 
 
-# サーバー起動時にニコニコ実況 (Re:仮) の各実況チャンネルのコメントのリアルタイムストリーミングを開始
+# サーバー起動時にニコニコ実況の各実況チャンネルのコメントのリアルタイムストリーミングを開始
 # ストリーミングで取得したコメントは随時 NX-Jikkyo のコメントとして「投稿」する
 ## この処理はサーバー起動時に 1 回だけ実行される
 @app.on_event('startup')
-async def StartStreamRekariComments():
+async def StartStreamNicoliveComments():
 
     # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
     if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
         return
 
-    # ニコニコ実況 (Re:仮) で実装されている実況チャンネル (jk の prefix なし)
-    REKARI_JIKKYO_CHANNELS = [1, 2, 4, 5, 6, 7, 8, 9, 101, 211]
+    # ニコニコ実況で実装されている実況チャンネル (jk の prefix なし)
+    NICOLIVE_JIKKYO_CHANNELS = [1, 2, 4, 5, 6, 7, 8, 9, 101, 211]
 
     # 現在アクティブなスレッドの情報を保存する辞書
     active_threads: dict[int, Thread] = {}
 
-    # ニコニコ実況 (Re:仮) のコメントをリアルタイムに受信する非同期関数
-    async def StreamRekariComments(channel_id_int: int) -> None:
+    # ニコニコ実況のコメントをリアルタイムに受信する非同期関数
+    async def StreamNicoliveComments(channel_id_int: int) -> None:
 
         # jk の prefix つきのチャンネル ID
         channel_id = f'jk{channel_id_int}'
@@ -280,10 +280,10 @@ async def StartStreamRekariComments():
                     end_at__gte = current_time_datetime,
                 ).first()
                 if not thread:
-                    logging.error(f'StreamRekariComments [{channel_id}]: Active thread not found.')
+                    logging.error(f'StreamNicoliveComments [{channel_id}]: Active thread not found.')
                     return
                 active_threads[channel_id_int] = thread
-                logging.info(f'StreamRekariComments [{channel_id}]: Active thread has been updated.')
+                logging.info(f'StreamNicoliveComments [{channel_id}]: Active thread has been updated.')
 
             # 現在アクティブなスレッドの情報を取得
             thread = active_threads[channel_id_int]
@@ -314,8 +314,9 @@ async def StartStreamRekariComments():
                     xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
 
                     # 新しいコメントを作成
-                    ## コメ番はニコニコ実況 (Re:仮) では運用されておらず齟齬も出るため、NX-Jikkyo 側に合わせている
-                    ## vpos はニコニコ実況 (Re:仮) で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
+                    ## NDGR 新コメントサーバーのコメ番はベストエフォートで一意性が保証されない上齟齬も出るため、当面 NX-Jikkyo 側に合わせている
+                    ## vpos はニコニコ実況で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
+                    ## 新新ニコニコ実況のリセット時刻が今の所わからないのもある
                     comment = await Comment.create(
                         thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
                         no = new_no,  # NX-Jikkyo 側で算出した値を入れる
@@ -338,12 +339,12 @@ async def StartStreamRekariComments():
                 if random.random() < 0.1:
                     await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
 
-                # ニコニコ実況 (Re:仮) からのコメントのインポート完了
-                logging.info(f'StreamRekariComments [{channel_id}]: Rekari user {comment.user_id} posted a comment.')
+                # ニコニコ実況からのコメントのインポート完了
+                logging.info(f'StreamNicoliveComments [{channel_id}]: Nicolive user {comment.user_id} posted a comment.')
 
             # 何らかの理由でコメント投稿に失敗した場合はエラーログを出力
             except Exception:
-                logging.error(f'StreamRekariComments [{channel_id}]: Failed to import comment.')
+                logging.error(f'StreamNicoliveComments [{channel_id}]: Failed to import comment.')
                 logging.error(traceback.format_exc())
 
         # コメントのストリーミング処理を開始
@@ -352,19 +353,19 @@ async def StartStreamRekariComments():
             try:
                 await ndgr_client.streamComments(callback)
             except Exception:
-                logging.error(f'StreamRekariComments [{channel_id}]: Unexpected error occurred while streaming.')
+                logging.error(f'StreamNicoliveComments [{channel_id}]: Unexpected error occurred while streaming.')
                 logging.error(traceback.format_exc())
-                logging.info(f'StreamRekariComments [{channel_id}]: Retrying in 15 seconds...')
+                logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 15 seconds...')
                 await asyncio.sleep(15)
             else:
                 break  # エラーが発生しなかった場合はループを抜ける
 
-    # ニコニコ実況 (Re:仮) の各実況チャンネルに対し、バックグラウンドでストリーミングを開始
-    ## 一度にアクセスするとアクセス規制を喰らう可能性があるので、0.5 秒ずつ遅らせてタスクを起動する
-    for rekari_jikkyo_channel_id_int in REKARI_JIKKYO_CHANNELS:
-        asyncio.create_task(StreamRekariComments(rekari_jikkyo_channel_id_int))
-        await asyncio.sleep(0.5)
-        logging.info(f'StartStreamRekariComments [jk{rekari_jikkyo_channel_id_int}]: Streaming started.')
+    # ニコニコ実況の各実況チャンネルに対し、バックグラウンドでストリーミングを開始
+    ## 一度にアクセスするとアクセス規制を喰らう可能性があるので、0.2 秒ずつ遅らせてタスクを起動する
+    for nicolive_jikkyo_channel_id_int in NICOLIVE_JIKKYO_CHANNELS:
+        asyncio.create_task(StreamNicoliveComments(nicolive_jikkyo_channel_id_int))
+        await asyncio.sleep(0.2)
+        logging.info(f'StartStreamNicoliveComments [jk{nicolive_jikkyo_channel_id_int}]: Streaming started.')
 
 
 # 10秒に1回、現在のチャンネル情報を DB から取得し、Redis にキャッシュとして格納する

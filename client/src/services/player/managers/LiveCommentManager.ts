@@ -485,8 +485,8 @@ class LiveCommentManager implements PlayerManager {
                 playback_position: this.player.video.currentTime,
                 user_id: comment.user_id,
                 my_post: false,
-                // ユーザー ID に rekari: の prefix がつく場合
-                rekari: comment.user_id.startsWith('rekari:'),
+                // ユーザー ID に nicolive: または rekari: の prefix がつく場合
+                rekari: comment.user_id.startsWith('nicolive:') || comment.user_id.startsWith('rekari:'),
             };
 
             // もしまだ初期コメントを受信し終えていないなら、バッファに格納して終了

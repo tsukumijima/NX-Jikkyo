@@ -42,7 +42,7 @@
                     <!-- 以下では Icon コンポーネントを使うと個数が多いときに高負荷になるため、意図的に SVG を直書きしている -->
                     <div class="comment" :class="{'comment--my-post': item.my_post}">
                         <span class="comment__text">{{item.text}}</span>
-                        <span class="comment__time">{{item.rekari ? '[Re:仮] ' : ''}}{{item.time}}</span>
+                        <span class="comment__time">{{item.rekari ? '[ニコ実] ' : ''}}{{item.time}}</span>
                         <!-- なぜか @click だとスマホで発火しないので @touchend にしている -->
                         <div class="comment__icon" v-ripple="!Utils.isTouchDevice()"
                             @mouseup="showCommentListDropdown($event, item)"
