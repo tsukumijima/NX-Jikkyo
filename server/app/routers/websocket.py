@@ -553,8 +553,6 @@ async def CommentSessionAPI(
         ]
         """
 
-        # コマンドのカウント
-        command_count: int = 0
         # 指定されたスレッドの新着コメントがあれば随時送信するタスク
         sender_task: asyncio.Task[None] | None = None
 
@@ -585,8 +583,13 @@ async def CommentSessionAPI(
 
                 # ping コマンド
                 if 'ping' in message:
-                    # 仕様がよくわからないので当面無視
-                    continue
+
+                    # ping の名の通り、受け取った ping メッセージをそのままクライアントに送信するのが正しい挙動っぽい
+                    ## 例えばコマンドが ping(rs:0), ping(ps:0), thread, ping(pf:0), ping(rf:0) の順で送られてきた場合、
+                    ## コマンドのレスポンスは ping(rs:0), ping(ps:0), thread, chat(複数), ping(pf:0), ping(rf:0) の順で送信される
+                    ## この挙動を利用すると、送られてくる chat メッセージがどこまで初回取得コメントかをクライアント側で判定できる
+                    ## ref: https://scrapbox.io/rinsuki/%E3%83%8B%E3%82%B3%E3%83%8B%E3%82%B3%E7%94%9F%E6%94%BE%E9%80%81%E3%81%AE%E3%82%B3%E3%83%A1%E3%83%B3%E3%83%88%E3%82%92%E5%8F%96%E3%82%8B
+                    await websocket.send_json(message)
 
                 # thread コマンド
                 if 'thread' in message:
@@ -638,8 +641,8 @@ async def CommentSessionAPI(
                         await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
                         return
 
-                    # 当該スレッドの最新 res_from 件のコメントを取得して送信
-                    ## when が設定されている場合のみ、when より前のコメントを取得して送信
+                    # 当該スレッドの最新 res_from 件のコメントを取得
+                    ## when が設定されている場合のみ、when より前のコメントを取得
                     if when is not None:
                         comments = await Comment.filter(thread_id=thread.id, date__lt=when).order_by('-id').limit(abs(res_from))  # res_from を正の値に変換
                     else:
@@ -664,17 +667,10 @@ async def CommentSessionAPI(
                     })
                     logging.info(f'CommentSessionAPI [{channel_id}]: Thread info sent. thread: {thread_id} / last_res: {last_comment_no}')
 
-                    # この rs,ps,pf,rf の謎コマンドに挟んでコメントを送るのが重要
-                    ## : の後の数字は何回か送るごとに5ずつ増えるらしい…？
-                    ## ref: https://qiita.com/kumaS-kumachan/items/706123c9a4a5aff5517c
-                    await websocket.send_json({'ping': {'content': f'rs:{command_count}'}})
-                    await websocket.send_json({'ping': {'content': f'ps:{command_count}'}})
+                    # 初回取得コメントを連続送信する
+                    ## XML 互換データ形式に変換した後、必要に応じて yourpost フラグを設定してから送信している
                     for comment in comments:
-                        # XML 互換データ形式に変換した後、必要に応じて yourpost フラグを設定してから送信
                         await websocket.send_json(SetYourPostFlag(ConvertToXMLCompatibleCommentResponse(thread.id, comment), thread_key))
-                    await websocket.send_json({'ping': {'content': f'pf:{command_count}'}})
-                    await websocket.send_json({'ping': {'content': f'rf:{command_count}'}})  # クライアントはこの謎コマンドを受信し終えたら初期コメントの受信が完了している
-                    command_count += 5  # 新着コメントを全て送ったので、次送信要求が来た場合は5増やす
 
                     # 最後にクライアントに送信したコメントの ID
                     ## コメ番は (整合性を担保しようとしているとはいえ) ID ほど厳格ではないので、コメ番ではなく ID ベースでコメント取得時に絞り込む
