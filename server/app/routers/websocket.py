@@ -605,12 +605,12 @@ async def CommentSessionAPI(
                             return
 
                         # threadkey: スレッドキー
-                        ## 視聴セッション側の yourPostKey と同一
-                        ## NX-Jikkyo では (コメントに user_id としてセットされる) watch_session_client_id がセットされている
-                        ## 過去ログ取得時は設定されないため、その場合は空文字とする
+                        ## 視聴セッション WebSocket の "room" メッセージから返される yourPostKey と同一
+                        ## NX-Jikkyo では (コメントに user_id としてセットされる) watch_session_client_id を yourPostKey として返却している
                         if 'threadkey' in message['thread']:
                             thread_key = str(message['thread']['threadkey'])
                         else:
+                            # 過去ログ取得時などで threadkey が指定されていない場合、空文字とする
                             thread_key = ''
 
                         # when: 取得するコメントの投稿日時の下限を示す UNIX タイムスタンプ
