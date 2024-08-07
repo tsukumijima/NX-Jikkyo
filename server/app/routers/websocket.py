@@ -75,8 +75,8 @@ async def WatchSessionAPI(
     ## 放送開始前のスレッドが指定された場合はエラーを返す
     else:
         thread = await Thread.filter(
-            id=thread_id,
-            channel_id=channel_id_int,
+            id = thread_id,
+            channel_id = channel_id_int,
         ).first()
         if not thread:
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread not found.')
@@ -475,7 +475,15 @@ async def CommentSessionAPI(
     """
 
     # コメントセッションはあくまで WebSocket でリクエストされたスレッド ID に基づいて送るので、
-    # チャンネル ID はログ出力以外では使わない
+    # チャンネル ID はログ出力とフォールバック以外では使わない
+
+    # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得
+    try:
+        channel_id_int = int(channel_id.replace('jk', ''))
+    except ValueError:
+        logging.error(f'CommentSessionAPI [{channel_id}]: Invalid channel ID.')
+        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
+        return
 
     # クライアント ID を生成
     ## 同一 IP 同一クライアントからなら UA が変更されない限り同一値になるはず
@@ -596,7 +604,22 @@ async def CommentSessionAPI(
                     try:
 
                         # thread: スレッド ID
-                        thread_id = int(message['thread']['thread'])
+                        if 'thread' in message['thread']:
+                            thread_id = int(message['thread']['thread'])
+                        else:
+                            # スレッド ID が省略されたとき、現在アクティブな (放送中の) スレッドの ID を取得 (NX-Jikkyo 独自仕様)
+                            ## 旧ニコ生のコメントサーバーではスレッド ID の指定は必須だった
+                            now = timezone.now()
+                            thread = await Thread.filter(
+                                channel_id = channel_id_int,
+                                start_at__lte = now,
+                                end_at__gte = now,
+                            ).first()
+                            if not thread:
+                                logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
+                                await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
+                                return
+                            thread_id = thread.id
                         logging.info(f'CommentSessionAPI [{channel_id}]: Thread ID: {thread_id}')
 
                         # res_from: 初回にクライアントに送信する最新コメントの数
