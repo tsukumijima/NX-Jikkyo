@@ -749,7 +749,7 @@ files = [
 [[package]]
 name = "ndgr-client"
 version = "0.1.0"
-description = "NDGRClient: Nicolive NDGR Server Client Library"
+description = "NDGRClient: Nicolive NDGR Message Server Client Library"
 optional = false
 python-versions = ">=3.11,<3.13"
 files = []
@@ -769,8 +769,8 @@ websockets = "^12.0"
 [package.source]
 type = "git"
 url = "https://github.com/tsukumijima/NDGRClient"
-reference = "5fdbc3e616a46230b6e0d9aff27e43090df3e876"
-resolved_reference = "5fdbc3e616a46230b6e0d9aff27e43090df3e876"
+reference = "efdf54973d61037e16bb3d19010bd2c8e1bc857e"
+resolved_reference = "efdf54973d61037e16bb3d19010bd2c8e1bc857e"
 
 [[package]]
 name = "protobuf"
@@ -1613,4 +1613,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "f29d0742503557bd264311dbf90979777ccffddac8942022df0fa700806a43a7"
+content-hash = "21211c829a1ecdd2390d566c6fb4da43db9e5497ba669d41a2aedaf11dbd3438"

@@ -264,17 +264,16 @@ async def StartStreamNicoliveComments():
         # NDGRClient を初期化
         ## デバッグ時のみログを表示
         await NDGRClient.updateJikkyoChannelIDMap()
-        ndgr_client = NDGRClient(channel_id, show_log=CONFIG.ENVIRONMENT == 'Develop')
+        ndgr_client = NDGRClient(channel_id, show_log=True)
 
         # コメントのストリーミング処理を開始
         ## 予期せぬエラー発生時はログを出力し、15秒後にリトライする
         while True:
             try:
                 async for ndgr_comment in ndgr_client.streamComments():
-                    if CONFIG.ENVIRONMENT == 'Develop':
-                        print(f'[{datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")}] Comment Received. [grey70](ID: {ndgr_comment.id})[/grey70]')
-                        print(str(ndgr_comment))
-                        print(Rule(characters='-', style=Style(color='#E33157')))
+                    print(f'[{datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")}] Comment Received. [grey70](ID: {ndgr_comment.id})[/grey70]')
+                    print(str(ndgr_comment))
+                    print(Rule(characters='-', style=Style(color='#E33157')))
 
                     # 現在のサーバー時刻 (UNIX タイムスタンプ)
                     current_time = time.time()
@@ -336,7 +335,7 @@ async def StartStreamNicoliveComments():
                                 vpos = vpos,  # NX-Jikkyo 側で算出した値を入れる
                                 date = ndgr_comment.at,  # NX-Jikkyo 側では自動生成せず、NDGR サーバーから受信したコメント投稿時刻を入れる
                                 mail = xml_compatible_comment.mail,
-                                user_id = xml_compatible_comment.user_id,
+                                user_id = f'nicolive:{xml_compatible_comment.user_id}',
                                 premium = True if xml_compatible_comment.premium == 1 else False,
                                 anonymity = True if xml_compatible_comment.anonymity == 1 else False,
                                 content = xml_compatible_comment.content,
