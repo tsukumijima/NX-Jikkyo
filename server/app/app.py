@@ -12,9 +12,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_restful.tasks import repeat_every
-from ndgr_client import NDGRClient, NDGRComment
+from ndgr_client import NDGRClient
 from pathlib import Path
 from pydantic import TypeAdapter
+from rich import print
+from rich.rule import Rule
+from rich.style import Style
 from tortoise import timezone
 from tortoise.transactions import in_transaction
 from zoneinfo import ZoneInfo
@@ -260,98 +263,103 @@ async def StartStreamNicoliveComments():
 
         # NDGRClient を初期化
         ## デバッグ時のみログを表示
+        await NDGRClient.updateJikkyoChannelIDMap()
         ndgr_client = NDGRClient(channel_id, show_log=CONFIG.ENVIRONMENT == 'Develop')
-
-        # コメント受信時に実行されるコールバック関数
-        async def callback(ndgr_comment: NDGRComment) -> None:
-
-            # 現在のサーバー時刻 (UNIX タイムスタンプ)
-            current_time = time.time()
-
-            # 現在のサーバー時刻 (datetime)
-            current_time_datetime = timezone.now()
-
-            # 現在アクティブなスレッドの情報が保存されていないか、放送が終了している場合は、
-            # 現在アクティブなスレッドの情報を取得し、active_threads に保存する
-            if channel_id_int not in active_threads or active_threads[channel_id_int].end_at < current_time_datetime:
-                thread = await Thread.filter(
-                    channel_id = channel_id_int,
-                    start_at__lte = current_time_datetime,
-                    end_at__gte = current_time_datetime,
-                ).first()
-                if not thread:
-                    logging.error(f'StreamNicoliveComments [{channel_id}]: Active thread not found.')
-                    return
-                active_threads[channel_id_int] = thread
-                logging.info(f'StreamNicoliveComments [{channel_id}]: Active thread has been updated.')
-
-            # 現在アクティブなスレッドの情報を取得
-            thread = active_threads[channel_id_int]
-
-            try:
-
-                # コメントを DB に登録
-                async with in_transaction() as connection:
-
-                    # 採番テーブルに記録されたコメ番をインクリメント
-                    await connection.execute_query(
-                        'UPDATE comment_counters SET max_no = max_no + 1 WHERE thread_id = %s',
-                        [thread.id]
-                    )
-                    # インクリメント後のコメ番を取得
-                    ## 採番テーブルを使うことでコメ番の重複を防いでいる
-                    new_no_result = await connection.execute_query_dict(
-                        'SELECT max_no FROM comment_counters WHERE thread_id = %s',
-                        [thread.id]
-                    )
-                    new_no = new_no_result[0]['max_no']
-
-                    # vpos はスレッドの放送開始時刻から起算した秒 1/100 秒 (10ミリ秒) 単位のタイムスタンプ
-                    ## NX-Jikkyo 側でのスレッド放送開始時刻と、NDGR サーバーから受信したコメント投稿時刻の差分から算出する
-                    vpos = int((ndgr_comment.at.timestamp() - thread.start_at.timestamp()) * 100)
-
-                    # 受信したコメントデータを XML 互換コメント形式に変換
-                    xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
-
-                    # 新しいコメントを作成
-                    ## NDGR 新コメントサーバーのコメ番はベストエフォートで一意性が保証されない上齟齬も出るため、当面 NX-Jikkyo 側に合わせている
-                    ## vpos はニコニコ実況で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
-                    ## 新新ニコニコ実況のリセット時刻が今の所わからないのもある
-                    comment = await Comment.create(
-                        thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
-                        no = new_no,  # NX-Jikkyo 側で算出した値を入れる
-                        vpos = vpos,  # NX-Jikkyo 側で算出した値を入れる
-                        date = ndgr_comment.at,  # NX-Jikkyo 側では自動生成せず、NDGR サーバーから受信したコメント投稿時刻を入れる
-                        mail = xml_compatible_comment.mail,
-                        user_id = xml_compatible_comment.user_id,
-                        premium = True if xml_compatible_comment.premium == 1 else False,
-                        anonymity = True if xml_compatible_comment.anonymity == 1 else False,
-                        content = xml_compatible_comment.content,
-                    )
-
-                # 実況勢いカウント用の Redis ソート済みセット型にエントリを追加
-                ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる
-                await REDIS_CLIENT.zadd(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', {f'comment:{comment.id}': current_time})
-
-                # 1/10 の確率で現在時刻から 60 秒以上前のエントリを削除
-                ## 毎回削除する必要はないが (古いエントリが残ったままでもカウントする上では影響しない) 、
-                ## メモリ上に古いエントリが残りすぎないように、定期的に削除する
-                if random.random() < 0.1:
-                    await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
-
-                # ニコニコ実況からのコメントのインポート完了
-                logging.info(f'StreamNicoliveComments [{channel_id}]: Nicolive user {comment.user_id} posted a comment.')
-
-            # 何らかの理由でコメント投稿に失敗した場合はエラーログを出力
-            except Exception:
-                logging.error(f'StreamNicoliveComments [{channel_id}]: Failed to import comment.')
-                logging.error(traceback.format_exc())
 
         # コメントのストリーミング処理を開始
         ## 予期せぬエラー発生時はログを出力し、15秒後にリトライする
         while True:
             try:
-                await ndgr_client.streamComments(callback)
+                async for ndgr_comment in ndgr_client.streamComments():
+                    if CONFIG.ENVIRONMENT == 'Develop':
+                        print(f'[{datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")}] Comment Received. [grey70](ID: {ndgr_comment.id})[/grey70]')
+                        print(str(ndgr_comment))
+                        print(Rule(characters='-', style=Style(color='#E33157')))
+
+                    # 現在のサーバー時刻 (UNIX タイムスタンプ)
+                    current_time = time.time()
+
+                    # 現在のサーバー時刻 (datetime)
+                    current_time_datetime = timezone.now()
+
+                    # 現在アクティブなスレッドの情報が保存されていないか、放送が終了している場合は、
+                    # 現在アクティブなスレッドの情報を取得し、active_threads に保存する
+                    if channel_id_int not in active_threads or active_threads[channel_id_int].end_at < current_time_datetime:
+                        thread = await Thread.filter(
+                            channel_id = channel_id_int,
+                            start_at__lte = current_time_datetime,
+                            end_at__gte = current_time_datetime,
+                        ).first()
+                        if not thread:
+                            # 今日のスレッドが作成中などの理由でまだスレッドが取得できる状態にないことが原因と思われる
+                            ## このコメントは飛ばし、スレッドが取得できるようになったコメントから保存する
+                            logging.error(f'StreamNicoliveComments [{channel_id}]: Active thread not found.')
+                            continue
+                        active_threads[channel_id_int] = thread
+                        logging.info(f'StreamNicoliveComments [{channel_id}]: Active thread has been updated.')
+
+                    # 現在アクティブなスレッドの情報を取得
+                    thread = active_threads[channel_id_int]
+
+                    try:
+
+                        # コメントを DB に登録
+                        async with in_transaction() as connection:
+
+                            # 採番テーブルに記録されたコメ番をインクリメント
+                            await connection.execute_query(
+                                'UPDATE comment_counters SET max_no = max_no + 1 WHERE thread_id = %s',
+                                [thread.id]
+                            )
+                            # インクリメント後のコメ番を取得
+                            ## 採番テーブルを使うことでコメ番の重複を防いでいる
+                            new_no_result = await connection.execute_query_dict(
+                                'SELECT max_no FROM comment_counters WHERE thread_id = %s',
+                                [thread.id]
+                            )
+                            new_no = new_no_result[0]['max_no']
+
+                            # vpos はスレッドの放送開始時刻から起算した秒 1/100 秒 (10ミリ秒) 単位のタイムスタンプ
+                            ## NX-Jikkyo 側でのスレッド放送開始時刻と、NDGR サーバーから受信したコメント投稿時刻の差分から算出する
+                            vpos = int((ndgr_comment.at.timestamp() - thread.start_at.timestamp()) * 100)
+
+                            # 受信したコメントデータを XML 互換コメント形式に変換
+                            xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
+
+                            # 新しいコメントを作成
+                            ## NDGR 新コメントサーバーのコメ番はベストエフォートで一意性が保証されない上齟齬も出るため、当面 NX-Jikkyo 側に合わせている
+                            ## vpos はニコニコ実況で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
+                            ## 新新ニコニコ実況のリセット時刻が今の所わからないのもある
+                            comment = await Comment.create(
+                                thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
+                                no = new_no,  # NX-Jikkyo 側で算出した値を入れる
+                                vpos = vpos,  # NX-Jikkyo 側で算出した値を入れる
+                                date = ndgr_comment.at,  # NX-Jikkyo 側では自動生成せず、NDGR サーバーから受信したコメント投稿時刻を入れる
+                                mail = xml_compatible_comment.mail,
+                                user_id = xml_compatible_comment.user_id,
+                                premium = True if xml_compatible_comment.premium == 1 else False,
+                                anonymity = True if xml_compatible_comment.anonymity == 1 else False,
+                                content = xml_compatible_comment.content,
+                            )
+
+                        # 実況勢いカウント用の Redis ソート済みセット型にエントリを追加
+                        ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる
+                        await REDIS_CLIENT.zadd(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', {f'comment:{comment.id}': current_time})
+
+                        # 1/10 の確率で現在時刻から 60 秒以上前のエントリを削除
+                        ## 毎回削除する必要はないが (古いエントリが残ったままでもカウントする上では影響しない) 、
+                        ## メモリ上に古いエントリが残りすぎないように、定期的に削除する
+                        if random.random() < 0.1:
+                            await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
+
+                        # ニコニコ実況からのコメントのインポート完了
+                        logging.info(f'StreamNicoliveComments [{channel_id}]: Nicolive user {comment.user_id} posted a comment.')
+
+                    # 何らかの理由でコメント投稿に失敗した場合はエラーログを出力
+                    except Exception:
+                        logging.error(f'StreamNicoliveComments [{channel_id}]: Failed to import comment.')
+                        logging.error(traceback.format_exc())
+
             except Exception:
                 logging.error(f'StreamNicoliveComments [{channel_id}]: Unexpected error occurred while streaming.')
                 logging.error(traceback.format_exc())
