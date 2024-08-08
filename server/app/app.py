@@ -328,7 +328,7 @@ async def StartStreamNicoliveComments():
                             # 新しいコメントを作成
                             ## NDGR 新コメントサーバーのコメ番はベストエフォートで一意性が保証されない上齟齬も出るため、当面 NX-Jikkyo 側に合わせている
                             ## vpos はニコニコ実況で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
-                            ## 新新ニコニコ実況のリセット時刻が今の所わからないのもある
+                            ## 本家ニコニコ実況のリセット時刻が今の所わからないのもある
                             comment = await Comment.create(
                                 thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
                                 no = new_no,  # NX-Jikkyo 側で算出した値を入れる

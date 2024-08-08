@@ -16,10 +16,10 @@
                 </div>
                 <div class="settings__item settings__item--switch">
                     <label class="settings__item-heading" for="mute_rekari_comments">
-                        新新ニコニコ実況からインポートされたコメントをミュートする
+                        本家ニコニコ実況からインポートされたコメントをミュートする
                     </label>
                     <label class="settings__item-label" for="mute_rekari_comments">
-                        新新ニコニコ実況からインポートされたコメントを、一括でミュートするかを設定します。<br>
+                        本家ニコニコ実況からインポートされたコメントを、一括でミュートするかを設定します。<br>
                     </label>
                     <v-switch class="settings__item-switch" color="primary" id="mute_rekari_comments" hide-details
                         v-model="settingsStore.settings.mute_rekari_comments">

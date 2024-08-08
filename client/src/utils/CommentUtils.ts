@@ -163,7 +163,7 @@ export class CommentUtils {
             return true;
         }
 
-        // 「新新ニコニコ実況からインポートされたコメントをミュートする」がオンの場合
+        // 「本家ニコニコ実況からインポートされたコメントをミュートする」がオンの場合
         // コメントのユーザー ID が "nicolive:" または "rekari:" から始まるときは弾く
         if ((settings_store.settings.mute_rekari_comments === true) &&
             (user_id.startsWith('nicolive:') || user_id.startsWith('rekari:'))) {

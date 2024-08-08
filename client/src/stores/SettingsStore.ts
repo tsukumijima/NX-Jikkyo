@@ -169,7 +169,7 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
 
     // ***** 設定 → ニコニコ実況 (ミュート設定) *****
 
-    // 新新ニコニコ実況からインポートされたコメントをミュートする (Default: ミュートしない)
+    // 本家ニコニコ実況からインポートされたコメントをミュートする (Default: ミュートしない)
     mute_rekari_comments: false,
     // 露骨な表現を含むコメントをミュートする (Default: ミュートしない)
     mute_vulgar_comments: false,
