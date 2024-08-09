@@ -262,7 +262,6 @@ async def StartStreamNicoliveComments():
         channel_id = f'jk{channel_id_int}'
 
         # NDGRClient を初期化
-        ## デバッグ時のみログを表示
         await NDGRClient.updateJikkyoChannelIDMap()
         ndgr_client = NDGRClient(channel_id, show_log=True)
 
@@ -319,21 +318,21 @@ async def StartStreamNicoliveComments():
                             new_no = new_no_result[0]['max_no']
 
                             # vpos はスレッドの放送開始時刻から起算した秒 1/100 秒 (10ミリ秒) 単位のタイムスタンプ
-                            ## NX-Jikkyo 側でのスレッド放送開始時刻と、NDGR サーバーから受信したコメント投稿時刻の差分から算出する
+                            ## NX-Jikkyo 側でのスレッド放送開始時刻と、NDGR メッセージサーバーから受信したコメント投稿時刻の差分から算出する
                             vpos = int((ndgr_comment.at.timestamp() - thread.start_at.timestamp()) * 100)
 
                             # 受信したコメントデータを XML 互換コメント形式に変換
                             xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
 
                             # 新しいコメントを作成
-                            ## NDGR 新コメントサーバーのコメ番はベストエフォートで一意性が保証されない上齟齬も出るため、当面 NX-Jikkyo 側に合わせている
+                            ## NDGR メッセージサーバーのコメ番はベストエフォートで一意性が保証されない上齟齬も出るため、当面 NX-Jikkyo 側に合わせている
                             ## vpos はニコニコ実況で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
                             ## 本家ニコニコ実況のリセット時刻が今の所わからないのもある
                             comment = await Comment.create(
                                 thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
                                 no = new_no,  # NX-Jikkyo 側で算出した値を入れる
                                 vpos = vpos,  # NX-Jikkyo 側で算出した値を入れる
-                                date = ndgr_comment.at,  # NX-Jikkyo 側では自動生成せず、NDGR サーバーから受信したコメント投稿時刻を入れる
+                                date = ndgr_comment.at,  # NX-Jikkyo 側では自動生成せず、NDGR メッセージサーバーから受信したコメント投稿時刻を入れる
                                 mail = xml_compatible_comment.mail,
                                 user_id = f'nicolive:{xml_compatible_comment.user_id}',
                                 premium = True if xml_compatible_comment.premium == 1 else False,
