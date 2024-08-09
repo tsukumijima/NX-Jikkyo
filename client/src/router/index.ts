@@ -21,7 +21,7 @@ const router = createRouter({
             component: () => import('@/views/TV/Home.vue'),
             meta: {
                 title: 'NX-Jikkyo : ニコニコ実況避難所',
-                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。',
+                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく快適に実況できます。',
             },
         },
         {
@@ -30,7 +30,7 @@ const router = createRouter({
             component: () => import('@/views/TV/Watch.vue'),
             meta: {
                 title: 'テレビ実況 - コメント再生中 | NX-Jikkyo : ニコニコ実況避難所',
-                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。',
+                description: 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく快適に実況できます。',
             },
         },
         {
@@ -137,7 +137,7 @@ const router = createRouter({
 // タイトルと概要を動的に変更
 router.beforeEach((to) => {
     const title = (to.meta.title || 'NX-Jikkyo') as string;
-    const description = (to.meta.description || 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。') as string;
+    const description = (to.meta.description || 'サイバー攻撃で最低7月末まで鯖落ち中のニコニコ実況に代わる避難所です。お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく快適に実況できます。') as string;
     document.title = title;
     const description_meta = document.querySelector('meta[name="description"]');
     if (description_meta) {

@@ -5,19 +5,19 @@
             <Navigation />
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
                 <blockquote class="font-weight-bold" style="font-size: 15px;">
-                    【📢重要なお知らせ】 NX-Jikkyo で復旧後の <a class="link" href="https://originalnews.nico/464285" target="_blank">本家ニコニコ実況</a> に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 本家ニコニコ実況から受信したコメントは通常より薄く描画され、コメントリストでは <code>[ニコ実]</code> がつきます (各 NX-Jikkyo 対応アプリでは別途対応されない限り区別されません) 。<br>
+                    【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://x.com/TVRemotePlus/status/1821214317385282033" target="_blank">08/22 までの繋ぎ</a> で運用されている <a class="link" href="https://originalnews.nico/464285" target="_blank">暫定復旧版ニコニコ実況</a> に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 コメントリストではコメント取得元に応じてそれぞれ <code>[ニコ実]</code> or <code>[NX]</code> のラベルがつきます (各 NX-Jikkyo 対応アプリでは別途対応されない限り区別されません) 。<br>
                     <div class="mt-1">
                         NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。過去ログを含め、ニコニコ実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 <a class="link" href="/about/#faq" target="_blank">詳しくはこちら！</a>
                     </div>
-                    <div class="mt-1">
-                        なお <a class="link" href="https://x.com/TVRemotePlus/status/1813149934373466396" target="_blank">NX-Jikkyo ではデフォルトでいくつかのコメントミュート設定がオンになっている</a> ので、完全に以前の使い勝手に戻したい方は適宜 <router-link class="link" to="/settings/jikkyo">コメントのミュート設定</router-link> からオフにしてみてください！<br>
-                        またコメントプレイヤーの背景写真がわずらわしい方は <router-link class="link" to="/settings/general">全般設定</router-link> からオフにできます！
+                    <div class="mt-2" style="font-weight: 400 !important">
+                        08/22 のニコニコ実況の本復旧後、<strong>NX-Jikkyo では本家ニコニコ実況へのコメント投稿機能をリリース予定です！！</strong><br>
+                        <strong>本家ニコニコ実況へのコメント投稿にはニコニコアカウントとの連携が必要です。</strong>設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。
                     </div>
                 </blockquote>
                 <h1 class="mt-5">NX-Jikkyo とは</h1>
                 <p class="mt-4 text-text-darken-1">
                     <strong>NX-Jikkyo は、<a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">サイバー攻撃で最低7月末まで鯖落ち中</a> のニコニコ実況に代わる、ニコニコ実況民のための避難所であり、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/blob/master/server/app/routers/websocket.py" target="_blank">ニコニコ生放送互換の WebSocket API</a> を備えるコメントサーバーです。</strong><br>
-                    お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく実況できます。<br>
+                    お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく快適に実況できます。<br>
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏<br>

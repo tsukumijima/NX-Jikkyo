@@ -17,7 +17,7 @@ export interface ICommentData {
     playback_position: number;
     user_id: string;
     my_post: boolean;
-    rekari: boolean;
+    comment_source: 'ニコ実' | 'NX' | null;
 }
 
 interface IWatchSessionInfo {
@@ -486,7 +486,7 @@ class LiveCommentManager implements PlayerManager {
                 user_id: comment.user_id,
                 my_post: false,
                 // ユーザー ID に nicolive: または rekari: の prefix がつく場合
-                rekari: comment.user_id.startsWith('nicolive:') || comment.user_id.startsWith('rekari:'),
+                comment_source: (comment.user_id.startsWith('nicolive:') || comment.user_id.startsWith('rekari:')) ? 'ニコ実' : 'NX',
             };
 
             // もしまだ初期コメントを受信し終えていないなら、バッファに格納して終了
@@ -517,8 +517,7 @@ class LiveCommentManager implements PlayerManager {
             if (this.player.video.paused === false) {
                 this.player.danmaku!.draw({
                     text: comment.content,
-                    // rekari が true の時は color 内の 16 進数カラーコードの末尾に C0 を付与して半透明にする
-                    color: comment_data.rekari ? `${color}C0` : color,
+                    color: color,
                     type: position,
                     size: size,
                 });
@@ -612,7 +611,7 @@ class LiveCommentManager implements PlayerManager {
                             playback_position: this.player.video.currentTime,  // 現在の再生位置
                             user_id: 'Unknown',  // ユーザー ID
                             my_post: true,  // 自分のコメントであることを示すフラグ
-                            rekari: false,
+                            comment_source: 'NX',
                         }
                     });
 

@@ -16,10 +16,11 @@
                 </div>
                 <div class="settings__item settings__item--switch">
                     <label class="settings__item-heading" for="mute_rekari_comments">
-                        本家ニコニコ実況からインポートされたコメントをミュートする
+                        本家ニコニコ実況に投稿されたコメントをミュートする
                     </label>
                     <label class="settings__item-label" for="mute_rekari_comments">
-                        本家ニコニコ実況からインポートされたコメントを、一括でミュートするかを設定します。<br>
+                        本家ニコニコ実況に投稿されたコメントを、一括でミュートするかを設定します。<br>
+                        この設定は過去ログ再生時には適用されません。
                     </label>
                     <v-switch class="settings__item-switch" color="primary" id="mute_rekari_comments" hide-details
                         v-model="settingsStore.settings.mute_rekari_comments">
