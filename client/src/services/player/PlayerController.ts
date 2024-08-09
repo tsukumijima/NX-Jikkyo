@@ -355,7 +355,7 @@ class PlayerController {
                                     playback_position: comment.time,
                                     user_id: comment.author,
                                     my_post: false,
-                                    rekari: comment.author.startsWith('rekari:'),
+                                    comment_source: null,  // 過去ログではコメントソースを設定しない
                                 })),
                             });
                             options.success(jikkyo_comments.comments);
