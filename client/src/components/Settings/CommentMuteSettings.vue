@@ -15,15 +15,27 @@
                     <span class="ml-2">クイック設定</span>
                 </div>
                 <div class="settings__item settings__item--switch">
-                    <label class="settings__item-heading" for="mute_rekari_comments">
+                    <label class="settings__item-heading" for="mute_nicolive_comments">
                         本家ニコニコ実況に投稿されたコメントをミュートする
                     </label>
-                    <label class="settings__item-label" for="mute_rekari_comments">
-                        本家ニコニコ実況に投稿されたコメントを、一括でミュートするかを設定します。<br>
-                        この設定は過去ログ再生時には適用されません。
+                    <label class="settings__item-label" for="mute_nicolive_comments">
+                        本家ニコニコ実況のコメントサーバーに投稿されたコメントを、一括でミュートするかを設定します。<br>
+                        この設定はリアルタイム実況と過去ログ再生の両方に例外なく適用されます。
                     </label>
-                    <v-switch class="settings__item-switch" color="primary" id="mute_rekari_comments" hide-details
-                        v-model="settingsStore.settings.mute_rekari_comments">
+                    <v-switch class="settings__item-switch" color="primary" id="mute_nicolive_comments" hide-details
+                        v-model="settingsStore.settings.mute_nicolive_comments">
+                    </v-switch>
+                </div>
+                <div class="settings__item settings__item--switch">
+                    <label class="settings__item-heading" for="mute_nxjikkyo_comments">
+                        NX-Jikkyo に投稿されたコメントをミュートする
+                    </label>
+                    <label class="settings__item-label" for="mute_nxjikkyo_comments">
+                        NX-Jikkyo のコメントサーバーに投稿されたコメントを、一括でミュートするかを設定します。<br>
+                        この設定はリアルタイム実況と過去ログ再生の両方に例外なく適用されます。
+                    </label>
+                    <v-switch class="settings__item-switch" color="primary" id="mute_nxjikkyo_comments" hide-details
+                        v-model="settingsStore.settings.mute_nxjikkyo_comments">
                     </v-switch>
                 </div>
                 <div class="settings__item settings__item--switch">

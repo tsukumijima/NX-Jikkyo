@@ -168,10 +168,20 @@ export class CommentUtils {
         }
 
         // 「本家ニコニコ実況に投稿されたコメントをミュートする」がオンの場合
-        // コメントのユーザー ID が "nicolive:" または "rekari:" から始まるときは弾く
-        if ((settings_store.settings.mute_rekari_comments === true) &&
-            (user_id.startsWith('nicolive:') || user_id.startsWith('rekari:'))) {
-            console.log('[CommentUtils] Muted comment (rekari_comments): ' + comment);
+        // コメントのユーザー ID が 35 文字未満の場合は弾く
+        // NX-Jikkyo で生成されるユーザー ID は SHA-1: 40 文字 (初期に投稿されたコメントのみ UUID v4: 36 文字) のため、
+        // 35 文字未満であれば確実に本家ニコニコ実況に投稿されたコメントであると判断できる
+        if (settings_store.settings.mute_nicolive_comments === true && user_id.length < 35) {
+            console.log('[CommentUtils] Muted comment (nicolive_comments): ' + comment);
+            return true;
+        }
+
+        // 「NX-Jikkyo に投稿されたコメントをミュートする」がオンの場合
+        // コメントのユーザー ID が 35 文字以上の場合は弾く
+        // NX-Jikkyo で生成されるユーザー ID は SHA-1: 40 文字 (初期に投稿されたコメントのみ UUID v4: 36 文字) のため、
+        // 35 文字以上であれば確実に NX-Jikkyo に投稿されたコメントであると判断できる
+        if (settings_store.settings.mute_nxjikkyo_comments === true && user_id.length >= 35) {
+            console.log('[CommentUtils] Muted comment (nxjikkyo_comments): ' + comment);
             return true;
         }
 

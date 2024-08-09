@@ -50,7 +50,8 @@ export interface ILocalClientSettings extends IClientSettings {
     comment_speed_rate: number;
     comment_font_size: number;
     close_comment_form_after_sending: boolean;
-    mute_rekari_comments: boolean;
+    mute_nicolive_comments: boolean;
+    mute_nxjikkyo_comments: boolean;
     mute_vulgar_comments: boolean;
     mute_abusive_discriminatory_prejudiced_comments: boolean;
     mute_big_size_comments: boolean;
@@ -170,7 +171,9 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     // ***** 設定 → ニコニコ実況 (ミュート設定) *****
 
     // 本家ニコニコ実況に投稿されたコメントをミュートする (Default: ミュートしない)
-    mute_rekari_comments: false,
+    mute_nicolive_comments: false,
+    // NX-Jikkyo に投稿されたコメントをミュートする (Default: ミュートしない)
+    mute_nxjikkyo_comments: false,
     // 露骨な表現を含むコメントをミュートする (Default: ミュートしない)
     mute_vulgar_comments: false,
     // 罵倒や誹謗中傷、差別的な表現、政治的に偏った表現を含むコメントをミュートする (Default: ミュートする)
@@ -240,7 +243,8 @@ const SYNCABLE_SETTINGS_KEYS: (keyof IClientSettings)[] = [
     'comment_speed_rate',
     'comment_font_size',
     'close_comment_form_after_sending',
-    'mute_rekari_comments',
+    'mute_nicolive_comments',
+    'mute_nxjikkyo_comments',
     'mute_vulgar_comments',
     'mute_abusive_discriminatory_prejudiced_comments',
     'mute_big_size_comments',
