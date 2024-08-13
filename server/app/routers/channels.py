@@ -32,6 +32,7 @@ from app.constants import (
 from app.models.comment import (
     ChannelResponse,
     ThreadResponse,
+    ThreadWithoutStatisticsResponse,
 )
 from app.utils.TVer import GetNowAndNextProgramInfos
 
@@ -263,6 +264,74 @@ async def ChannelsXMLAPI():
 
     # メモリから XML 形式のチャンネル情報リストを取得する
     return await GetRedisCachedChannelResponsesXML()
+
+
+@router.get(
+    '/channels/{channel_id}/threads',
+    summary = 'チャンネルスレッド情報 API',
+    response_model = list[ThreadWithoutStatisticsResponse],
+)
+async def ChannelThreadsAPI(
+    channel_id: Annotated[str, Path(description='チャンネル ID 。ex: jk101')],
+):
+    """
+    指定されたチャンネルに紐づく、過去すべてのスレッド情報を新しい順に取得する。<br>
+    API 軽量化のため、実況勢いやコメント数などの統計情報、スレッドに投稿されたコメントはレスポンスに含まれない。<br>
+    スレッドに投稿されたコメントを取得したいときは、別途 /api/v1/threads/{thread_id} にリクエストする必要がある。
+    """
+
+    # チャンネル ID から数値部分を抽出
+    try:
+        channel_id_num = int(channel_id.replace('jk', ''))
+    except ValueError:
+        raise HTTPException(status_code=400, detail='Invalid channel ID format.')
+
+    # 現在時刻を取得
+    now = timezone.now()
+
+    # SQL クエリを最適化して必要な情報のみを取得
+    query = '''
+        SELECT
+            id,
+            start_at,
+            end_at,
+            title,
+            description
+        FROM threads
+        WHERE channel_id = %s
+        ORDER BY start_at DESC
+    '''
+
+    # クエリを実行
+    threads = await connections.get('default').execute_query_dict(query, [channel_id_num])
+
+    # スレッド情報をレスポンス形式に変換
+    thread_responses: list[ThreadWithoutStatisticsResponse] = []
+    for thread in threads:
+
+        # タイムゾーン情報を付加した datetime に変換する
+        start_at = thread['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+        end_at = thread['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+
+        # スレッドのステータスを算出
+        if start_at <= now <= end_at:
+            status = 'ACTIVE'
+        elif start_at > now:
+            status = 'UPCOMING'
+        else:
+            status = 'PAST'
+
+        # スレッド情報をレスポンス形式に変換
+        thread_responses.append(ThreadWithoutStatisticsResponse(
+            id = thread['id'],
+            start_at = thread['start_at'],
+            end_at = thread['end_at'],
+            title = thread['title'],
+            description = thread['description'],
+            status = status,
+        ))
+
+    return thread_responses
 
 
 @router.get(

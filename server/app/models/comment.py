@@ -139,9 +139,20 @@ class ThreadResponse(BaseModel):
     viewers: int | None
     comments: int
 
+class ThreadWithoutStatisticsResponse(BaseModel):
+    """
+    実況勢い・コメント数などを含まない軽量なスレッド情報のレスポンスの Pydantic モデル
+    """
+    id: int
+    start_at: datetime
+    end_at: datetime
+    title: str
+    description: str
+    status: Literal['ACTIVE', 'UPCOMING', 'PAST']
+
 class ThreadWithCommentsResponse(BaseModel):
     """
-    スレッド情報にコメントを含む Pydantic モデル
+    コメントを含むスレッド情報のレスポンスの Pydantic モデル
     """
     id: int
     channel_id: str
