@@ -47,7 +47,7 @@ def main(
     if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
         # 自分が実行されたコマンドラインと同一だが --port オプションでポートがインクリメントされているサブプロセスを起動する
-        ## 例えば SERVER_PORT が 3100 なら 3101, 3102 ... と起動する
+        ## 例えば SERVER_PORT が 5610 なら 5611, 5612 ... と起動する
         for count in range(CONFIG.SUB_SERVER_PROCESS_COUNT):
             subprocess.Popen([sys.executable, __file__, '--port', str(port + count + 1)])
 

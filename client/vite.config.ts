@@ -49,12 +49,12 @@ export default defineConfig({
     // 開発用サーバーの設定
     server: {
         host: '0.0.0.0',
-        port: 3000,
+        port: 5710,
         strictPort: true,
     },
     preview: {
         host: '0.0.0.0',
-        port: 3000,
+        port: 5710,
         strictPort: true,
     },
     // プラグインの設定
