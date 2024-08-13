@@ -15,7 +15,6 @@ from fastapi_restful.tasks import repeat_every
 from ndgr_client import NDGRClient
 from pathlib import Path
 from pydantic import TypeAdapter
-from rich import print
 from rich.rule import Rule
 from rich.style import Style
 from tortoise import timezone
@@ -27,6 +26,7 @@ from app.config import CONFIG
 from app.constants import (
     CLIENT_DIR,
     DATABASE_CONFIG,
+    LOGS_DIR,
     REDIS_CLIENT,
     REDIS_KEY_CHANNEL_INFOS_CACHE,
     REDIS_KEY_JIKKYO_FORCE_COUNT,
@@ -263,16 +263,17 @@ async def StartStreamNicoliveComments():
 
         # NDGRClient を初期化
         await NDGRClient.updateJikkyoChannelIDMap()
-        ndgr_client = NDGRClient(channel_id, show_log=True)
+        ndgr_client = NDGRClient(channel_id, verbose=True, log_path=LOGS_DIR / f'NDGRClient-{channel_id}.log')
 
         # コメントのストリーミング処理を開始
-        ## 予期せぬエラー発生時はログを出力し、15秒後にリトライする
+        ## NDGRClient.streamComments() は通常エンドレスに実行され続ける
+        ## 予期せぬエラーで途中終了してしまったときは、エラーログを出力した上で 10 秒後にリトライする
         while True:
             try:
                 async for ndgr_comment in ndgr_client.streamComments():
-                    print(f'[{datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")}] Comment Received. [grey70](ID: {ndgr_comment.id})[/grey70]')
-                    print(str(ndgr_comment))
-                    print(Rule(characters='-', style=Style(color='#E33157')))
+                    ndgr_client.print(f'[{datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")}] Comment Received. [grey70](ID: {ndgr_comment.id})[/grey70]')
+                    ndgr_client.print(str(ndgr_comment))
+                    ndgr_client.print(Rule(characters='-', style=Style(color='#E33157')))
 
                     # 現在のサーバー時刻 (UNIX タイムスタンプ)
                     current_time = time.time()
@@ -351,7 +352,7 @@ async def StartStreamNicoliveComments():
                             await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
 
                         # ニコニコ実況からのコメントのインポート完了
-                        logging.info(f'StreamNicoliveComments [{channel_id}]: Nicolive user {comment.user_id} posted a comment.')
+                        logging.info(f'StreamNicoliveComments [{channel_id}]: User {xml_compatible_comment.user_id} posted a comment.')
 
                     # 何らかの理由でコメント投稿に失敗した場合はエラーログを出力
                     except Exception:
@@ -361,17 +362,17 @@ async def StartStreamNicoliveComments():
             except Exception:
                 logging.error(f'StreamNicoliveComments [{channel_id}]: Unexpected error occurred while streaming.')
                 logging.error(traceback.format_exc())
-                logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 15 seconds...')
+                logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 10 seconds...')
                 await NDGRClient.updateJikkyoChannelIDMap()  # ニコニコ実況の暫定運用中は必須
-                await asyncio.sleep(15)
+                await asyncio.sleep(10)
             else:
                 break  # エラーが発生しなかった場合はループを抜ける
 
     # ニコニコ実況の各実況チャンネルに対し、バックグラウンドでストリーミングを開始
-    ## 一度にアクセスするとアクセス規制を喰らう可能性があるので、0.2 秒ずつ遅らせてタスクを起動する
+    ## 一度にアクセスするとアクセス規制を喰らう可能性があるので、0.1 秒ずつ遅らせてタスクを起動する
     for nicolive_jikkyo_channel_id_int in NICOLIVE_JIKKYO_CHANNELS:
         asyncio.create_task(StreamNicoliveComments(nicolive_jikkyo_channel_id_int))
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.1)
         logging.info(f'StartStreamNicoliveComments [jk{nicolive_jikkyo_channel_id_int}]: Streaming started.')
 
 
