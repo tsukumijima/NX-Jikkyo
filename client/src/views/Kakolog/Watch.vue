@@ -103,7 +103,7 @@ export default defineComponent({
             recorded_program.detail = {
                 '過去ログ再生について': (
                     '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
-                    '2009年11月から現在までの 旧ニコニコ実況 (~2020/12/14)・ニコ生統合後の新ニコニコ実況 (~2024/06/08)・ニコニコ実況 (Re:仮) (~2024/08/05)・公式生放送での暫定復旧版ニコニコ実況 (~2024/08/22)・NX-Jikkyo (2024/06/10~) の過去ログコメントを再生できます。\n\n' +
+                    '2009年11月から現在までの 旧ニコニコ実況 (2009/11/28 ~ 2020/12/15)・ニコ生統合後の新ニコニコ実況 (2020/12/15 ~ 2024/06/08)・NX-Jikkyo (2024/06/10 ~)・ニコニコ実況 (Re:仮) (2024/07/20 ~ 2024/08/05)・暫定復旧版ニコニコ実況 (2024/08/05 ~ 2024/08/22)・本復旧後のニコニコ実況 (2024/08/22 ~) の過去ログコメントを再生できます。\n\n' +
                     `現在は、Ch:${channel.channel_number} ${channel.name} の ${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを、時系列に再生しています。`
                 ),
             };
@@ -115,7 +115,7 @@ export default defineComponent({
             // 現在表示中の過去ログのタイトルと概要を更新
             const title = `過去ログ再生 - Ch:${channel.channel_number} ${channel.name} ${display_date.format('YYYY年MM月DD日')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} | NX-Jikkyo : ニコニコ実況避難所`;
             const description = '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
-                '2009年11月から現在までの 旧ニコニコ実況 (~2020/12/14)・ニコ生統合後の新ニコニコ実況 (~2024/06/08)・ニコニコ実況 (Re:仮) (~2024/08/05)・公式生放送での暫定復旧版ニコニコ実況 (~2024/08/22)・NX-Jikkyo (2024/06/10~) の過去ログコメントを再生できます。';
+                '2009年11月から現在までの 旧ニコニコ実況 (2009/11/28 ~ 2020/12/15)・ニコ生統合後の新ニコニコ実況 (2020/12/15 ~ 2024/06/08)・NX-Jikkyo (2024/06/10 ~)・ニコニコ実況 (Re:仮) (2024/07/20 ~ 2024/08/05)・暫定復旧版ニコニコ実況 (2024/08/05 ~ 2024/08/22)・本復旧後のニコニコ実況 (2024/08/22 ~) の過去ログコメントを再生できます。';
             document.title = title;
             const description_meta = document.querySelector('meta[name="description"]');
             if (description_meta) {
