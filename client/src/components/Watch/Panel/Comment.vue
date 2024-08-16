@@ -558,12 +558,18 @@ export default defineComponent({
             width: 100%;
             height: 100%;
             padding-left: 16px;
-            padding-right: 10px;
+            padding-right: 0px;
             padding-bottom: 12px;
             overflow-y: scroll !important;
+            @media (hover: none) {
+                padding-right: 8px;
+            }
             @include tablet-vertical {
                 padding-left: 24px;
-                padding-right: 18px;
+                padding-right: 8px;
+                @media (hover: none) {
+                    padding-right: 16px;
+                }
                 /* padding-bottom: 0px; */
             }
             @include smartphone-vertical {
@@ -591,13 +597,13 @@ export default defineComponent({
                     padding-left: 8px;
                     color: rgb(var(--v-theme-text-darken-1));
                     font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-                    font-size: 13px;
+                    font-size: 12px;
                 }
 
                 &__icon {
                     width: 20px;
                     height: 20px;
-                    margin-left: 8px;
+                    margin-left: 2px;
                     border-radius: 5px;
                     color: rgb(var(--v-theme-text));
                     cursor: pointer;

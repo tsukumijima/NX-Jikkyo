@@ -355,7 +355,9 @@ class PlayerController {
                                     playback_position: comment.time,
                                     user_id: comment.author,
                                     my_post: false,
-                                    comment_source: null,  // 過去ログではコメントソースを設定しない
+                                    // NX-Jikkyo で生成されるユーザー ID は SHA-1: 40 文字 (初期に投稿されたコメントのみ UUID v4: 36 文字) のため、
+                                    // 35 文字以上であれば確実に NX-Jikkyo に投稿されたコメントであると判断できる
+                                    comment_source: comment.author.length >= 35 ? 'NX' : 'ニコ実',
                                 })),
                             });
                             options.success(jikkyo_comments.comments);
