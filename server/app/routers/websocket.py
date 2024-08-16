@@ -1,6 +1,5 @@
 
 import asyncio
-import gc
 import json
 import random
 import time
@@ -770,9 +769,6 @@ async def CommentSessionAPI(
                     await websocket.close(code=1000)  # 正常終了扱い
                     return
 
-                # 定期的にガベージコレクションを強制実行
-                gc.collect()
-
         # タスク終了時に確実に Redis Pub/Sub の購読を解除する
         finally:
             await pubsub.unsubscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}')
@@ -811,6 +807,3 @@ async def CommentSessionAPI(
                 await sender_task
             except asyncio.CancelledError:
                 pass
-
-        # ガベージコレクションを強制実行
-        gc.collect()
