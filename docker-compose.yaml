@@ -27,6 +27,10 @@ services:
       - nx-jikkyo-redis
     networks:
       - proxy-network
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
 
   nx-jikkyo-mysql:
     image: mysql:8.0
