@@ -1,5 +1,6 @@
 
 import asyncio
+import gc
 import json
 import random
 import time
@@ -18,7 +19,7 @@ from starlette.websockets import (
 )
 from tortoise import timezone
 from tortoise.transactions import in_transaction
-from typing import Annotated
+from typing import Annotated, cast
 
 from app import logging
 from app.constants import (
@@ -552,6 +553,9 @@ async def CommentSessionAPI(
     # 接続を受け入れる
     await websocket.accept()
 
+    # 指定されたスレッドの新着コメントがあれば随時送信するタスク
+    sender_task: asyncio.Task[None] | None = None
+
     async def RunReceiverTask() -> None:
         """
         クライアントからのメッセージを受信するタスク
@@ -575,8 +579,7 @@ async def CommentSessionAPI(
         ]
         """
 
-        # 指定されたスレッドの新着コメントがあれば随時送信するタスク
-        sender_task: asyncio.Task[None] | None = None
+        nonlocal sender_task
 
         while True:
 
@@ -743,35 +746,43 @@ async def CommentSessionAPI(
         # スレッドの放送終了時刻の Unix 時間
         thread_end_time = thread.end_at.timestamp()
 
-        while True:
+        try:
+            while True:
 
-            # 最新コメントを Redis Pub/Sub から随時取得
-            ## この get_message() は最大 5 秒間コメントの受信を待機し、5 秒間に一度もコメントがなかった場合は None を返す
-            ## こうすることで、可能な限りループ回数を削減して負荷を削減しつつ、5 秒に 1 回は確実に接続確認処理を回せるようになる
-            message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
-            if message is not None:
+                # 最新コメントを Redis Pub/Sub から随時取得
+                ## この get_message() は最大 5 秒間コメントの受信を待機し、5 秒間に一度もコメントがなかった場合は None を返す
+                ## こうすることで、可能な限りループ回数を削減して負荷を削減しつつ、5 秒に 1 回は確実に接続確認処理を回せるようになる
+                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
+                if message is not None:
 
-                # 取得したコメントに必要に応じて yourpost フラグを設定してから送信
-                xml_compatible_comment: XMLCompatibleCommentResponse = json.loads(message['data'])
-                await websocket.send_json(SetYourPostFlag(xml_compatible_comment, thread_key))
+                    # 取得したコメントに必要に応じて yourpost フラグを設定してから送信
+                    xml_compatible_comment: XMLCompatibleCommentResponse = json.loads(message['data'])
+                    await websocket.send_json(SetYourPostFlag(xml_compatible_comment, thread_key))
 
-            # 接続が切れたらタスクを終了
-            if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
-                await pubsub.unsubscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}')
-                return
+                # 接続が切れたらタスクを終了
+                ## 通常は Receiver Task 側で接続切断を検知した後このタスク自体がキャンセルされるため、ここには到達しないはず
+                if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
+                    return
 
-            # 最新コメント配信中に当該スレッドの放送終了時刻を過ぎた場合は接続を切断する
-            if time.time() > thread_end_time:
-                logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
-                await pubsub.unsubscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}')
-                await websocket.close(code=1000)  # 正常終了扱い
-                return
+                # 最新コメント配信中に当該スレッドの放送終了時刻を過ぎた場合は接続を切断する
+                if time.time() > thread_end_time:
+                    logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
+                    await websocket.close(code=1000)  # 正常終了扱い
+                    return
+
+                # 定期的にガベージコレクションを強制実行
+                gc.collect()
+
+        # タスク終了時に確実に Redis Pub/Sub の購読を解除する
+        finally:
+            await pubsub.unsubscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}')
+            await pubsub.close()
 
     try:
 
         # クライアントからのメッセージを受信するタスクの実行が完了するまで待機
         ## サーバーからクライアントにメッセージを送信するタスクは必要に応じて起動される
-        await asyncio.create_task(RunReceiverTask())
+        await RunReceiverTask()
 
     except (WebSocketDisconnect, websockets.exceptions.ConnectionClosedOK):
         # 接続が切れた時の処理
@@ -788,3 +799,18 @@ async def CommentSessionAPI(
         logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection.')
         logging.error(traceback.format_exc())
         await websocket.close(code=1011, reason=f'[{channel_id}]: Error during connection.')
+
+    # コメントセッション WebSocket の接続切断時、Receiver Task 内から起動した
+    # Sender Task を確実に終了する
+    ## WebSocket の切断に気づくのは通常 Receiver Task の方が速いので、明示的に実行中の Sender Task をキャンセルする必要がある
+    finally:
+        if sender_task is not None:
+            sender_task = cast(asyncio.Task[None], sender_task)
+            sender_task.cancel()
+            try:
+                await sender_task
+            except asyncio.CancelledError:
+                pass
+
+        # ガベージコレクションを強制実行
+        gc.collect()
