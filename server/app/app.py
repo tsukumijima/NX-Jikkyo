@@ -1,5 +1,6 @@
 
 import asyncio
+import json
 import mimetypes
 import random
 import time
@@ -27,6 +28,7 @@ from app.constants import (
     CLIENT_DIR,
     DATABASE_CONFIG,
     LOGS_DIR,
+    REDIS_CHANNEL_THREAD_COMMENTS_PREFIX,
     REDIS_CLIENT,
     REDIS_KEY_CHANNEL_INFOS_CACHE,
     REDIS_KEY_JIKKYO_FORCE_COUNT,
@@ -45,6 +47,7 @@ from app.routers import (
     threads,
     websocket,
 )
+from app.routers.websocket import ConvertToXMLCompatibleCommentResponse
 
 
 # FastAPI を初期化
@@ -340,6 +343,14 @@ async def StartStreamNicoliveComments():
                                 anonymity = True if xml_compatible_comment.anonymity == 1 else False,
                                 content = xml_compatible_comment.content,
                             )
+
+                        # ニコ生 XML 互換コメント形式に変換した上で、Redis Pub/Sub でコメントを送信
+                        ## この段階ではまだ yourpost フラグを設定してはならない
+                        ## yourpost フラグはコメントセッション WebSocket 側で設定しないと、意図しないコメントに yourpost フラグが付与されてしまう
+                        await REDIS_CLIENT.publish(
+                            channel = f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}',
+                            message = json.dumps(ConvertToXMLCompatibleCommentResponse(comment), ensure_ascii=False),
+                        )
 
                         # 実況勢いカウント用の Redis ソート済みセット型にエントリを追加
                         ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる

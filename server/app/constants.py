@@ -164,6 +164,8 @@ HTTPX_CLIENT = lambda: httpx.AsyncClient(
 
 # Redis クライアント
 REDIS_CLIENT = Redis.from_url('redis://nx-jikkyo-redis', encoding='utf-8', decode_responses=True)
+# Redis 上でスレッドに投稿されたコメントを Pub/Sub するチャンネルの Prefix
+REDIS_CHANNEL_THREAD_COMMENTS_PREFIX = 'nx-jikkyo:thread_comments'
 # Redis 上のチャンネル情報キャッシュのキー
 REDIS_KEY_CHANNEL_INFOS_CACHE = 'nx-jikkyo:channel_infos_cache'
 # Redis 上の実況勢いカウントのキー
