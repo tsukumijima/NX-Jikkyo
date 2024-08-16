@@ -558,18 +558,12 @@ export default defineComponent({
             width: 100%;
             height: 100%;
             padding-left: 16px;
-            padding-right: 0px;
+            padding-right: 4px;
             padding-bottom: 12px;
             overflow-y: scroll !important;
-            @media (hover: none) {
-                padding-right: 8px;
-            }
             @include tablet-vertical {
                 padding-left: 24px;
-                padding-right: 8px;
-                @media (hover: none) {
-                    padding-right: 16px;
-                }
+                padding-right: 10px;
                 /* padding-bottom: 0px; */
             }
             @include smartphone-vertical {
