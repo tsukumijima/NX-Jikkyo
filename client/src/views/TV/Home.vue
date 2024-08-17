@@ -15,15 +15,14 @@
                             <strong>本家ニコニコ実況へのコメント投稿にはニコニコアカウントとの連携が必要です。</strong>設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。
                         </div>
                     </blockquote>
-                    <div class="mt-2">ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</div>
-                    <div class="mt-1"><a class="link" href="https://air.fem.jp/jkcommentviewer/" target="_blank">jkcommentviewer</a> / <a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-released/#toc4" target="_blank">TVTest (NicoJK)</a> / <a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV</a> 最新版で NX-Jikkyo に対応しました！！🎉🎊</div>
                     <div class="mt-1">
                         <!-- eslint-disable-next-line no-irregular-whitespace -->
                         最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣
                         <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフいただけると大変モチベ上がるのでぜひ🙇🙏</a>
                     </div>
                     <div class="mt-1">
-                        最大 3000 人もの同接を捌くため月 8000 円も掛かってます… ぜひ <a class="link" href="https://www.amazon.co.jp/dp/B0C1YY8GSB/?tag=tsukumijima-22" target="_blank">この Amazon リンクから</a> 何か買って頂けると助かります🙏
+                        試行錯誤を重ね、<a class="link" href="https://x.com/TVRemotePlus/status/1824379610189955321" target="_blank">サーバーの安定性を大幅に改善しました！</a> コメント詰まりや接続切断もほぼ起きなくなっているはずです…！<br>
+                        また <a class="link" href="https://forms.gle/C4jnW2jGX4H5AApSA" target="_blank">利用者アンケート</a> を実施中です！ぜひ率直なご意見をお聞かせください🙏
                     </div>
                 </div>
                 <div class="channels-tab">

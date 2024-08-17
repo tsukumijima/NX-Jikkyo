@@ -40,7 +40,7 @@
                     また <a class="link" href="https://github.com/noriokun4649/TVTComment" target="_blank">TVTComment</a> プラグインでも v3.0.1 以降で NX-Jikkyo 対応が追加されています！
                 </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
-                    <strong><a class="link" href="https://github.com/tsukumijima/KonomiTV/releases/tag/v0.10.1" target="_blank">KonomiTV 0.10.1</a> 以降で、ニコニコ実況の代わりに NX-Jikkyo のコメントをリアルタイム表示できるようになりました！！🎉🎊<br></strong>
+                    <strong><a class="link" href="https://github.com/tsukumijima/KonomiTV/releases" target="_blank">KonomiTV 0.10.1</a> 以降で、ニコニコ実況の代わりに NX-Jikkyo のコメントをリアルタイム表示できるようになりました！！🎉🎊<br></strong>
                     <a class="link" href="https://github.com/tsukumijima/KonomiTV" target="_blank">KonomiTV</a> + ニコニコ実況ユーザーの方は [サーバー設定] → [ニコニコ実況の代わりに NX-Jikkyo からリアルタイムに実況コメントを取得する] をオンにすると今まで通り実況コメントを表示できるようになるのでアプデ推奨です🙏<br>
                 </blockquote>
                 <h2 class="mt-5">開発経緯</h2>
