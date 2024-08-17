@@ -182,6 +182,8 @@ async def RegisterMasterChannels():
         'jk10': {'name': 'テレ玉'},
         'jk11': {'name': 'tvk'},
         'jk12': {'name': 'チバテレビ'},
+        'jk13': {'name': 'サンテレビ'},
+        'jk14': {'name': 'KBS京都'},
         'jk101': {'name': 'NHK BS'},
         'jk103': {'name': 'NHK BSプレミアム'},
         'jk141': {'name': 'BS日テレ'},
