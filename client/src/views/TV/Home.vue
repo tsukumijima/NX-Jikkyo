@@ -22,7 +22,7 @@
                     </div>
                     <div class="mt-1">
                         試行錯誤を重ね、<a class="link" href="https://x.com/TVRemotePlus/status/1824379610189955321" target="_blank">サーバーの安定性を大幅に改善しました！</a> コメント詰まりや接続切断もほぼ起きなくなっているはずです…！<br>
-                        また <a class="link" href="https://forms.gle/C4jnW2jGX4H5AApSA" target="_blank">利用者アンケート・フィードバック</a> を実施中です！ぜひ率直なご意見をお聞かせください🙏
+                        また <a class="link" href="https://forms.gle/C4jnW2jGX4H5AApSA" target="_blank">利用者アンケート・フィードバック</a> を実施中です！ぜひ率直なご意見をお聞かせください🙏🙏
                     </div>
                 </div>
                 <div class="channels-tab">
