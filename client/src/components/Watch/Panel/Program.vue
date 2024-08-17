@@ -228,7 +228,7 @@ export default defineComponent({
         .program-info__next {
             display: flex;
             align-items: center;
-            margin-top: 18px;
+            margin-top: 12px;
             color: rgb(var(--v-theme-text));
             font-size: 14px;
             font-weight: bold;

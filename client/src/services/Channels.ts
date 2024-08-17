@@ -224,10 +224,11 @@ class Channels {
                     service_id: -1,
                     event_id: -1,
                     title: channel.program_present?.title || current_thread.title,
-                    description: `<div class="font-weight-bold text-text" style="margin-bottom: 2px">🎧実況枠: ${current_thread.title}</div>${current_thread.description}`,
+                    description: `<div class="font-weight-bold">🎧実況枠: ${current_thread.title}</div>`,
                     detail: {
                         'NX-Jikkyo について': (
-                            'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。\n\n' +
+                            'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。\n' +
+                            'ニコニコ実況に投稿されたコメントも、リアルタイムで表示されます。\n\n' +
                             'ひとりだけど、ひとりじゃない。\n' +
                             'テレビの映像は流れませんが、好きな番組をテレビで見ながら、プレイヤーに流れるコメントでワイワイ楽しめます。\n' +
                             'ぜひ感想などを気軽にコメントしてお楽しみください。'

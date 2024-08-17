@@ -540,7 +540,7 @@ export default defineComponent({
                 display: flex;
                 flex-direction: column;
                 position: relative;
-                height: 251px;
+                height: 216px;
                 padding: 18px 20px;
                 padding-bottom: 19px;
                 border-radius: 14px;
@@ -860,7 +860,7 @@ export default defineComponent({
                         display: -webkit-box;
                         margin-top: 6px;
                         color: rgb(var(--v-theme-text-darken-1));
-                        font-size: 10.5px;
+                        font-size: 12.5px;
                         line-height: 175%;
                         overflow-wrap: break-word;
                         font-feature-settings: "palt" 1;  // 文字詰め
