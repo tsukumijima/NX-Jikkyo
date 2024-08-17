@@ -399,7 +399,7 @@ async def WatchSessionAPI(
 
                 # コメント投稿に失敗した場合はエラーを返す
                 except Exception:
-                    logging.error(f'WatchSessionAPI [{channel_id}]: Invalid message.')
+                    logging.error(f'WatchSessionAPI [{channel_id}]: Failed to post a comment.')
                     logging.error(message)
                     logging.error(traceback.format_exc())
                     await websocket.send_json({
@@ -620,11 +620,12 @@ async def CommentSessionAPI(
                     try:
 
                         # thread: スレッド ID
-                        if 'thread' in message['thread']:
+                        if 'thread' in message['thread'] and message['thread']['thread'] != '':
                             thread_id = int(message['thread']['thread'])
                         else:
                             # スレッド ID が省略されたとき、現在アクティブな (放送中の) スレッドの ID を取得 (NX-Jikkyo 独自仕様)
                             ## 旧ニコ生のコメントサーバーではスレッド ID の指定は必須だった
+                            ## スレッド ID に空文字が指定された場合も同様に処理する
                             now = timezone.now()
                             thread = await Thread.filter(
                                 channel_id = channel_id_int,
