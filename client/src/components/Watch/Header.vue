@@ -178,8 +178,10 @@ export default defineComponent({
             border-radius: 4px;
         }
         @include smartphone-vertical {
-            display: none;
-            margin-right: 0px;
+            width: 36px;
+            height: 28px;
+            margin-right: 12px;
+            border-radius: 4px;
         }
     }
 
