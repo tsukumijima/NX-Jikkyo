@@ -42,6 +42,44 @@ router = APIRouter(
     prefix = '/api/v1',
 )
 
+# 現在アクティブなスレッドの情報を保存する辞書
+__active_threads: dict[int, Thread] = {}
+
+
+async def GetActiveThread(channel_id_int: int) -> Thread | None:
+    """
+    現在アクティブな (放送されている) スレッド情報を取得する
+
+    Args:
+        channel_id_int (int): 実況チャンネル ID (jk の prefix を取り除いた数値)
+
+    Returns:
+        Thread | None: 現在アクティブなスレッドの情報。見つからない場合は None を返す
+    """
+
+    # 現在のサーバー時刻 (datetime)
+    current_time_datetime = timezone.now()
+
+    # 実況チャンネル ID に対応する現在アクティブなスレッド情報が保存されていないか、キャッシュされたスレッド情報がすでに放送を終了している場合は、
+    # 実況チャンネル ID に対応する現在アクティブなスレッド情報を取得し、__active_threads に保存する
+    if channel_id_int not in __active_threads or __active_threads[channel_id_int].end_at < current_time_datetime:
+        thread = await Thread.filter(
+            channel_id = channel_id_int,
+            start_at__lte = current_time_datetime,
+            end_at__gte = current_time_datetime,
+        ).first()
+
+        # 実況チャンネル ID に対応するスレッドが見つからなかった
+        if not thread:
+            return None
+
+        # キャッシュを新しいスレッド情報で更新
+        __active_threads[channel_id_int] = thread
+        logging.info(f'GetActiveThread [jk{channel_id_int}]: Active thread has been updated.')
+
+    # 現在アクティブなスレッド情報を取得して返す
+    return __active_threads[channel_id_int]
+
 
 def ConvertToXMLCompatibleCommentResponse(comment: Comment) -> XMLCompatibleCommentResponse:
     """
@@ -109,12 +147,7 @@ async def WatchSessionAPI(
 
     # スレッド ID が指定されていなければ、現在アクティブな (放送中の) スレッドを取得
     if not thread_id:
-        now = timezone.now()
-        thread = await Thread.filter(
-            channel_id = channel_id_int,
-            start_at__lte = now,
-            end_at__gte = now,
-        ).first()
+        thread = await GetActiveThread(channel_id_int)
         if not thread:
             # 存在しないチャンネル ID を指定された場合にも発生して頻度が多すぎるのでログをコメントアウト中
             # logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
@@ -626,12 +659,7 @@ async def CommentSessionAPI(
                             # スレッド ID が省略されたとき、現在アクティブな (放送中の) スレッドの ID を取得 (NX-Jikkyo 独自仕様)
                             ## 旧ニコ生のコメントサーバーではスレッド ID の指定は必須だった
                             ## スレッド ID に空文字が指定された場合も同様に処理する
-                            now = timezone.now()
-                            thread = await Thread.filter(
-                                channel_id = channel_id_int,
-                                start_at__lte = now,
-                                end_at__gte = now,
-                            ).first()
+                            thread = await GetActiveThread(channel_id_int)
                             if not thread:
                                 logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
                                 await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
