@@ -14,10 +14,16 @@
                         <strong>本家ニコニコ実況へのコメント投稿にはニコニコアカウントとの連携が必要です。</strong>設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。
                     </div>
                 </blockquote>
+                <blockquote class="mt-5">
+                    <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong>
+                </blockquote>
                 <h1 class="mt-5">NX-Jikkyo とは</h1>
                 <p class="mt-4 text-text-darken-1">
-                    <strong>NX-Jikkyo は、<a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">サイバー攻撃で最低7月末まで鯖落ち中</a> のニコニコ実況に代わる、ニコニコ実況民のための避難所であり、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/blob/master/server/app/routers/websocket.py" target="_blank">ニコニコ生放送互換の WebSocket API</a> を備えるコメントサーバーです。</strong><br>
+                    <strong>NX-Jikkyo は、<a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">サイバー攻撃の影響で 2024/06/08 ~ 08/05 まで鯖落ちしていた</a> ニコニコ実況に代わる、ニコニコ実況民のための避難所であり、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/blob/master/server/app/routers/websocket.py" target="_blank">ニコニコ生放送互換の WebSocket API</a> を備えるコメントサーバーです。</strong>2024/06/10 から運営しています。<br>
+                </p>
+                <p class="mt-2 text-text-darken-1">
                     お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく快適に実況できます。<br>
+                    ニコニコ実況が復旧した現在では、<strong>「ニコニコ実況の Web 版非公式コメントビューワー」＋「公式にない実況チャンネルを補完するコメントサーバー」</strong>として運営を続けています。
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo%20from%3ATVRemotePlus&src=typed_query&f=live" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏<br>
@@ -45,9 +51,9 @@
                 </blockquote>
                 <h2 class="mt-5">開発経緯</h2>
                 <p class="mt-3 text-text-darken-1">
-                    個人的にもニコニコ実況がすぐに復活してくれればそれが一番良かったのですが、<strong>2024/06/14 時点での <a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">ニコニコインフォの報告</a> によれば、ニコニコ実況 (ニコニコ生放送公式チャンネル) の復旧は最短でも8月以降になりそうな極めて厳しい状況です。</strong><br>
-                    2020年12月までのニコニコ実況は独立していたのですが、<a class="link" href="https://blog.nicovideo.jp/niconews/143148.html" target="_blank">Adobe Flash 廃止に伴いニコ生のチャンネル生放送として統合されてしまいました。</a><br>
-                    よってニコ生本体が完全復旧しない限り、ニコニコ実況も当分復旧しそうにありません。<br>
+                    個人的にもニコニコ実況がすぐに復活してくれればそれが一番良かったのですが、<strong>2024/06/14 当時の <a class="link" href="https://blog.nicovideo.jp/niconews/225099.html" target="_blank">ニコニコインフォの報告</a> によれば、ニコニコ実況 (ニコニコ生放送:チャンネル生放送) の復旧は最短でも8月以降になりそうな、極めて厳しい状況でした。</strong><br>
+                    2020年12月までのニコニコ実況は独立していましたが、<a class="link" href="https://blog.nicovideo.jp/niconews/143148.html" target="_blank">Adobe Flash 廃止に伴いニコ生のチャンネル生放送として統合されてしまいました。</a><br>
+                    よってニコ生本体が完全復旧しない限り、ニコニコ実況も当分復旧しそうにない状況でした。<br>
                 </p>
                 <p class="mt-2 text-text-darken-1">
                     ニコニコ実況が使えない時間が続けば続くほど、リアルタイムに実況できないのはもちろんのこと、録画でニコニコ実況の過去ログを見て作品を楽しむライフワークもできなくなってしまいます。<br>
@@ -56,13 +62,6 @@
                 <p class="mt-5 text-text-darken-1">
                     <strong>そこで突貫工事ではありますが、ニコニコ生放送互換のサードパーティーツールが比較的対応しやすい技術仕様で、ニコニコ実況が使えない間のつなぎとしてテレビを実況できる、このサイトを開発しました。</strong><br>
                 </p>
-                <blockquote class="mt-5 text-text-darken-1">
-                    <strong>ぜひこのサイトをまだ NX-Jikkyo を知らないニコニコ実況難民の方に広めていただけると嬉しいです！</strong><br>
-                    コメントサーバーの負荷問題は……なんとかします…！現時点での最大瞬間ユーザー数の数倍程度なら今のサーバーでも捌けそうな状況です。<br>
-                </blockquote>
-                <blockquote class="mt-5 text-text-darken-1">
-                    <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong>
-                </blockquote>
                 <blockquote class="mt-5 text-text-darken-1">
                     <strong>ソースコードは <a class="link" href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank">GitHub</a> で公開しています。<a class="link" href="/api/v1/docs" target="_blank">API ドキュメント</a> もあります。</strong><br>
                     WebSocket API のドキュメントは <a class="link" href="https://github.com/tiangolo/fastapi" target="_blank">FastAPI</a> が API ドキュメントを自動生成してくれないため現状ありませんが、ニコ生の WebSocket API のドロップイン代替として機能するはずです。<br>
@@ -78,13 +77,10 @@
                     またシステム簡素化のため、意図的にアカウント不要で書き込めるようにしています（データベースに個人情報が保存されることは絶対にありません）。<br>
                     気軽にお使いいただけますが、マナーを守ってのご利用をお願いします。
                 </p>
-                <blockquote class="mt-5 text-text-darken-1">
-                    ニコニコ実況の復活後のこのサイトの処遇は未定です。ニコニコ実況復活後も引き続き需要があれば、あるいはサーバー負荷的に大丈夫そうなら、継続する可能性も十分あります。
-                </blockquote>
                 <hr class="mt-5">
                 <p class="mt-5 text-text-darken-1">
-                    <strong>このサイトを公開した最大の理由は、十数年にも及ぶニコニコ実況の歴史上異常事態である、1ヶ月以上に渡りテレビの過去ログコメントが完全に断たれる事態をなんとしてでも避けたいからです。</strong><br>
-                    もちろん元々15時間で突貫で作ったサイトなのでバグも多いでしょうし、大量のコメントの負荷には耐えきれないかもしれません（随時改善中です）。しかし、コメントが全く残らないよりはマシだと考えています。
+                    <strong>このサイトを公開した最大の理由は、十数年にも及ぶニコニコ実況の歴史上異常事態である、2ヶ月近くに渡りテレビの過去ログコメントが完全に断たれる事態をなんとしてでも避けたかったからです。</strong><br>
+                    もちろん元々15時間で突貫で作ったサイトなので公開最初はバグも多かったですし、大量のコメントの負荷に耐えきれないこともありました。しかし、コメントが全く残らないよりはマシだと考え、日々改善しながら運営しています。
                 </p>
                 <blockquote class="mt-2 text-text-darken-1">
                     <strong>NX-Jikkyo に書き込んでいただいたコメントの過去ログは、順次 <a class="link" href="https://jikkyo.tsukumijima.net" target="_blank">ニコニコ実況 過去ログ API</a> で取得できるよう反映されています！ご安心ください…！</strong>
