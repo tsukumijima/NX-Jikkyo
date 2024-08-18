@@ -351,7 +351,7 @@ export default defineComponent({
         background: linear-gradient(
             to bottom,
             rgb(var(--v-theme-background)) calc(100% - calc(var(--channels-tab-padding-bottom) + 3px)),
-            rgb(var(--v-theme-background-lighten-2))
+            rgb(var(--v-theme-background-lighten-1))
                 calc(100% - calc(var(--channels-tab-padding-bottom) + 3px))
                 calc(100% - var(--channels-tab-padding-bottom)),
             rgb(var(--v-theme-background)) calc(100% - 12px)
@@ -372,6 +372,7 @@ export default defineComponent({
             display: flex;
             position: relative;
             align-items: center;
+            column-gap: 4px;
             max-width: 100%;
             height: 100%;
             margin-left: auto;
@@ -386,15 +387,16 @@ export default defineComponent({
                 width: 98px;
                 height: 100%;
                 padding: 0;
-                border-top-left-radius: 6px;
-                border-top-right-radius: 6px;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
                 border-bottom-left-radius: 0;
                 border-bottom-right-radius: 0;
                 color: rgb(var(--v-theme-text)) !important;
-                background-color: transparent !important;
+                background-color: rgb(var(--v-theme-background-lighten-1)) !important;
                 font-size: 17px;
                 letter-spacing: 0.0892857143em !important;
                 text-transform: none;
+                transition-property: box-shadow, transform, opacity, background-color, color;
                 cursor: pointer;
                 @include smartphone-horizontal {
                     font-size: 16.5px;
@@ -405,6 +407,8 @@ export default defineComponent({
                 }
 
                 &--active {
+                    font-weight: bold;
+                    color: rgb(var(--v-theme-primary)) !important;
                     background-color: rgb(var(--v-theme-background-lighten-2)) !important;
                 }
             }
@@ -413,11 +417,11 @@ export default defineComponent({
                 position: absolute;
                 left: 0;
                 bottom: 0;
-                width: calc(100% / var(--tab-length, 0));
+                width: calc((100% - (var(--tab-length, 1) - 1) * 4px) / var(--tab-length, 1));
                 height: 3px;
                 background: rgb(var(--v-theme-primary));
                 transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-                transform: translateX(calc(100% * var(--active-tab-index, 0)));
+                transform: translateX(calc((100% + 4px) * var(--active-tab-index, 0)));
                 will-change: transform;
             }
         }
