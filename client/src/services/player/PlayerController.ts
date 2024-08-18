@@ -551,6 +551,10 @@ class PlayerController {
             }
         });
 
+        // 直接視聴ページにアクセスしても自動再生できるように既定でミュートする
+        // NX-Jikkyo では実際の音声は流れないので問題ない
+        this.player.video.muted = true;
+
         // デバッグ用にプレイヤーインスタンスも window 直下に入れる
         (window as any).player = this.player;
 
