@@ -232,6 +232,9 @@ export default defineComponent({
                 width: 80px;
                 height: 100%;
                 padding: 0 8px;
+                padding-top: 3px;
+                border: 1px solid rgb(var(--v-theme-background-lighten-2));
+                border-bottom: 3px solid rgb(var(--v-theme-background-lighten-2));
                 border-top-left-radius: 8px;
                 border-top-right-radius: 8px;
                 border-bottom-left-radius: 0;
