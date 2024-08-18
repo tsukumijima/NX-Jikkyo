@@ -399,21 +399,29 @@ def ChannelLogoAPI(
 
 @router.get(
     '/channels/total-viewers',
-    summary = '全チャンネルの同時接続数カウントの合計を返す API',
+    summary = '全チャンネルの同時接続数カウント・実況勢い (コメント数/分) の合計を返す API',
     response_model = dict,
     responses = {
         status.HTTP_200_OK: {
-            'description': '全チャンネルの同時接続数カウントの合計。',
+            'description': '全チャンネルの同時接続数カウント・実況勢い (コメント数/分) の合計。',
             'content': {'application/json': {}},
         },
     },
 )
 async def GetTotalViewers():
     """
-    全チャンネルの同時接続数カウントの合計を返す。ほぼデバッグ&負荷検証用。
+    全チャンネルの同時接続数カウント・実況勢い (コメント数/分) の合計を返す。ほぼデバッグ&負荷検証用。
     """
     channels = await ChannelsAPI()
-    total_viewers = sum(
-        thread.viewers for channel in channels for thread in channel.threads if thread.viewers is not None
-    )
-    return {'total_viewers': total_viewers}
+    total_viewers = 0
+    total_jikkyo_force = 0
+    for channel in channels:
+        for thread in channel.threads:
+            if thread.viewers is not None:
+                total_viewers += thread.viewers
+            if thread.jikkyo_force is not None:
+                total_jikkyo_force += thread.jikkyo_force
+    return {
+        'total_viewers': total_viewers,
+        'total_jikkyo_force': total_jikkyo_force,
+    }
