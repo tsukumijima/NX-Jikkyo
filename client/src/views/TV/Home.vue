@@ -17,7 +17,7 @@
                     </blockquote>
                     <div class="mt-1">
                         <!-- eslint-disable-next-line no-irregular-whitespace -->
-                        最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">Twitter</a> で発信中です📣
+                        最新情報は <a class="link" href="https://x.com/search?q=%23NXJikkyo%20from%3ATVRemotePlus&src=typed_query&f=live" target="_blank">Twitter</a> で発信中です📣
                         <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフいただけると大変モチベ上がるのでぜひ🙇🙏</a>
                     </div>
                     <div class="mt-1">

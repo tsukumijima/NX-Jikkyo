@@ -20,7 +20,7 @@
                     お気に入りのアプリを使い続けながら、今まで通りテレビを楽しく快適に実況できます。<br>
                 </p>
                 <blockquote class="mt-5 text-text-darken-1">
-                    <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo&src=typed_query" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏<br>
+                    <strong><a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> やハッシュタグ <a class="link" href="https://x.com/search?q=%23NXJikkyo%20from%3ATVRemotePlus&src=typed_query&f=live" target="_blank">#NXJikkyo</a> では NX-Jikkyo の最新情報を発信しています！<br>ぜひチェックしてみてください🙏<br>
                     また <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフ</a> をいただけると大変モチベが上がるのでよければぜひ🙇🙏 <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋のリスト</a> は不定期で更新してます。<br></strong>
                     <div class="mt-2"></div>
                     あと何かショッピングする際は、<strong>ぜひ <a class="link" href="https://www.amazon.co.jp/dp/B0C1YY8GSB/?tag=tsukumijima-22" target="_blank">このアフィリンク</a> を通して Amazon でお買い物いただけると大変助かります🙏</strong>
