@@ -9,8 +9,27 @@
             Nico Nico Jikkyo Alternative
         </div>
         <v-spacer></v-spacer>
+        <v-btn v-if="isButtonDisplay" variant="flat" color="background-lighten-3" class="pwa-install-button"
+            @click="pwaInstallHandler.install()">
+            <Icon icon="material-symbols:install-desktop-rounded" height="20px" class="mr-1" />
+            アプリとしてインストール
+        </v-btn>
     </header>
 </template>
+<script lang="ts" setup>
+
+import { pwaInstallHandler } from 'pwa-install-handler';
+import { onMounted, ref } from 'vue';
+
+const isButtonDisplay = ref(false);
+
+onMounted(() => {
+    pwaInstallHandler.addListener((canInstall) => {
+        isButtonDisplay.value = canInstall;
+    });
+});
+
+</script>
 <style lang="scss" scoped>
 
 .header {
@@ -65,6 +84,15 @@
 
     .subtitle {
         @include smartphone-horizontal {
+            display: none !important;
+        }
+    }
+
+    .pwa-install-button {
+        @include smartphone-horizontal {
+            display: none !important;
+        }
+        @media (display-mode: standalone) {
             display: none !important;
         }
     }

@@ -24,6 +24,7 @@
         "nanoid": "^5.0.7",
         "piexifjs": "^2.0.0-beta.9",
         "pinia": "^2.1.7",
+        "pwa-install-handler": "^2.6.0",
         "seamless-scroll-polyfill": "^2.3.4",
         "swiper": "^11.1.4",
         "tslib": "^2.6.3",
