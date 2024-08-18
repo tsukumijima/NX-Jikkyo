@@ -30,6 +30,16 @@
                         <span class="navigation__link-text">設定</span>
                     </router-link>
                     <a v-ripple class="navigation__link" active-class="navigation__link--active"
+                        href="https://x.com/search?q=%23NXJikkyo%20from%3ATVRemotePlus&src=typed_query&f=live" target="_blank">
+                        <Icon class="navigation__link-icon" icon="fluent:news-20-regular" width="26px" />
+                        <span class="navigation__link-text">最新情報</span>
+                    </a>
+                    <a v-ripple class="navigation__link" active-class="navigation__link--active"
+                        href="https://x.com/TVRemotePlus" target="_blank">
+                        <Icon class="navigation__link-icon" icon="basil:twitter-outline" width="26px" />
+                        <span class="navigation__link-text">公式 Twitter</span>
+                    </a>
+                    <a v-ripple class="navigation__link" active-class="navigation__link--active"
                         href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank"
                         :class="{
                             'navigation__link--develop-version': versionStore.is_client_develop_version,

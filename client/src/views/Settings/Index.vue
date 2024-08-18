@@ -18,9 +18,23 @@
                         <Icon icon="bi:chat-left-text-fill" width="26px" style="padding: 0 2px;" />
                         <span class="ml-4">コメント/実況</span>
                     </v-btn>
+                    <v-btn variant="flat" class="settings-navigation__button mt-4"
+                        href="https://x.com/search?q=%23NXJikkyo%20from%3ATVRemotePlus&src=typed_query&f=live" target="_blank">
+                        <Icon icon="fluent:news-20-filled" width="26px" />
+                        <span class="ml-4">
+                            最新情報
+                        </span>
+                    </v-btn>
+                    <v-btn variant="flat" class="settings-navigation__button"
+                        href="https://x.com/TVRemotePlus" target="_blank">
+                        <Icon icon="mdi:twitter" width="26px" />
+                        <span class="ml-4">
+                            公式 Twitter
+                        </span>
+                    </v-btn>
                     <v-btn variant="flat" class="settings-navigation__button settings-navigation__button--version"
                         :class="{'settings-navigation__button--version-highlight': versionStore.is_update_available}"
-                        href="https://github.com/tsukumijima/NX-Jikkyo">
+                        href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank">
                         <Icon icon="fluent:info-16-regular" width="26px" />
                         <span class="ml-4">
                             version {{versionStore.client_version}}{{versionStore.is_update_available ? ' (Update Available)' : ''}}
