@@ -376,7 +376,9 @@ async def StartStreamNicoliveComments():
                 logging.error(f'StreamNicoliveComments [{channel_id}]: Unexpected error occurred while streaming.')
                 logging.error(traceback.format_exc())
                 logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 10 seconds...')
-                await NDGRClient.updateJikkyoChannelIDMap()  # ニコニコ実況の暫定運用中は必須
+                # NDGRClient を再初期化
+                await NDGRClient.updateJikkyoChannelIDMap()
+                ndgr_client = NDGRClient(channel_id, verbose=True, log_path=LOGS_DIR / f'NDGRClient-{channel_id}.log')
                 await asyncio.sleep(10)
             else:
                 break  # エラーが発生しなかった場合はループを抜ける
