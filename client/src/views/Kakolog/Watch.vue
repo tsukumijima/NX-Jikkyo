@@ -98,13 +98,17 @@ export default defineComponent({
             recorded_program.recorded_video.recording_end_time = kakolog_end_dayjs.toISOString();
             recorded_program.recording_start_margin = 0;
             recorded_program.recording_end_margin = 0;
-            recorded_program.title = `${channel.name}【ニコニコ実況・NX-Jikkyo】${display_date.format('YYYY年MM月DD日')}`;
-            recorded_program.description = 'ニコニコ実況・NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。<br>';
+            recorded_program.title = `${channel.name}【ニコニコ実況${kakolog_start_dayjs.isAfter('2024-06-09') ? '+NX-Jikkyo' : ''}】${display_date.format('YYYY年MM月DD日')}`;
+            recorded_program.description = '';
             recorded_program.detail = {
                 '過去ログ再生について': (
                     '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
-                    '2009年11月から現在までの 旧ニコニコ実況 (2009/11/28 ~ 2020/12/15)・ニコ生統合後の新ニコニコ実況 (2020/12/15 ~ 2024/06/08)・NX-Jikkyo (2024/06/10 ~)・ニコニコ実況 (Re:仮) (2024/07/20 ~ 2024/08/05)・暫定復旧版ニコニコ実況 (2024/08/05 ~ 2024/08/22)・本復旧後のニコニコ実況 (2024/08/22 ~) の過去ログコメントを再生できます。\n\n' +
+                    '2009年11月から現在までのほぼすべての過去ログコメントを再生できます。\n\n' +
                     `現在は、Ch:${channel.channel_number} ${channel.name} の ${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを、時系列に再生しています。`
+                ),
+                'NX-Jikkyo について': (
+                    'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。\n' +
+                    'ニコニコ実況に投稿されたコメントも、NX-Jikkyo のコメントと一緒にまとめて再生できます。'
                 ),
             };
             recorded_program.start_time = kakolog_start_dayjs.toISOString();
@@ -115,7 +119,7 @@ export default defineComponent({
             // 現在表示中の過去ログのタイトルと概要を更新
             const title = `過去ログ再生 - Ch:${channel.channel_number} ${channel.name} ${display_date.format('YYYY年MM月DD日')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} | NX-Jikkyo : ニコニコ実況避難所`;
             const description = '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
-                '2009年11月から現在までの 旧ニコニコ実況 (2009/11/28 ~ 2020/12/15)・ニコ生統合後の新ニコニコ実況 (2020/12/15 ~ 2024/06/08)・NX-Jikkyo (2024/06/10 ~)・ニコニコ実況 (Re:仮) (2024/07/20 ~ 2024/08/05)・暫定復旧版ニコニコ実況 (2024/08/05 ~ 2024/08/22)・本復旧後のニコニコ実況 (2024/08/22 ~) の過去ログコメントを再生できます。';
+                '2009年11月から現在までのほぼすべての過去ログコメントを再生できます。';
             document.title = title;
             const description_meta = document.querySelector('meta[name="description"]');
             if (description_meta) {

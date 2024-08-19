@@ -16,9 +16,9 @@
                     </div>
                 </div>
             </div>
-            <div class="program-info__description"
+            <!-- <div class="program-info__description"
                 v-html="ProgramUtils.decorateProgramInfo(playerStore.recorded_program, 'description')">
-            </div>
+            </div> -->
             <div class="program-info__genre-container">
                 <div class="program-info__genre" :key="genre_index"
                     v-for="(genre, genre_index) in playerStore.recorded_program.genres ?? []">
@@ -114,7 +114,7 @@ export default defineComponent({
 
     .program-info {
         .program-info__title {
-            font-size: 22px;
+            font-size: 21.5px;
             font-weight: bold;
             line-height: 145%;
             font-feature-settings: "palt" 1;  // 文字詰め
