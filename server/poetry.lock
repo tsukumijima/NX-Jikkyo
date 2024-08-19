@@ -765,8 +765,8 @@ websockets = "^12.0"
 [package.source]
 type = "git"
 url = "https://github.com/tsukumijima/NDGRClient"
-reference = "1e7c4398a51b02ffd35d4b93ba98449a89f63c81"
-resolved_reference = "1e7c4398a51b02ffd35d4b93ba98449a89f63c81"
+reference = "063eadbfae341125ed1adae5ef8afb51c692dd47"
+resolved_reference = "063eadbfae341125ed1adae5ef8afb51c692dd47"
 
 [[package]]
 name = "protobuf"
@@ -1307,13 +1307,13 @@ types-cffi = "*"
 
 [[package]]
 name = "types-redis"
-version = "4.6.0.20240806"
+version = "4.6.0.20240819"
 description = "Typing stubs for redis"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-redis-4.6.0.20240806.tar.gz", hash = "sha256:60dd02c2b91ea2d42ad079ac58dedc31d71d6eedb1c21d3796811b02baac655d"},
-    {file = "types_redis-4.6.0.20240806-py3-none-any.whl", hash = "sha256:9d8fbe0ce37e3660c0a06982db7812384295d10a93d637c7f8604a2f3c88b0e6"},
+    {file = "types-redis-4.6.0.20240819.tar.gz", hash = "sha256:08f51f550ad41d0152bd98d77ac9d6d8f761369121710a213642f6036b9a7183"},
+    {file = "types_redis-4.6.0.20240819-py3-none-any.whl", hash = "sha256:86db9af6f0033154e12bc22c77236cef0907b995fda8c9f0f0eacd59943ed2fc"},
 ]
 
 [package.dependencies]
@@ -1322,13 +1322,13 @@ types-pyOpenSSL = "*"
 
 [[package]]
 name = "types-setuptools"
-version = "71.1.0.20240813"
+version = "71.1.0.20240818"
 description = "Typing stubs for setuptools"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-setuptools-71.1.0.20240813.tar.gz", hash = "sha256:94ff4f0af18c7c24ac88932bcb0f5655fb7187a001b7c61e53a1bfdaf9877b54"},
-    {file = "types_setuptools-71.1.0.20240813-py3-none-any.whl", hash = "sha256:d9d9ba2936f5d3b47b59ae9bf65942a60063ac1d6bbee180a8a79fbb43f22ce5"},
+    {file = "types-setuptools-71.1.0.20240818.tar.gz", hash = "sha256:f62eaffaa39774462c65fbb49368c4dc1d91a90a28371cb14e1af090ff0e41e3"},
+    {file = "types_setuptools-71.1.0.20240818-py3-none-any.whl", hash = "sha256:c4f95302f88369ac0ac46c67ddbfc70c6c4dbbb184d9fed356244217a2934025"},
 ]
 
 [[package]]
@@ -1609,4 +1609,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "0eeae64f58d3907a1feed1e4e9580a7c97fe831b69b96c89bd8e22bfab07382e"
+content-hash = "0b8544783b5ac5876052450cf7800f298f8c3b2a273c34b3d458b86f03605236"
