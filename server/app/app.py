@@ -436,7 +436,7 @@ async def SyncCommentCounters():
 ## wait_first を指定していないので起動時にも実行される
 @app.on_event('startup')
 @repeat_every(seconds=60 * 60, logger=logging.logger)
-async def AddThreads():
+async def RegisterThreads():
 
     # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
     if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
@@ -508,3 +508,5 @@ async def AddThreads():
                 )
                 await CommentCounter.create(thread_id=thread.id, max_no=0)
                 logging.info(f'Thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
+
+    logging.info('Thread registration has been completed.')
