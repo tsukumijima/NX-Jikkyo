@@ -267,7 +267,6 @@ async def StartStreamNicoliveComments():
         channel_id = f'jk{channel_id_int}'
 
         # NDGRClient を初期化
-        await NDGRClient.updateJikkyoChannelIDMap()
         ndgr_client = NDGRClient(channel_id, verbose=True, log_path=LOGS_DIR / f'NDGRClient-{channel_id}.log')
 
         # コメントのストリーミング処理を開始
@@ -377,7 +376,6 @@ async def StartStreamNicoliveComments():
                 logging.error(traceback.format_exc())
                 logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 10 seconds...')
                 # NDGRClient を再初期化
-                await NDGRClient.updateJikkyoChannelIDMap()
                 ndgr_client = NDGRClient(channel_id, verbose=True, log_path=LOGS_DIR / f'NDGRClient-{channel_id}.log')
                 await asyncio.sleep(10)
             else:

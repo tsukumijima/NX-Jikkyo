@@ -765,8 +765,8 @@ websockets = "^12.0"
 [package.source]
 type = "git"
 url = "https://github.com/tsukumijima/NDGRClient"
-reference = "063eadbfae341125ed1adae5ef8afb51c692dd47"
-resolved_reference = "063eadbfae341125ed1adae5ef8afb51c692dd47"
+reference = "3d89303c2baafcf2901697f110f633f12349280c"
+resolved_reference = "3d89303c2baafcf2901697f110f633f12349280c"
 
 [[package]]
 name = "protobuf"
@@ -1322,13 +1322,13 @@ types-pyOpenSSL = "*"
 
 [[package]]
 name = "types-setuptools"
-version = "71.1.0.20240818"
+version = "73.0.0.20240822"
 description = "Typing stubs for setuptools"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-setuptools-71.1.0.20240818.tar.gz", hash = "sha256:f62eaffaa39774462c65fbb49368c4dc1d91a90a28371cb14e1af090ff0e41e3"},
-    {file = "types_setuptools-71.1.0.20240818-py3-none-any.whl", hash = "sha256:c4f95302f88369ac0ac46c67ddbfc70c6c4dbbb184d9fed356244217a2934025"},
+    {file = "types-setuptools-73.0.0.20240822.tar.gz", hash = "sha256:3a060681098eb3fbc2fea0a86f7f6af6aa1ca71906039d88d891ea2cecdd4dbf"},
+    {file = "types_setuptools-73.0.0.20240822-py3-none-any.whl", hash = "sha256:b9eba9b68546031317a0fa506d4973641d987d74f79e7dd8369ad4f7a93dea17"},
 ]
 
 [[package]]
@@ -1609,4 +1609,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "0b8544783b5ac5876052450cf7800f298f8c3b2a273c34b3d458b86f03605236"
+content-hash = "22f82d07e686f5fb086de635091161e21f3be2479a2f6419ea2333823afa95af"
