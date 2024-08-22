@@ -491,3 +491,9 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                     logging.info(f'Thread for {channel.name} from {now.strftime("%Y-%m-%d %H:%M:%S")} to {start_time_today.strftime("%Y-%m-%d %H:%M:%S")} has been registered.')
 
         logging.info('Thread registration has been completed.')
+
+        # startup イベントハンドラが完了するまでメインスレッドを待機させる
+        ## ここで待機しないと、なぜかタイミング次第ではタスクの完了前にタスクが破棄されてしまうことがある
+        ## 必ず発生するわけではないが、一度起きると次の日のスレッドがずっと作成されない致命的な問題になる
+        ## おそらくイベントループ関連の稀な症状を引いてしまっているみたいだが、とりあえずこれで直る
+        await asyncio.sleep(0.01)
