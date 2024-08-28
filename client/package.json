@@ -8,6 +8,9 @@
         "preview": "vite preview",
         "lint": "eslint . --fix --ignore-path .gitignore"
     },
+    "engines": {
+        "node": "20.16.0"
+    },
     "dependencies": {
         "@github/mini-throttle": "^2.1.1",
         "assert": "^2.1.0",
@@ -38,7 +41,7 @@
         "@babel/types": "^7.24.7",
         "@iconify/vue": "^4.1.2",
         "@types/assert": "^1.5.10",
-        "@types/node": "^18.19.39",
+        "@types/node": "20.16.0",
         "@types/offscreencanvas": "^2019.7.3",
         "@types/readable-stream": "^4.0.14",
         "@types/resize-observer-browser": "^0.1.11",
