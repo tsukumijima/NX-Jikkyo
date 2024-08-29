@@ -8,27 +8,27 @@
         </router-link>
         <router-link v-ripple class="watch-navigation__link" active-class="watch-navigation__link--active"
             :class="{'watch-navigation__link--active': $route.path.startsWith('/watch')}"
-            v-tooltip.right="'テレビ実況'" to="/">
+            v-ftooltip.right="'テレビ実況'" to="/">
             <Icon class="watch-navigation__link-icon" icon="fluent:tv-20-regular" width="26px" />
         </router-link>
         <router-link v-ripple class="watch-navigation__link" active-class="watch-navigation__link--active"
             :class="{'watch-navigation__link--active': $route.path.startsWith('/log')}"
-            v-tooltip.right="'過去ログ再生'" to="/log/">
+            v-ftooltip.right="'過去ログ再生'" to="/log/">
             <Icon class="watch-navigation__link-icon" icon="fluent:receipt-play-20-regular" width="26px" />
         </router-link>
         <a v-ripple class="watch-navigation__link" href="https://jikkyo.tsukumijima.net" target="_blank"
-            v-tooltip.right="'過去ログ API'">
+            v-ftooltip.right="'過去ログ API'">
             <Icon class="watch-navigation__link-icon" icon="fluent:slide-text-multiple-20-regular" width="26px" />
         </a>
         <router-link v-ripple class="watch-navigation__link" active-class="watch-navigation__link--active"
             :class="{'watch-navigation__link--active': $route.path.startsWith('/about')}"
-            v-tooltip.right="'NX-Jikkyo とは'" to="/about/">
+            v-ftooltip.right="'NX-Jikkyo とは'" to="/about/">
             <Icon class="watch-navigation__link-icon" icon="fluent:info-16-regular" width="26px" />
         </router-link>
         <v-spacer></v-spacer>
         <router-link v-ripple class="watch-navigation__link" active-class="watch-navigation__link--active"
             :class="{'watch-navigation__link--active': $route.path.startsWith('/settings')}"
-            v-tooltip.right="'設定'" to="/settings/">
+            v-ftooltip.right="'設定'" to="/settings/">
             <Icon class="watch-navigation__link-icon" icon="fluent:settings-20-regular" width="26px" />
         </router-link>
     </nav>

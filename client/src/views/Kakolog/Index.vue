@@ -35,7 +35,7 @@
                         </v-btn>
                     </div>
                     <v-btn variant="flat" color="secondary" height="46" class="px-2"
-                        v-tooltip.top="'開始日時を終了日時に設定'"
+                        v-ftooltip.top="'開始日時を終了日時に設定'"
                         @click="end_date = start_date; end_time = start_time">
                         <Icon icon="fluent:chevron-double-down-16-filled" height="40px" />
                     </v-btn>
