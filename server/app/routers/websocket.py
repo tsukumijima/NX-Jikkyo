@@ -217,7 +217,7 @@ async def WatchSessionAPI(
             ## 大元も基本視聴負荷の関係で映像がいらないなら省略してくれという話があった
             if message_type == 'startWatching':
 
-                # 現在のサーバー時刻 (ISO 8601) を返す
+                # 現在のサーバー時刻 (ISO 8601) を送信
                 await websocket.send_json({
                     'type': 'serverTime',
                     'data': {
@@ -231,6 +231,15 @@ async def WatchSessionAPI(
                     'data': {
                         # 「座席を維持するために送信する keepSeat メッセージ (クライアントメッセージ) の送信間隔時間（秒）」
                         'keepIntervalSec': 30,
+                    },
+                })
+
+                # スレッドの放送開始時刻・放送終了時刻を送信
+                await websocket.send_json({
+                    'type': 'schedule',
+                    'data': {
+                        'begin': thread.start_at.isoformat(),
+                        'end': thread.end_at.isoformat(),
                     },
                 })
 
