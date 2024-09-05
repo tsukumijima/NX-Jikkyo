@@ -243,17 +243,6 @@ const useChannelsStore = defineStore('channels', {
                 }
             }
 
-            // この時点で pinned_channels に存在していないピン留め中チャンネルの ID を pinned_channel_ids から削除する
-            // 受信環境の変化などでピン留め中チャンネルのチャンネル情報が取得できなくなった場合に備える
-            // Vue.js 3.4.13 以降で発生する Maximum recursive updates exceeded in component エラーを回避するには、async/await を使い
-            // 副作用を持ってはならない getter 関数が完了してから SettingsStore の更新処理を実行する必要がある
-            (async () => {
-                await Utils.sleep(100);  // 少し待つのが重要
-                settings_store.settings.pinned_channel_ids = settings_store.settings.pinned_channel_ids.filter((channel_id) => {
-                    return pinned_channels.some((channel) => channel.id === channel_id);
-                });
-            })();
-
             // ピン留め中チャンネルを pinned_channel_ids の順に並び替える
             channels_list_with_pinned.get('ピン留め')?.push(...pinned_channels.sort((a, b) => {
                 const index_a = settings_store.settings.pinned_channel_ids.indexOf(a.id);
