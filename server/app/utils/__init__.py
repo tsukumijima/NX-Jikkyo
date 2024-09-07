@@ -19,6 +19,11 @@ def GenerateClientID(websocket: WebSocket) -> str:
         str: クライアント ID
     """
 
+    # Cookie に NX-User-ID が含まれていればそれを取得し、単体でユーザーを識別できるため単独でハッシュ化する
+    ## NX-Jikkyo の公式 SPA アプリからアクセスした場合は常にセットされているはず
+    if 'NX-User-ID' in websocket.cookies:
+        return hashlib.sha1(websocket.cookies['NX-User-ID'].encode('utf-8')).hexdigest()
+
     # Cookie に _ga キーが含まれていればそれを取得し、単体でユーザーを識別できるため単独でハッシュ化する
     ## Google アナリティクスによって設定される _ga という名前の Cookie はユーザー識別用の ID で、
     ## ユーザーが Cookie を消去するか有効期限に達するまで永続的に設定される

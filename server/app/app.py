@@ -7,8 +7,9 @@ import time
 import traceback
 import tortoise.contrib.fastapi
 import tortoise.log
+import uuid
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,8 +19,10 @@ from pathlib import Path
 from pydantic import TypeAdapter
 from rich.rule import Rule
 from rich.style import Style
+from starlette.middleware.base import BaseHTTPMiddleware
 from tortoise import timezone
 from tortoise.transactions import in_transaction
+from typing import Awaitable, Callable
 from zoneinfo import ZoneInfo
 
 from app import logging
@@ -79,6 +82,21 @@ app.add_middleware(
     allow_headers = CORS_ORIGINS,
     allow_credentials = True,
 )
+
+# "NX-User-ID" という名前の Cookie が存在しない場合、新しい UUID を生成して Cookie をセット
+class NXUserIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]):
+        response = await call_next(request)
+        if not request.cookies.get('NX-User-ID'):
+            response.set_cookie(
+                key = 'NX-User-ID',
+                value = str(uuid.uuid4()),
+                max_age = 315360000,  # 10年間の有効期限 (秒単位)
+                httponly = True,
+                samesite = 'lax',
+            )
+        return response
+app.add_middleware(NXUserIDMiddleware)
 
 # 拡張子と MIME タイプの対照表を上書きする
 ## StaticFiles の内部動作は mimetypes.guess_type() の挙動に応じて変化する
