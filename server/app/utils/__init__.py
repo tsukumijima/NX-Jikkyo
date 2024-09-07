@@ -9,7 +9,8 @@ def GenerateClientID(websocket: WebSocket) -> str:
     ある程度一意にユーザーを特定できるクライアント ID を生成する
 
     基本荒らしや不快なコメントをコメント ID 単位で一発ミュートできるようにするためのもの
-    User-Agent はブラウザやソフト更新で変更されうるので、持続期間は数週間〜遅くとも数ヶ月程度のはず (したがって一定の匿名性が維持される)
+    NX-Jikkyo 以外のサードパーティークライアントからのアクセスでは Cookie での識別ができないため
+    完全には固定できず、IP アドレスや User-Agent の変更により随時変動する
 
     Args:
         websocket (WebSocket): WebSocket 接続情報
@@ -18,7 +19,16 @@ def GenerateClientID(websocket: WebSocket) -> str:
         str: クライアント ID
     """
 
-    # まずは HTTP リクエスト元の IP アドレスを取得
+    # Cookie に _ga キーが含まれていればそれを取得し、単体でユーザーを識別できるため単独でハッシュ化する
+    ## Google アナリティクスによって設定される _ga という名前の Cookie はユーザー識別用の ID で、
+    ## ユーザーが Cookie を消去するか有効期限に達するまで永続的に設定される
+    ## なお _ga_MK1R3QRD5D のような名前の Cookie はリロードごとに変更されるので、
+    ## Cookie 全体をフィンガープリントに突っ込むと一意性が失われるため注意
+    ## https://www.bbccss.com/explanation-of-cookie-values-used-by-ga4.html
+    if '_ga' in websocket.cookies:
+        return hashlib.sha1(websocket.cookies['_ga'].encode('utf-8')).hexdigest()
+
+    # HTTP リクエスト元の IP アドレスを取得
     ## NX-Jikkyo は Cloudflare と nginx を挟んでのデプロイを想定しているので、
     ## cf-connecting-ip, x-real-ip, x-forwarded-for (一番左側) の順で取得を試し、
     ## どのヘッダーも設定されていなければ何もリバースプロキシを挟んでいないものと判断して直接取得する
@@ -32,16 +42,6 @@ def GenerateClientID(websocket: WebSocket) -> str:
         ip_address = websocket.headers.get('x-forwarded-for', '').split(',')[0]
     elif websocket.client is not None:
         ip_address = websocket.client.host
-
-    # Cookie に _ga キーが含まれていればそれを取得
-    ## Google アナリティクスによって設定される _ga という名前の Cookie はユーザー識別用の ID で、
-    ## ユーザーが Cookie を消去するか有効期限に達するまで永続的に設定される
-    ## なお _ga_MK1R3QRD5D のような名前の Cookie はリロードごとに変更されるので、
-    ## Cookie 全体をフィンガープリントに突っ込むと一意性が失われるため注意
-    ## https://www.bbccss.com/explanation-of-cookie-values-used-by-ga4.html
-    google_analytics_user_id: str = ''
-    if '_ga' in websocket.cookies:
-        google_analytics_user_id = websocket.cookies['_ga']
 
     # User-Agent が指定されていればそれを取得
     user_agent: str = ''
@@ -89,7 +89,6 @@ def GenerateClientID(websocket: WebSocket) -> str:
     # 取得した情報を : で結合してフィンガープリントを生成
     fingerprint: str = ':'.join([
         ip_address,
-        google_analytics_user_id,
         user_agent,
         cf_ray_data_center,
         cf_ip_country,
