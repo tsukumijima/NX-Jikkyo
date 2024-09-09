@@ -7,7 +7,8 @@
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto" style="max-width: 850px">
                         【📢重要なお知らせ】 NX-Jikkyo から本家ニコニコ実況へコメントを投稿できるようになりました！！🎉🎊<br>
-                        本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。
+                        本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
+                        連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。
                     </blockquote>
                     <div class="mt-1">
                         <!-- eslint-disable-next-line no-irregular-whitespace -->

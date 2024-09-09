@@ -17,7 +17,7 @@
                             <span class="niconico-account__info-name-text">ニコニコアカウントと連携していません</span>
                         </div>
                         <span class="niconico-account__info-description">
-                            ニコニコアカウントと連携すると、ニコニコ実況のコメントサーバーにコメントできるようになります。
+                            ニコニコアカウントと連携すると、本家ニコニコ実況のコメントサーバーにコメントできるようになります。
                         </span>
                     </div>
                 </div>

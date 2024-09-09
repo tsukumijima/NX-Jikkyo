@@ -6,7 +6,8 @@
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
                 <blockquote class="font-weight-bold" style="font-size: 15px;">
                     【📢重要なお知らせ】 NX-Jikkyo から本家ニコニコ実況へコメントを投稿できるようになりました！！🎉🎊<br>
-                    本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。
+                    本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
+                    連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。
                 </blockquote>
                 <blockquote class="mt-5">
                     <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong>
@@ -88,6 +89,20 @@
                     あとコメントプレイヤーの背景は、私が過去に一眼レフで撮った写真から、選りすぐりの一枚をランダムでピックアップ表示しています。
                 </blockquote>
                 <h2 class="mt-5" id="faq" style="scroll-margin-top: 70px;">FAQ</h2>
+                <ul class="pl-5 mt-3 text-text-darken-1" style="line-height: 1.65">
+                    <li class="mt-3">
+                        <strong>Q. NX-Jikkyo から本家ニコニコ実況へコメントを投稿するにはどうすればいいですか？</strong>
+                    </li>
+                    <li class="mt-2">
+                        <strong>A. 詳しくは <router-link class="link" to="/settings/jikkyo">こちら</router-link> をご覧ください。</strong><br>
+                        <ul class="pl-5 mt-1">
+                            <li class="mt-1">ニコニコ実況にコメントするには、ニコニコアカウントとの連携が必要です。</li>
+                            <li class="mt-1"><strong>連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。</strong>ご安心ください。</li>
+                            <li class="mt-1">NX-Jikkyo は「ニコニコ実況の Web 版非公式コメントビューア」＋「ニコニコ実況公式にない実況チャンネルを補完する互換コメントサーバー」で、アカウント不要でコメントできます。</li>
+                        </ul>
+                    </li>
+                </ul>
+                <hr class="mt-4">
                 <ul class="pl-5 mt-3 text-text-darken-1" style="line-height: 1.65">
                     <li class="mt-3">
                         <strong>Q. いわゆる「コミュニティ実況」と NX-Jikkyo の関係について教えてください。</strong>
