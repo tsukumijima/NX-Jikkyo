@@ -124,9 +124,9 @@ const useUserStore = defineStore('user', {
         async fetchUser(force: boolean = false): Promise<IUser | null> {
 
             // LocalStorage にアクセストークンが保存されていない場合 (= 非ログイン状態) は常に null を返す
-            if (Utils.getAccessToken() === null) {
-                return null;
-            }
+            // if (Utils.getAccessToken() === null) {
+            //     return null;
+            // }
 
             // すでにログイン済みのユーザーアカウントの情報がある場合はそれを返す
             // force が true の場合は無視される
@@ -138,9 +138,9 @@ const useUserStore = defineStore('user', {
             const user = await Users.fetchUser();
             if (user === null) {
                 // この時点で無効などの理由でアクセストークンが削除されている場合、ログアウトする
-                if (Utils.getAccessToken() === null) {
-                    this.logout(true);
-                }
+                // if (Utils.getAccessToken() === null) {
+                //     this.logout(true);
+                // }
                 return null;
             }
             this.is_logged_in = true;

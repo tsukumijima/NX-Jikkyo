@@ -1,4 +1,6 @@
 
+import { getCookie } from 'typescript-cookie';
+
 import Message from '@/message';
 import APIClient from '@/services/APIClient';
 
@@ -122,6 +124,7 @@ class Users {
      */
     static async fetchUser(): Promise<IUser | null> {
 
+        /*
         // API リクエストを実行
         const response = await APIClient.get<IUser>('/users/me');
 
@@ -132,6 +135,58 @@ class Users {
         }
 
         return response.data;
+        */
+
+        // NX-Niconico-User クッキーを取得
+        const niconicoUserCookie = getCookie('NX-Niconico-User');
+
+        // クッキーが存在しない場合は非ログイン状態のアカウント情報をモックする
+        if (!niconicoUserCookie) {
+            return {
+                id: 1,
+                name: 'Mock User',
+                is_admin: false,
+                niconico_user_id: null,
+                niconico_user_name: null,
+                niconico_user_premium: null,
+                twitter_accounts: [],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            };
+        }
+
+        try {
+            // クッキーの値をデコードして JSON としてパース
+            const niconicoUser = JSON.parse(atob(niconicoUserCookie));
+
+            // IUser インターフェースに合わせてモックデータを作成
+            const mockUser: IUser = {
+                id: 1,
+                name: 'Mock User',
+                is_admin: false,
+                niconico_user_id: niconicoUser.niconico_user_id,
+                niconico_user_name: niconicoUser.niconico_user_name,
+                niconico_user_premium: niconicoUser.niconico_user_premium,
+                twitter_accounts: [],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            };
+
+            return mockUser;
+        } catch (error) {
+            console.error('Failed to parse NX-Niconico-User cookie:', error);
+            return {
+                id: 1,
+                name: 'Mock User',
+                is_admin: false,
+                niconico_user_id: null,
+                niconico_user_name: null,
+                niconico_user_premium: null,
+                twitter_accounts: [],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            };
+        }
     }
 
 
@@ -141,6 +196,7 @@ class Users {
      */
     static async fetchUserIcon(): Promise<string | null> {
 
+        /*
         // API リクエストを実行
         const response = await APIClient.get('/users/me/icon', {responseType: 'blob'});
 
@@ -151,6 +207,9 @@ class Users {
         }
 
         return URL.createObjectURL(response.data);
+        */
+
+        return '';
     }
 
 

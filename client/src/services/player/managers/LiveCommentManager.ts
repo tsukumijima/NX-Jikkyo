@@ -6,6 +6,7 @@ import Channels from '@/services/Channels';
 import PlayerManager from '@/services/player/PlayerManager';
 import useChannelsStore from '@/stores/ChannelsStore';
 import usePlayerStore from '@/stores/PlayerStore';
+import useSettingsStore from '@/stores/SettingsStore';
 import useUserStore from '@/stores/UserStore';
 import Utils, { dayjs, CommentUtils } from '@/utils';
 
@@ -30,7 +31,7 @@ interface IWatchSessionInfo {
 
 
 /**
- * ライブ視聴: NX-Jikkyo からリアルタイムに受信したコメントを DPlayer やイベントリスナーに送信する PlayerManager
+ * ライブ視聴: ニコニコ実況または NX-Jikkyo からリアルタイムに受信したコメントを DPlayer やイベントリスナーに送信する PlayerManager
  */
 class LiveCommentManager implements PlayerManager {
 
@@ -71,8 +72,14 @@ class LiveCommentManager implements PlayerManager {
     }
 
 
+    private get watch_session_type(): 'ニコニコ実況' | 'NX-Jikkyo ' {
+        // 英字と日本語の間にスペースを入れるため、意図的に "NX-Jikkyo " の末尾にスペースを付けている
+        return this.watch_session?.url.includes('live.nicovideo.jp') === true ? 'ニコニコ実況' : 'NX-Jikkyo ';
+    }
+
+
     /**
-     * NX-Jikkyo に接続し、セッションを初期化する
+     * ニコニコ実況または NX-Jikkyo に接続し、セッションを初期化する
      */
     public async init(): Promise<void> {
         const player_store = usePlayerStore();
@@ -94,8 +101,7 @@ class LiveCommentManager implements PlayerManager {
             console.error(`[LiveCommentManager][WatchSession] Error: ${watch_session_info.detail}`);
 
             // 通常発生しないエラーメッセージ (サーバーエラーなど) はプレイヤー側にも通知する
-            if ((watch_session_info.detail !== 'このチャンネルはNX-Jikkyo に対応していません。') &&
-                (watch_session_info.detail !== '現在放送中のNX-Jikkyo がありません。')) {
+            if (watch_session_info.detail !== 'このチャンネルはニコニコ実況に対応していません。') {
                 if (this.player.template.notice.textContent!.includes('再起動しています…') === false) {
                     this.player.notice(watch_session_info.detail, undefined, undefined, '#FF6F6A');
                 }
@@ -117,27 +123,69 @@ class LiveCommentManager implements PlayerManager {
      */
     private async initWatchSession(): Promise<IWatchSessionInfo> {
         const channels_store = useChannelsStore();
+        const settings_store = useSettingsStore();
+        const user_store = useUserStore();
 
         // サーバーから disconnect メッセージが送られてきた際のフラグ
         let is_disconnect_message_received = false;
 
-        // セッション情報を取得
-        const watch_session_info = await Channels.fetchJikkyoSession(channels_store.channel.current.id);
-        if (watch_session_info === null) {
+        // 視聴セッション WebSocket の URL を取得
+        // 実際は旧ニコニコ生放送の WebSocket API と互換性がある NX-Jikkyo の WebSocket API の URL が返る
+        const websocket_info = await Channels.fetchWebSocketInfo(channels_store.channel.current.id);
+        if (websocket_info === null) {
             return {
                 is_success: false,
-                detail: 'NX-Jikkyo のセッション情報を取得できませんでした。',
+                detail: 'コメント受信用 WebSocket API の情報を取得できませんでした。',
             };
         }
-        if (watch_session_info.is_success === false) {
+        // チャンネルに対応するニコニコ実況チャンネルが存在しない場合
+        if (websocket_info.watch_session_url === null) {
             return {
                 is_success: false,
-                detail: watch_session_info.detail,
+                detail: 'このチャンネルはニコニコ実況に対応していません。',
             };
         }
 
+        // ニコニコ生放送と NX-Jikkyo のどちらの視聴セッションに接続するかを決定
+        // デフォルト: NX-Jikkyo の視聴セッションに接続する
+        let watch_session_url = websocket_info.watch_session_url;
+
+        // 「可能であればニコニコ実況にコメントする」設定がオンのときのみ
+        // ニコニコ生放送の視聴セッション WebSocket URL を取得できなかった場合もコメント受信と NX-Jikkyo へのコメント送信は可能なので、
+        // 致命的なエラーとはせずあえて警告メッセージにとどめている
+        if (settings_store.settings.prefer_posting_to_nicolive === true) {
+
+            // ニコニコ生放送の視聴セッション WebSocket URL の取得に成功した場合のみ、
+            // NX-Jikkyo ではなくニコニコ生放送で現在放送中の実況番組の視聴セッションに接続する
+            if (websocket_info.nicolive_watch_session_url !== null) {
+                console.log('[LiveCommentManager][WatchSession] Post comments to Nicolive.');
+                watch_session_url = websocket_info.nicolive_watch_session_url;
+
+            // ニコニコ実況に存在しない実況チャンネル (ex: BS日テレ): コンソールにのみ警告を表示
+            // 頻度が多い上エラーではなく予期された挙動であり、毎回表示するのは鬱陶しいため
+            } else if (websocket_info.is_nxjikkyo_exclusive === true) {
+                console.warn('[LiveCommentManager][WatchSession] Failed to get Nicolive watch session URL. (This channel is exclusive to NX-Jikkyo.)');
+
+            // KonomiTV アカウントにログインしていないために視聴セッション WebSocket URL を取得できなかった: コンソールにのみ警告を表示
+            // ニコニコ実況を使わない人にとって、わざわざ設定をオフにしないとこのメッセージが消せないのはストレスなので、警告メッセージとしては表示しない
+            } else if (user_store.user === null) {
+                console.warn('[LiveCommentManager][WatchSession] Failed to get Nicolive watch session URL. (Not logged in to KonomiTV)');
+
+            // ニコニコアカウントと連携していないために視聴セッション WebSocket URL を取得できなかった: コンソールにのみ警告を表示
+            // ニコニコ実況を使わない人にとって、わざわざ設定をオフにしないとこのメッセージが消せないのはストレスなので、警告メッセージとしては表示しない
+            } else if (user_store.user?.niconico_user_id === null) {
+                console.warn('[LiveCommentManager][WatchSession] Failed to get Nicolive watch session URL. (Not linked with Niconico account)');
+
+            // ニコニコ生放送からエラーが返された: 普通発生しないため警告メッセージとして表示
+            } else if (websocket_info.nicolive_watch_session_error !== null) {
+                console.warn(`[LiveCommentManager][WatchSession] Failed to get Nicolive watch session URL. (${websocket_info.nicolive_watch_session_error})`);
+                this.player.notice(`${websocket_info.nicolive_watch_session_error}代わりに NX-Jikkyo にコメントします。`, undefined, undefined, '#FFA86A');
+            }
+        }
+
         // 視聴セッション WebSocket を開く
-        this.watch_session = new WebSocket(watch_session_info.audience_token!);
+        console.log(`[LiveCommentManager][WatchSession] Connected to ${watch_session_url}`);
+        this.watch_session = new WebSocket(watch_session_url);
 
         // 視聴セッションの接続が開かれたとき
         this.watch_session.addEventListener('open', () => {
@@ -165,7 +213,7 @@ class LiveCommentManager implements PlayerManager {
             // 接続切断の理由を表示
             const code = (event instanceof CloseEvent) ? event.code : 'Error';
             if (this.player.template.notice.textContent!.includes('再起動しています…') === false) {
-                this.player.notice(`NX-Jikkyo との接続が切断されました。(Code: ${code})`, undefined, undefined, '#FF6F6A');
+                this.player.notice(`${this.watch_session_type}との接続が切断されました。(Code: ${code})`, undefined, undefined, '#FF6F6A');
             }
             console.error(`[LiveCommentManager][WatchSession] Connection closed. (Code: ${code})`);
 
@@ -222,31 +270,31 @@ class LiveCommentManager implements PlayerManager {
                         break;
                     }
 
-                    let error = `NX-Jikkyo でエラーが発生しています。(Code: ${message.data.code})`;
+                    let error = `${this.watch_session_type}でエラーが発生しています。(Code: ${message.data.code})`;
                     switch (message.data.code) {
                         case 'CONNECT_ERROR':
-                            error = 'NX-Jikkyo のコメントサーバーに接続できません。';
+                            error = `${this.watch_session_type}のコメントサーバーに接続できません。`;
                             break;
                         case 'CONTENT_NOT_READY':
-                            error = 'NX-Jikkyo が配信できない状態です。';
+                            error = `${this.watch_session_type}が配信できない状態です。`;
                             break;
                         case 'NO_THREAD_AVAILABLE':
-                            error = 'NX-Jikkyo のコメントスレッドを取得できません。';
+                            error = `${this.watch_session_type}のコメントスレッドを取得できません。`;
                             break;
                         case 'NO_ROOM_AVAILABLE':
-                            error = 'NX-Jikkyo のコメント部屋を取得できません。';
+                            error = `${this.watch_session_type}のコメント部屋を取得できません。`;
                             break;
                         case 'NO_PERMISSION':
-                            error = 'NX-Jikkyo の API にアクセスする権限がありません。';
+                            error = `${this.watch_session_type}の API にアクセスする権限がありません。`;
                             break;
                         case 'NOT_ON_AIR':
-                            error = 'NX-Jikkyo が放送中ではありません。';
+                            error = `${this.watch_session_type}が放送中ではありません。`;
                             break;
                         case 'BROADCAST_NOT_FOUND':
-                            error = 'NX-Jikkyo の配信情報を取得できません。';
+                            error = `${this.watch_session_type}の配信情報を取得できません。`;
                             break;
                         case 'INTERNAL_SERVERERROR':
-                            error = 'NX-Jikkyo でサーバーエラーが発生しています。';
+                            error = `${this.watch_session_type}でサーバーエラーが発生しています。`;
                             break;
                     }
 
@@ -278,34 +326,34 @@ class LiveCommentManager implements PlayerManager {
                     is_disconnect_message_received = true;
 
                     // 接続切断の理由
-                    let disconnect_reason = `NX-Jikkyo との接続が切断されました。(${message.data.reason})`;
+                    let disconnect_reason = `${this.watch_session_type}との接続が切断されました。(${message.data.reason})`;
                     switch (message.data.reason) {
                         case 'TAKEOVER':
-                            disconnect_reason = 'NX-Jikkyo の番組から追い出されました。';
+                            disconnect_reason = `${this.watch_session_type}の番組から追い出されました。`;
                             break;
                         case 'NO_PERMISSION':
-                            disconnect_reason = 'NX-Jikkyo の番組の座席を取得できませんでした。';
+                            disconnect_reason = `${this.watch_session_type}の番組の座席を取得できませんでした。`;
                             break;
                         case 'END_PROGRAM':
-                            disconnect_reason = 'NX-Jikkyo がリセットされたか、コミュニティの番組が終了しました。';
+                            disconnect_reason = `${this.watch_session_type}がリセットされたか、コミュニティの番組が終了しました。`;
                             break;
                         case 'PING_TIMEOUT':
                             disconnect_reason = 'コメントサーバーとの接続生存確認に失敗しました。';
                             break;
                         case 'TOO_MANY_CONNECTIONS':
-                            disconnect_reason = 'NX-Jikkyo の同一ユーザからの接続数上限を越えています。';
+                            disconnect_reason = `${this.watch_session_type}の同一ユーザからの接続数上限を越えています。`;
                             break;
                         case 'TOO_MANY_WATCHINGS':
-                            disconnect_reason = 'NX-Jikkyo の同一ユーザからの視聴番組数上限を越えています。';
+                            disconnect_reason = `${this.watch_session_type}の同一ユーザからの視聴番組数上限を越えています。`;
                             break;
                         case 'CROWDED':
-                            disconnect_reason = 'NX-Jikkyo の番組が満席です。';
+                            disconnect_reason = `${this.watch_session_type}の番組が満席です。`;
                             break;
                         case 'MAINTENANCE_IN':
-                            disconnect_reason = 'NX-Jikkyo はメンテナンス中です。';
+                            disconnect_reason = `${this.watch_session_type}はメンテナンス中です。`;
                             break;
                         case 'SERVICE_TEMPORARILY_UNAVAILABLE':
-                            disconnect_reason = 'NX-Jikkyo で一時的にサーバーエラーが発生しています。';
+                            disconnect_reason = `${this.watch_session_type}で一時的にサーバーエラーが発生しています。`;
                             break;
                     }
 
@@ -329,6 +377,8 @@ class LiveCommentManager implements PlayerManager {
         return new Promise((resolve) => {
             this.watch_session!.addEventListener('message', async (event) => {
                 const message = JSON.parse(event.data);
+
+                // 2024/08/05 以降のニコニコ生放送では room メッセージは廃止されており、現在は NX-Jikkyo のみが送信している
                 if (message.type === 'room') {
 
                     // vpos の基準時刻のタイムスタンプを取得 (ミリ秒単位)
@@ -336,7 +386,7 @@ class LiveCommentManager implements PlayerManager {
                     this.vpos_base_timestamp = dayjs(message.data.vposBaseTime).valueOf();
 
                     // コメントサーバーへの接続情報を返す
-                    console.log(`[LiveCommentManager][WatchSession] Connected.\nThread ID: ${message.data.threadId}\n`);
+                    console.log(`[LiveCommentManager][WatchSession] Connected.\nThread ID: ${message.data.threadId}`);
                     return resolve({
                         is_success: true,
                         detail: '視聴セッションを取得しました。',
@@ -346,6 +396,37 @@ class LiveCommentManager implements PlayerManager {
                         thread_id: message.data.threadId,
                         // メッセージサーバーから受信するコメント (chat メッセージ) に yourpost フラグを付けるためのキー
                         your_post_key: (message.data.yourPostKey ? message.data.yourPostKey : null),
+                    });
+
+                // 2024/08/05 以降のニコニコ生放送では room メッセージの代わりに messageServer メッセージが送信されてくる
+                // messageServer メッセージでは NDGR 新メッセージサーバーへの接続先 URL が返されるが、以前と異なり WebSocket ではないため
+                // CORS 制限で直接接続することはできずプロトコルも全く別物なので、コメントセッションは常に NX-Jikkyo のニコニコ生放送互換 API に接続する
+                } else if (message.type === 'messageServer') {
+
+                    // vpos の基準時刻のタイムスタンプを取得 (ミリ秒単位)
+                    // vpos は番組開始時間からの累計秒数
+                    this.vpos_base_timestamp = dayjs(message.data.vposBaseTime).valueOf();
+
+                    // hashedUserId: 匿名コメント投稿時に用いられる自身のユーザ ID (ログインユーザのみ取得可能)
+                    // 自身が投稿したコメントかどうかを判別する上で使用可能
+                    const hashed_user_id = message.data.hashedUserId;
+
+                    // コメントサーバーへの接続情報を返す
+                    console.log('[LiveCommentManager][WatchSession] Connected.');
+                    return resolve({
+                        is_success: true,
+                        detail: '視聴セッションを取得しました。',
+                        // コメントサーバーへの接続情報
+                        // 常に NX-Jikkyo のニコニコ生放送互換 API に接続する
+                        message_server_url: websocket_info.comment_session_url!,
+                        // コメントサーバー上のスレッド ID
+                        // 現在放送中 (アクティブ) なスレッドに自動接続するために意図的に空文字を設定
+                        thread_id: '',
+                        // メッセージサーバーから受信するコメント (chat メッセージ) に yourpost フラグを付けるためのキー
+                        // NX-Jikkyo のニコニコ生放送互換 API において、yourPostKey (threadkey) はコメントのユーザー ID と同一
+                        // ニコニコ実況から NX-Jikkyo にインポートされたコメントのユーザー ID には nicolive: の Prefix が付与される仕様を利用し、
+                        // ハッシュ化された匿名ユーザー ID から NX-Jikkyo 上で使える threadkey を算出している
+                        your_post_key: `nicolive:${hashed_user_id}`,
                     });
                 }
             }, { signal: this.abort_controller.signal });
@@ -359,6 +440,7 @@ class LiveCommentManager implements PlayerManager {
      */
     private initCommentSession(comment_session_info: IWatchSessionInfo): void {
         const player_store = usePlayerStore();
+        const user_store = useUserStore();
 
         // 初回接続時に一括で送信されてくる過去コメントを受信し終えるまで格納するバッファ
         const initial_comments_buffer: ICommentData[] = [];
@@ -464,8 +546,11 @@ class LiveCommentManager implements PlayerManager {
 
             // コメントデータが不正な場合 or 自分が投稿したコメントの場合は弾く
             // ただし初期コメント受信中のみ、自分が投稿したコメントであっても通常コメント同様に続行する
+            // yourpost キーが設定されているコメントだけでなく、非匿名コメントにおいてニコニコユーザー ID が一致するコメントも弾く
+            // ニコニコ実況に投稿された非匿名コメントのユーザー ID は nicolive:1234567 のような形式で送信されてくる
             if ((comment === undefined || comment.content === undefined || comment.content === '') ||
-                (comment.yourpost && comment.yourpost === 1 && initial_comments_received === true)) {
+                (comment.yourpost && comment.yourpost === 1 && initial_comments_received === true) ||
+                (user_store.user?.niconico_user_id?.toString() === comment.user_id.replace('nicolive:', ''))) {
                 return;
             }
 
@@ -528,17 +613,43 @@ class LiveCommentManager implements PlayerManager {
 
 
     /**
-     * NX-Jikkyo にコメントを送信する
+     * ニコニコ実況または NX-Jikkyo にコメントを送信する
+     * DPlayer からコメントオプションを受け取り、成功 or 失敗をコールバックで通知する
      * @param options DPlayer のコメントオプション
      */
     public sendComment(options: DPlayerType.APIBackendSendOptions): void {
         const player_store = usePlayerStore();
+        const settings_store = useSettingsStore();
         const user_store = useUserStore();
 
         // 初期化に失敗しているときは実行せず、保存しておいたエラーメッセージを表示する
         if (player_store.live_comment_init_failed_message !== null) {
             options.error(player_store.live_comment_init_failed_message);
             return;
+        }
+
+        // 「可能であればニコニコ実況にコメントする」がオンかつニコニコアカウントと連携できていないときは、
+        // フォールバックで代わりに NX-Jikkyo にコメントが投稿される旨を通知する
+        if (settings_store.settings.prefer_posting_to_nicolive === true) {
+            if (user_store.user === null) {
+                this.player.notice('ニコニコ実況にコメントするには、KonomiTV アカウントにログインしてください。代わりに NX-Jikkyo にコメントします。',
+                    undefined, undefined, '#FFA86A');
+            } else if (user_store.user.niconico_user_id === null) {
+                this.player.notice('ニコニコ実況にコメントするには、ニコニコアカウントと連携してください。代わりに NX-Jikkyo にコメントします。',
+                    undefined, undefined, '#FFA86A');
+            }
+        }
+
+        // 視聴セッションの接続先がニコニコ生放送のときのみのバリデーション
+        if (this.watch_session_type === 'ニコニコ実況') {
+            if (user_store.user?.niconico_user_premium === false && (options.data.type === 'top' || options.data.type === 'bottom')) {
+                options.error('ニコニコ実況でコメントを上下に固定するには、ニコニコアカウントのプレミアム会員登録が必要です。');
+                return;
+            }
+            if (user_store.user?.niconico_user_premium === false && options.data.size === 'big') {
+                options.error('ニコニコ実況でコメントサイズを大きめに設定するには、ニコニコアカウントのプレミアム会員登録が必要です。');
+                return;
+            }
         }
 
         // 視聴セッションが null か、接続が既に切れている場合
@@ -609,7 +720,7 @@ class LiveCommentManager implements PlayerManager {
                             text: options.data.text,  // コメント本文
                             time: dayjs().format('HH:mm:ss'),  // 現在時刻
                             playback_position: this.player.video.currentTime,  // 現在の再生位置
-                            user_id: 'Unknown',  // ユーザー ID
+                            user_id: `${user_store.user?.niconico_user_id ?? 'Unknown'}`,  // ニコニコユーザー ID
                             my_post: true,  // 自分のコメントであることを示すフラグ
                             comment_source: 'NX',
                         }
@@ -640,12 +751,13 @@ class LiveCommentManager implements PlayerManager {
                     break;
                 }
             }
+
         }, { signal: abort_controller.signal });
     }
 
 
     /**
-     * 同じ設定で NX-Jikkyo に再接続する
+     * 同じ設定でニコニコ実況または NX-Jikkyo に再接続する
      */
     private async reconnect(): Promise<void> {
         const player_store = usePlayerStore();
@@ -667,7 +779,7 @@ class LiveCommentManager implements PlayerManager {
         this.reconnecting = true;
         console.warn('[LiveCommentManager] Reconnecting...');
         if (this.player.template.notice.textContent!.includes('再起動しています…') === false) {
-            this.player.notice('NX-Jikkyo に再接続しています…');
+            this.player.notice(`${this.watch_session_type}に再接続しています…`);
         }
 
         // 前の視聴セッション・コメントセッションを破棄

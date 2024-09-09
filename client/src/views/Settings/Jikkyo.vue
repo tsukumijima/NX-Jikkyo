@@ -9,8 +9,62 @@
             <span class="ml-3">コメント/実況</span>
         </h2>
         <div class="settings__content" :class="{'settings__content--loading': is_loading}">
-            <div class="settings__item-label mt-0" style="border-left: 3px solid rgb(var(--v-theme-text-darken-1)); padding-left: 12px;">
-                コメントの透明度は、コメントプレイヤー下にある設定アイコン ⚙️ から変更できます。<br>
+            <div class="niconico-account niconico-account--anonymous" v-if="userStore.user === null || userStore.user.niconico_user_id === null">
+                <div class="niconico-account-wrapper">
+                    <Icon class="flex-shrink-0" icon="bi:chat-left-text-fill" width="45px" />
+                    <div class="niconico-account__info ml-4">
+                        <div class="niconico-account__info-name">
+                            <span class="niconico-account__info-name-text">ニコニコアカウントと連携していません</span>
+                        </div>
+                        <span class="niconico-account__info-description">
+                            ニコニコアカウントと連携すると、ニコニコ実況のコメントサーバーにコメントできるようになります。
+                        </span>
+                    </div>
+                </div>
+                <v-btn class="niconico-account__login ml-auto" color="secondary" width="130" height="56" variant="flat"
+                    @click="loginNiconicoAccount()">
+                    <Icon icon="fluent:plug-connected-20-filled" class="mr-2" height="26" />連携する
+                </v-btn>
+            </div>
+            <div class="niconico-account" v-if="userStore.user !== null && userStore.user.niconico_user_id !== null">
+                <div class="niconico-account-wrapper">
+                    <img class="niconico-account__icon" :src="userStore.user_niconico_icon_url ?? ''">
+                    <div class="niconico-account__info">
+                        <div class="niconico-account__info-name">
+                            <span class="niconico-account__info-name-text">{{userStore.user.niconico_user_name}} と連携しています</span>
+                        </div>
+                        <span class="niconico-account__info-description">
+                            <span class="mr-2" style="white-space: nowrap;">Niconico User ID:</span>
+                            <a class="link mr-2" :href="`https://www.nicovideo.jp/user/${userStore.user.niconico_user_id}`"
+                                target="_blank">{{userStore.user.niconico_user_id}}</a>
+                            <span class="text-secondary" v-if="userStore.user.niconico_user_premium === true">(Premium)</span>
+                        </span>
+                    </div>
+                </div>
+                <v-btn class="niconico-account__login ml-auto" color="secondary" width="130" height="56" variant="flat"
+                    @click="logoutNiconicoAccount()">
+                    <Icon icon="fluent:plug-disconnected-20-filled" class="mr-2" height="26" />連携解除
+                </v-btn>
+            </div>
+            <div class="settings__item settings__item--switch">
+                <label class="settings__item-heading" for="prefer_posting_to_nicolive">可能であればニコニコ実況にコメントする</label>
+                <label class="settings__item-label" for="prefer_posting_to_nicolive">
+                    <ul class="ml-4 mb-2 font-weight-bold">
+                        <li>オン：<a class="link" href="https://jk.nicovideo.jp" target="_blank">ニコニコ実況</a> に優先的にコメントを送信</li>
+                        <li>オフ：<a class="link" href="https://nx-jikkyo.tsukumijima.net" target="_blank">NX-Jikkyo</a> にコメントを送信</li>
+                    </ul>
+                    ニコニコ実況が利用できない場合（BS 民放など公式では廃止された実況チャンネル・ニコニコ生放送のメンテナンス中など）は、常に NX-Jikkyo にコメントします。
+                </label>
+                <label class="settings__item-label mt-2" for="prefer_posting_to_nicolive">
+                    ニコニコ実況にコメントするには、ニコニコアカウントとの連携が必要です。<br>
+                    NX-Jikkyo は「ニコニコ実況の Web 版非公式コメントビューア」＋「ニコニコ実況公式にない実況チャンネルを補完する互換コメントサーバー」で、アカウント不要でコメントできます。<br>
+                </label>
+                <label class="settings__item-label mt-2" for="prefer_posting_to_nicolive">
+                    ニコニコアカウント未連携でのコメント送信時に「代わりに NX-Jikkyo にコメントします」という通知を表示しないようにするには、この設定をオフにしてください。
+                </label>
+                <v-switch class="settings__item-switch" color="primary" id="prefer_posting_to_nicolive" hide-details
+                    v-model="settingsStore.settings.prefer_posting_to_nicolive">
+                </v-switch>
             </div>
             <div class="settings__item">
                 <div class="settings__item-heading">コメントのミュート設定</div>
@@ -31,6 +85,9 @@
                 <Icon icon="heroicons-solid:filter" height="19px" />
                 <span class="ml-1">コメントのミュート設定を開く</span>
             </v-btn>
+            <div class="settings__quote mt-7">
+                コメントの透明度は、プレイヤー下にある設定アイコン ⚙️ から変更できます。<br>
+            </div>
             <div class="settings__item">
                 <div class="settings__item-heading">コメントの速さ</div>
                 <div class="settings__item-label">
@@ -71,8 +128,11 @@ import { mapStores } from 'pinia';
 import { defineComponent } from 'vue';
 
 import CommentMuteSettings from '@/components/Settings/CommentMuteSettings.vue';
+import Message from '@/message';
+import Niconico from '@/services/Niconico';
 import useSettingsStore from '@/stores/SettingsStore';
 import useUserStore from '@/stores/UserStore';
+import Utils from '@/utils';
 import SettingsBase from '@/views/Settings/Base.vue';
 
 export default defineComponent({
@@ -101,6 +161,120 @@ export default defineComponent({
 
         // ローディング状態を解除
         this.is_loading = false;
+
+        // もしハッシュ (# から始まるフラグメント) に何か指定されていたら、
+        // OAuth 連携のコールバックの結果が入っている可能性が高いので、パースを試みる
+        // アカウント情報更新より後にしないと Snackbar がうまく表示されない
+        if (location.hash !== '') {
+            const params = new URLSearchParams(location.hash.replace('#', ''));
+            if (params.get('status') !== null && params.get('detail') !== null) {
+                // コールバックの結果を取得できたので、OAuth 連携の結果を画面に通知する
+                const authorization_status = parseInt(params.get('status')!);
+                const authorization_detail = params.get('detail')!;
+                this.onOAuthCallbackReceived(authorization_status, authorization_detail);
+                // URL からフラグメントを削除
+                // ref: https://stackoverflow.com/a/49373716/17124142
+                history.replaceState(null, '', ' ');
+            }
+        }
+    },
+    methods: {
+        async loginNiconicoAccount() {
+
+            // ログインしていない場合はエラーにする
+            if (this.userStore.is_logged_in === false) {
+                Message.warning('連携をはじめるには、KonomiTV アカウントにログインしてください。');
+                return;
+            }
+
+            // ニコニコアカウントと連携するための認証 URL を取得
+            const authorization_url = await Niconico.fetchAuthorizationURL();
+            if (authorization_url === null) {
+                return;
+            }
+
+            // モバイルデバイスではポップアップが事実上使えない (特に Safari ではブロックされてしまう) ので、素直にリダイレクトで実装する
+            if (Utils.isMobileDevice() === true) {
+                location.href = authorization_url;
+                return;
+            }
+
+            // OAuth 連携のため、認証 URL をポップアップウインドウで開く
+            // window.open() の第2引数はユニークなものにしておくと良いらしい
+            // ref: https://qiita.com/catatsuy/items/babce8726ea78f5d25b1 (大変参考になりました)
+            const popup_window = window.open(authorization_url, 'NX-Jikkyo-OAuthPopup', Utils.getWindowFeatures());
+            if (popup_window === null) {
+                Message.error('ポップアップウインドウを開けませんでした。');
+                return;
+            }
+
+            // 認証完了 or 失敗後、ポップアップウインドウから送信される文字列を受信
+            const onMessage = async (event) => {
+
+                // すでにウインドウが閉じている場合は実行しない
+                if (popup_window.closed) return;
+
+                // 受け取ったオブジェクトに NX-Jikkyo-OAuthPopup キーがない or そもそもオブジェクトではない際は実行しない
+                // ブラウザの拡張機能から結構余計な message が飛んでくるっぽい…。
+                if (Utils.typeof(event.data) !== 'object') return;
+                if (('NX-Jikkyo-OAuthPopup' in event.data) === false) return;
+
+                // 認証は完了したので、ポップアップウインドウを閉じ、リスナーを解除する
+                if (popup_window) popup_window.close();
+                window.removeEventListener('message', onMessage);
+
+                // ステータスコードと詳細メッセージを取得
+                const authorization_status = event.data['NX-Jikkyo-OAuthPopup']['status'] as number;
+                const authorization_detail = event.data['NX-Jikkyo-OAuthPopup']['detail'] as string;
+                this.onOAuthCallbackReceived(authorization_status, authorization_detail);
+            };
+
+            // postMessage() を受信するリスナーを登録
+            window.addEventListener('message', onMessage);
+        },
+
+        async onOAuthCallbackReceived(authorization_status: number, authorization_detail: string) {
+            console.log(`NiconicoAuthCallbackAPI: Status: ${authorization_status} / Detail: ${authorization_detail}`);
+
+            // OAuth 連携に失敗した
+            if (authorization_status !== 200) {
+                if (authorization_detail.startsWith('Authorization was denied (access_denied)')) {
+                    Message.error('ニコニコアカウントとの連携がキャンセルされました。');
+                } else if (authorization_detail.startsWith('Failed to get access token (HTTP Error ')) {
+                    const error = authorization_detail.replace('Failed to get access token ', '');
+                    Message.error(`アクセストークンの取得に失敗しました。${error}`);
+                } else if (authorization_detail.startsWith('Failed to get access token (Connection Timeout)')) {
+                    Message.error('アクセストークンの取得に失敗しました。ニコニコで障害が発生している可能性があります。');
+                } else if (authorization_detail.startsWith('Failed to get user information (HTTP Error ')) {
+                    const error = authorization_detail.replace('Failed to get user information ', '');
+                    Message.error(`ニコニコアカウントのユーザー情報の取得に失敗しました。${error}`);
+                } else if (authorization_detail.startsWith('Failed to get user information (Connection Timeout)')) {
+                    Message.error('ニコニコアカウントのユーザー情報の取得に失敗しました。ニコニコで障害が発生している可能性があります。');
+                } else {
+                    Message.error(`ニコニコアカウントとの連携に失敗しました。(${authorization_detail})`);
+                }
+                return;
+            }
+
+            // アカウント情報を強制的に更新
+            await this.userStore.fetchUser(true);
+
+            Message.success('ニコニコアカウントと連携しました。');
+        },
+
+        async logoutNiconicoAccount() {
+
+            // ニコニコアカウント連携解除 API にリクエスト
+            const result = await Niconico.logoutAccount();
+            if (result === false) {
+                return;
+            }
+
+            // アカウント情報を強制的に更新
+            await this.userStore.fetchUser(true);
+
+            Message.success('ニコニコアカウントとの連携を解除しました。');
+        },
     }
 });
 
