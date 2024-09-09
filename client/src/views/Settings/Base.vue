@@ -258,9 +258,15 @@ export default defineComponent({
 
                 &--switch {
                     margin-right: 62px;
+                    @include smartphone-vertical {
+                        margin-right: 50px;
+                    }
 
                     .settings__item-heading {
                         width: calc(100% + 62px);
+                        @include smartphone-vertical {
+                            width: calc(100% + 50px);
+                        }
                     }
 
                     .settings__item-heading, .settings__item-label {
@@ -305,6 +311,9 @@ export default defineComponent({
                     right: -60px;
                     bottom: 0px;
                     margin-top: 0;
+                    @include smartphone-vertical {
+                        right: -48px;
+                    }
                 }
 
                 &-delete-button {
@@ -343,6 +352,14 @@ export default defineComponent({
                     font-size: 14px;
                 }
             }
+        }
+
+        .settings__quote {
+            border-left: 3px solid rgb(var(--v-theme-text-darken-1));
+            padding-left: 12px;
+            color: rgb(var(--v-theme-text-darken-1));
+            font-size: 13.5px;
+            line-height: 1.6;
         }
     }
 }
