@@ -137,11 +137,11 @@ class Users {
         return response.data;
         */
 
-        // NX-Niconico-User クッキーを取得
-        const niconicoUserCookie = getCookie('NX-Niconico-User');
+        // NX-Niconico-User Cookie を取得
+        const niconico_user_cookie = getCookie('NX-Niconico-User');
 
-        // クッキーが存在しない場合は非ログイン状態のアカウント情報をモックする
-        if (!niconicoUserCookie) {
+        // Cookie が存在しない場合は非ログイン状態のアカウント情報をモックする
+        if (!niconico_user_cookie) {
             return {
                 id: 1,
                 name: 'Mock User',
@@ -157,10 +157,10 @@ class Users {
 
         try {
             // クッキーの値をデコードして JSON としてパース
-            const niconicoUser = JSON.parse(atob(niconicoUserCookie));
+            const niconicoUser = JSON.parse(atob(niconico_user_cookie));
 
             // IUser インターフェースに合わせてモックデータを作成
-            const mockUser: IUser = {
+            return {
                 id: 1,
                 name: 'Mock User',
                 is_admin: false,
@@ -171,8 +171,6 @@ class Users {
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
             };
-
-            return mockUser;
         } catch (error) {
             console.error('Failed to parse NX-Niconico-User cookie:', error);
             return {

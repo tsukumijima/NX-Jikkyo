@@ -1,4 +1,6 @@
 
+import { getCookie } from 'typescript-cookie';
+
 import APIClient from '@/services/APIClient';
 import { IProgram, IProgramDefault } from '@/services/Programs';
 import Utils from '@/utils';
@@ -321,24 +323,30 @@ class Channels {
      */
     static async fetchWebSocketInfo(channel_id: string): Promise<IJikkyoWebSocketInfo | null> {
 
-        return {
-            watch_session_url: `${Utils.api_base_url.replaceAll('http', 'ws')}/channels/${channel_id}/ws/watch`,
-            nicolive_watch_session_url: null,
-            nicolive_watch_session_error: null,
-            comment_session_url: `${Utils.api_base_url.replaceAll('http', 'ws')}/channels/${channel_id}/ws/comment`,
-            is_nxjikkyo_exclusive: false,
-        };
+        // NX-Niconico-User Cookie を取得
+        const niconico_user_cookie = getCookie('NX-Niconico-User');
 
-        // // API リクエストを実行
-        // const response = await APIClient.get<IJikkyoWebSocketInfo>(`/channels/${channel_id}/jikkyo`);
+        // Cookie が存在しない場合は負荷削減のため、常に API にはアクセスせずモックする
+        if (!niconico_user_cookie) {
+            return {
+                watch_session_url: `${Utils.api_base_url.replaceAll('http', 'ws')}/channels/${channel_id}/ws/watch`,
+                nicolive_watch_session_url: null,
+                nicolive_watch_session_error: null,
+                comment_session_url: `${Utils.api_base_url.replaceAll('http', 'ws')}/channels/${channel_id}/ws/comment`,
+                is_nxjikkyo_exclusive: false,
+            };
+        }
 
-        // // エラー処理
-        // if (response.type === 'error') {
-        //     APIClient.showGenericError(response, 'コメント送受信用 WebSocket API の情報を取得できませんでした。');
-        //     return null;
-        // }
+        // API リクエストを実行
+        const response = await APIClient.get<IJikkyoWebSocketInfo>(`/channels/${channel_id}/jikkyo`);
 
-        // return response.data;
+        // エラー処理
+        if (response.type === 'error') {
+            APIClient.showGenericError(response, 'コメント送受信用 WebSocket API の情報を取得できませんでした。');
+            return null;
+        }
+
+        return response.data;
     }
 }
 
