@@ -1,4 +1,5 @@
 
+import { Base64 } from 'js-base64';
 import { getCookie } from 'typescript-cookie';
 
 import Message from '@/message';
@@ -157,7 +158,7 @@ class Users {
 
         try {
             // クッキーの値をデコードして JSON としてパース
-            const niconicoUser = JSON.parse(atob(niconico_user_cookie));
+            const niconicoUser = JSON.parse(Base64.decode(niconico_user_cookie));
 
             // IUser インターフェースに合わせてモックデータを作成
             return {

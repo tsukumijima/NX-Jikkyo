@@ -22,6 +22,7 @@
         "dplayer": "github:tsukumijima/DPlayer#v1.31.3",
         "floating-vue": "^5.2.2",
         "hls.js": "github:tsukumijima/hls.js#4e8c7c9adcc6ee99aeb8eadcd273cedc60b8f141",
+        "js-base64": "^3.7.7",
         "mitt": "^3.0.1",
         "mpegts.js": "github:tsukumijima/mpegts.js#953900315a3c80b9d8e15fa74334a13866ccd016",
         "nanoid": "^5.0.7",
