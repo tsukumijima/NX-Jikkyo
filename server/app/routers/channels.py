@@ -426,7 +426,7 @@ async def ChannelJikkyoWebSocketInfoAPI(
 
     # ニコニココメント送受信用 WebSocket API の情報を取得する
     jikkyo = Jikkyo(channel_id)
-    jikkyo_websocket_info, updated_niconico_user = await jikkyo.fetchWebSocketInfo(niconico_user)
+    jikkyo_websocket_info, updated_niconico_user = await jikkyo.fetchWebSocketInfo(request, niconico_user)
 
     # レスポンスを作成
     response = JSONResponse(content=jikkyo_websocket_info.model_dump())

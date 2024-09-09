@@ -6,6 +6,7 @@ from __future__ import annotations
 import httpx
 from bs4 import BeautifulSoup
 from bs4 import Tag
+from fastapi import Request
 from typing import cast, ClassVar
 
 from app import logging
@@ -74,7 +75,10 @@ class Jikkyo:
             self.nicochannel_id: str | None = None
 
 
-    async def fetchWebSocketInfo(self, current_user: schemas.NiconicoUser | None) -> tuple[schemas.JikkyoWebSocketInfo, schemas.NiconicoUser | None]:
+    async def fetchWebSocketInfo(self,
+        request: Request,
+        current_user: schemas.NiconicoUser | None,
+    ) -> tuple[schemas.JikkyoWebSocketInfo, schemas.NiconicoUser | None]:
         """
         ニコニコ実況・NX-Jikkyo とコメントを送受信するための WebSocket API の情報を取得する
         2024/08/05 以降の新ニコニコ生放送でコメントサーバーが刷新された影響で、従来 KonomiTV で実装していた
@@ -109,11 +113,15 @@ class Jikkyo:
                 current_user,
             )
 
+        # scheme はそのままだと多段プロキシの場合に ws:// になってしまうので、
+        # X-Forwarded-Proto ヘッダから scheme を取得してから URI を組み立てる
+        scheme = request.headers.get('X-Forwarded-Proto', request.url.scheme).replace('http', 'ws')
+
         # NX-Jikkyo の旧ニコニコ生放送「視聴セッション維持用 WebSocket API」互換の WebSocket API の URL を生成
-        watch_session_url = f'wss://nx-jikkyo.tsukumijima.net/api/v1/channels/{self.jikkyo_id}/ws/watch'
+        watch_session_url = f'{scheme}://{request.url.netloc}/api/v1/channels/{self.jikkyo_id}/ws/watch'
 
         # NX-Jikkyo の旧ニコニコ生放送「コメント受信用 WebSocket API」互換の WebSocket API の URL を生成
-        comment_session_url = f'wss://nx-jikkyo.tsukumijima.net/api/v1/channels/{self.jikkyo_id}/ws/comment'
+        comment_session_url = f'{scheme}://{request.url.netloc}/api/v1/channels/{self.jikkyo_id}/ws/comment'
 
         # 現在は NX-Jikkyo のみ存在するニコニコ実況チャンネル or 未ログイン or ニコニコアカウントと連携していない場合は、
         # ニコ生側の「視聴セッション維持用 WebSocket API」の URL は取得せず、そのまま NX-Jikkyo の WebSocket API の URL のみを返す
