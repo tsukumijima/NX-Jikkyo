@@ -551,6 +551,23 @@ class PlayerController {
             }
         });
 
+        if (this.playback_mode === 'Video') {
+
+            // 再生速度を復元
+            const playback_rate = localStorage.getItem('NX-Jikkyo-PlaybackRate');
+            if (playback_rate !== null) {
+                this.player.speed(parseFloat(playback_rate));
+            }
+
+            // 再生速度が変更されたとき、再生速度を LocalStorage に保存する
+            this.player.on('ratechange', () => {
+                const playback_rate = this.player?.video.playbackRate;
+                if (playback_rate !== undefined) {
+                    localStorage.setItem('NX-Jikkyo-PlaybackRate', playback_rate.toString());
+                }
+            });
+        }
+
         // 直接視聴ページにアクセスしても自動再生できるように既定でミュートする
         // NX-Jikkyo では実際の音声は流れないので問題ない
         this.player.video.muted = true;
