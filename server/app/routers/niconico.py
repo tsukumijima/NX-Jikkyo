@@ -8,10 +8,10 @@ from fastapi import Request
 from fastapi import status
 from fastapi.security.utils import get_authorization_scheme_param
 from jose import jwt
-from pydantic import BaseModel
 from typing import Annotated
 
 from app import logging
+from app import schemas
 from app.constants import API_REQUEST_HEADERS, HTTPX_CLIENT
 from app.config import CONFIG
 from app.utils.OAuthCallbackResponse import OAuthCallbackResponse
@@ -26,25 +26,10 @@ router = APIRouter(
 )
 
 
-class NiconicoUser(BaseModel):
-    """
-    ニコニコ生放送にアクセスするためのニコニコアカウントとの連携情報を表す Pydantic モデル
-    """
-
-    niconico_user_id: int
-    niconico_user_name: str
-    niconico_user_premium: bool
-    niconico_access_token: str
-    niconico_refresh_token: str
-
-class ThirdpartyAuthURL(BaseModel):
-    authorization_url: str
-
-
 @router.get(
     '/auth',
     summary = 'ニコニコ OAuth 認証 URL 発行 API',
-    response_model = ThirdpartyAuthURL,
+    response_model = schemas.ThirdpartyAuthURL,
     response_description = 'ユーザーにアプリ連携してもらうための認証 URL。',
 )
 async def NiconicoAuthURLAPI(
@@ -229,7 +214,7 @@ async def NiconicoAuthCallbackAPI(
         )
 
     # 取得したニコニコアカウントとの連携情報を NiconicoUser に格納
-    niconico_user = NiconicoUser(
+    niconico_user = schemas.NiconicoUser(
         niconico_user_id = niconico_user_id,
         niconico_user_name = niconico_user_name,
         niconico_user_premium = niconico_user_premium,

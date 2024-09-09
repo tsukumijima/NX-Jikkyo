@@ -1,4 +1,5 @@
 
+import base64
 import hashlib
 import pathlib
 import time
@@ -13,7 +14,7 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import TypeAdapter
 from tortoise import connections
 from tortoise import timezone
@@ -21,6 +22,7 @@ from typing import Annotated, cast, Literal
 from zoneinfo import ZoneInfo
 
 from app import logging
+from app import schemas
 from app.constants import (
     LOGO_DIR,
     REDIS_CLIENT,
@@ -34,6 +36,7 @@ from app.models.comment import (
     ThreadResponse,
     ThreadWithoutStatisticsResponse,
 )
+from app.utils.Jikkyo import Jikkyo
 from app.utils.TVer import GetNowAndNextProgramInfos
 
 
@@ -395,6 +398,50 @@ def ChannelLogoAPI(
         'Cache-Control': CACHE_CONTROL,
         'ETag': GetETag('default'.encode()),
     })
+
+
+@router.get(
+    '/channels/{channel_id}/jikkyo',
+    summary = 'ニコニコ実況 WebSocket URL API',
+    response_description = 'ニコニコ実況コメント送受信用 WebSocket API の情報。',
+    response_model = schemas.JikkyoWebSocketInfo,
+)
+async def ChannelJikkyoWebSocketInfoAPI(
+    request: Request,
+    channel_id: Annotated[str, Path(description='チャンネル ID 。ex: jk101')],
+):
+    """
+    指定されたチャンネルに対応する、ニコニコ実況コメント送受信用 WebSocket API の情報を取得する。
+    """
+
+    # Cookie から NiconicoUser を取得
+    niconico_user = None
+    niconico_user_cookie = request.cookies.get('NX-Niconico-User')
+    if niconico_user_cookie:
+        try:
+            niconico_user_json = base64.b64decode(niconico_user_cookie).decode('utf-8')
+            niconico_user = schemas.NiconicoUser.model_validate_json(niconico_user_json)
+        except Exception:
+            logging.warning('[ChannelJikkyoWebSocketInfoAPI] Failed to parse NX-Niconico-User cookie.')
+
+    # ニコニココメント送受信用 WebSocket API の情報を取得する
+    jikkyo = Jikkyo(channel_id)
+    jikkyo_websocket_info, updated_niconico_user = await jikkyo.fetchWebSocketInfo(niconico_user)
+
+    # レスポンスを作成
+    response = JSONResponse(content=jikkyo_websocket_info.model_dump())
+
+    # 更新された NiconicoUser が存在する場合、Cookie を更新
+    if updated_niconico_user is not None:
+        response.set_cookie(
+            key = 'NX-Niconico-User',
+            value = base64.b64encode(updated_niconico_user.model_dump_json().encode('utf-8')).decode('utf-8'),
+            max_age = 315360000,  # 10年間の有効期限 (秒単位)
+            httponly = False,  # JavaScript からアクセスできるようにする
+            samesite = 'lax',  # CSRF 攻撃を防ぐ
+        )
+
+    return response
 
 
 @router.get(
