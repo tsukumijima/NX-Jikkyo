@@ -6,14 +6,8 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto" style="max-width: 850px">
-                        【📢重要なお知らせ】 NX-Jikkyo で <a class="link" href="https://x.com/TVRemotePlus/status/1821214317385282033" target="_blank">08/22 までの繋ぎ</a> で運用されている <a class="link" href="https://originalnews.nico/464285" target="_blank">暫定復旧版ニコニコ実況</a> に投稿されたコメントをリアルタイム表示できるようになりました！！🎉🎊 コメントリストではコメント取得元に応じてそれぞれ <code>[ニコ実]</code> or <code>[NX]</code> のラベルがつきます (各 NX-Jikkyo 対応アプリでは別途対応されない限り区別されません) 。<br>
-                        <div class="mt-1">
-                            NX-Jikkyo 対応アプリ (jkcommentviewer・TVTest (NicoJK)・KonomiTV など) は更新不要です。過去ログを含め、ニコニコ実況と NX-Jikkyo の双方に投稿されたコメントを一緒に楽しめます！🎧 <a class="link" href="/about/#faq" target="_blank">詳しくはこちら！</a>
-                        </div>
-                        <div class="mt-2" style="font-weight: 400 !important">
-                            08/22 のニコニコ実況の本復旧後、<strong>NX-Jikkyo では本家ニコニコ実況へのコメント投稿機能をリリース予定です！！</strong><br>
-                            <strong>本家ニコニコ実況へのコメント投稿にはニコニコアカウントとの連携が必要です。</strong>設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。
-                        </div>
+                        【📢重要なお知らせ】 NX-Jikkyo から本家ニコニコ実況へコメントを投稿できるようになりました！！🎉🎊<br>
+                        本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。
                     </blockquote>
                     <div class="mt-1">
                         <!-- eslint-disable-next-line no-irregular-whitespace -->
