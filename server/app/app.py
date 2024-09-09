@@ -47,6 +47,7 @@ from app.models.comment import (
 )
 from app.routers import (
     channels,
+    niconico,
     threads,
     websocket,
 )
@@ -70,6 +71,7 @@ app = FastAPI(
 app.include_router(channels.router)
 app.include_router(threads.router)
 app.include_router(websocket.router)
+app.include_router(niconico.router)
 
 # CORS の設定
 ## 開発環境では全てのオリジンからのリクエストを許可

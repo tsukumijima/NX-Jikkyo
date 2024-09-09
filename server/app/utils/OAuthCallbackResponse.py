@@ -15,11 +15,11 @@ class OAuthCallbackResponse(HTMLResponse):
     ) -> None:
         """
         OAuth 連携のコールバック時のレスポンスを返す
-        実際に出力されるのは HTML で、OAuth 連携が完了または失敗したことを KonomiTV クライアントに送信するための JavaScript が記述される
+        実際に出力されるのは HTML で、OAuth 連携が完了または失敗したことを NX-Jikkyo クライアントに送信するための JavaScript が記述される
 
         Args:
-            detail (str): KonomiTV クライアントに送信する詳細メッセージ
-            redirect_to (str): リダイレクト先の KonomiTV クライアントの URL (モバイルデバイスのみ利用)
+            detail (str): NX-Jikkyo クライアントに送信する詳細メッセージ
+            redirect_to (str): リダイレクト先の NX-Jikkyo クライアントの URL (モバイルデバイスのみ利用)
             status_code (int, optional): HTTP ステータスコード. Defaults to 200.
             headers (dict, optional): カスタムのヘッダー. Defaults to None.
         """
@@ -46,7 +46,7 @@ class OAuthCallbackResponse(HTMLResponse):
                     // (PC) ポップアップ経由で OAuth 連携を行った場合
                     if (window.opener) {
                         window.opener.postMessage({
-                            'KonomiTV-OAuthPopup': {
+                            'NX-Jikkyo-OAuthPopup': {
                                 'status': $status$,
                                 'detail': '$detail$',
                             }

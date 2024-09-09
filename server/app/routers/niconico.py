@@ -8,20 +8,37 @@ from fastapi import Request
 from fastapi import status
 from fastapi.security.utils import get_authorization_scheme_param
 from jose import jwt
+from pydantic import BaseModel
 from typing import Annotated
 
 from app import logging
 from app.constants import API_REQUEST_HEADERS, HTTPX_CLIENT
 from app.config import CONFIG
-from app.models.niconico import NiconicoUser, ThirdpartyAuthURL
 from app.utils.OAuthCallbackResponse import OAuthCallbackResponse
 
 
 # ルーター
+## https://app.konomi.tv/api/redirect/niconico のコールバック先 URL が /app/niconico/callback 固定なので、
+## この API だけ /v1/ を外している
 router = APIRouter(
     tags = ['Niconico'],
-    prefix = '/api/v1/niconico',
+    prefix = '/api/niconico',
 )
+
+
+class NiconicoUser(BaseModel):
+    """
+    ニコニコ生放送にアクセスするためのニコニコアカウントとの連携情報を表す Pydantic モデル
+    """
+
+    niconico_user_id: int
+    niconico_user_name: str
+    niconico_user_premium: bool
+    niconico_access_token: str
+    niconico_refresh_token: str
+
+class ThirdpartyAuthURL(BaseModel):
+    authorization_url: str
 
 
 @router.get(
@@ -43,6 +60,7 @@ async def NiconicoAuthURLAPI(
     # クライアント (フロントエンド) の URL を Origin ヘッダーから取得
     ## Origin ヘッダーがリクエストに含まれていない場合はこの API サーバーの URL を使う
     client_url = request.headers.get('Origin', f'https://{request.url.netloc}').rstrip('/') + '/'
+    print(client_url)
 
     # コールバック URL を設定
     ## ニコニコ API の OAuth 連携では、事前にコールバック先の URL を運営側に設定しておく必要がある
@@ -59,7 +77,7 @@ async def NiconicoAuthURLAPI(
     # コールバック後の NiconicoAuthCallbackAPI に渡す state の値
     state = {
         # リダイレクト先の KonomiTV サーバー
-        'server': f'https://{request.url.netloc}/',
+        'server': f'{"https" if client_url.startswith("https") else "http"}://{request.url.netloc}/',
         # スマホ・タブレットでの NiconicoAuthCallbackAPI のリダイレクト先 URL
         'client': client_url,
         # ログイン中ユーザーの JWT アクセストークン
@@ -230,8 +248,8 @@ async def NiconicoAuthCallbackAPI(
     response.set_cookie(
         key = 'NX-Niconico-User',
         value = base64.b64encode(niconico_user.model_dump_json().encode('utf-8')).decode('utf-8'),
+        max_age = 315360000,  # 10年間の有効期限 (秒単位)
         httponly = False,  # JavaScript からアクセスできるようにする
-        secure = True,    # HTTPS 接続でのみ送信
         samesite = 'lax',  # CSRF 攻撃を防ぐ
     )
 
