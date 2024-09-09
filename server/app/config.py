@@ -29,6 +29,10 @@ class Config(BaseSettings):
     MYSQL_PASSWORD: str
     MYSQL_DATABASE: str
 
+    # ニコニコ連携
+    NICONICO_OAUTH_CLIENT_ID: str
+    NICONICO_OAUTH_CLIENT_SECRET: str
+
 
 # ref: https://github.com/pydantic/pydantic/blob/main/docs/visual_studio_code.md#basesettings-and-ignoring-pylancepyright-errors
 CONFIG = Config.model_validate({})
