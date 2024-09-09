@@ -414,6 +414,12 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
         await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(channel_responses).decode('utf-8'))
         logging.info('Channel responses cache has been updated.')
 
+        # startup イベントハンドラが完了するまでメインスレッドを待機させる
+        ## ここで待機しないと、なぜかタイミング次第ではタスクの完了前にタスクが破棄されてしまうことがある
+        ## 必ず発生するわけではないが、一度起きると次の日のスレッドがずっと作成されない致命的な問題になる
+        ## おそらくイベントループ関連の稀な症状を引いてしまっているみたいだが、とりあえずこれで直る
+        await asyncio.sleep(0.1)
+
 
     # 念のため、1時間に1回採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
     ## wait_first を指定していないので起動時にも実行される
@@ -434,6 +440,12 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
             )
 
         logging.info('Comment counters have been synchronized.')
+
+        # startup イベントハンドラが完了するまでメインスレッドを待機させる
+        ## ここで待機しないと、なぜかタイミング次第ではタスクの完了前にタスクが破棄されてしまうことがある
+        ## 必ず発生するわけではないが、一度起きると次の日のスレッドがずっと作成されない致命的な問題になる
+        ## おそらくイベントループ関連の稀な症状を引いてしまっているみたいだが、とりあえずこれで直る
+        await asyncio.sleep(0.1)
 
 
     # 1時間に1回、明日分の全実況チャンネルのスレッド予定が DB に登録されているかを確認し、もしなければ登録する
