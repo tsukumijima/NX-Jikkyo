@@ -722,7 +722,7 @@ class LiveCommentManager implements PlayerManager {
                             playback_position: this.player.video.currentTime,  // 現在の再生位置
                             user_id: `${user_store.user?.niconico_user_id ?? 'Unknown'}`,  // ニコニコユーザー ID
                             my_post: true,  // 自分のコメントであることを示すフラグ
-                            comment_source: 'NX',
+                            comment_source: this.watch_session_type === 'ニコニコ実況' ? 'ニコ実' : 'NX',
                         }
                     });
 
