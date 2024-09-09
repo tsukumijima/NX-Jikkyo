@@ -78,6 +78,9 @@ class APIClient {
                 request.headers['Authorization'] = `Bearer ${access_token}`;
             }
 
+            // withCredentials を true に設定し、Cookie を含めてリクエストを送信する
+            request.withCredentials = true;
+
             // NX-Jikkyo クライアントのバージョンを設定
             // 今のところ使わないが、将来的にクライアントとサーバーを分離することを見据えて念のため
             request.headers['X-NX-Jikkyo-Version'] = Utils.version;
