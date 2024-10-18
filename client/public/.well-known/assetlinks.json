@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "net.tsukumijima.nxjikkyo.android",
+            "sha256_cert_fingerprints": [
+                "43:25:DA:12:1D:8D:9E:03:46:5C:3E:4D:AE:29:0E:3C:1E:59:14:71:F1:05:85:5E:48:10:4B:E9:7E:40:6F:E3"
+            ]
+        }
+    }
+]
