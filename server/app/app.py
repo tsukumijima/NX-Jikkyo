@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi_restful.tasks import repeat_every
+from fastapi_utils.tasks import repeat_every
 from ndgr_client import NDGRClient
 from pathlib import Path
 from pydantic import TypeAdapter
