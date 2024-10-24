@@ -6,6 +6,10 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto" style="max-width: 850px">
+                        【📢お知らせ】 <a class="link" href="https://play.google.com/store/apps/details?id=net.tsukumijima.nxjikkyo.android" target="_blank">NX-Jikkyo の Android 版アプリ</a> をリリースしました！🎉🎊<br>
+                        この Web サイトから「ホーム画面に追加」でインストールしたアプリ (PWA) との機能的な違いはありませんが、100人以上インストール数がないとアプリ検索に全然載らないみたいなので、ぜひインストールを🙏 <a class="link" href="https://x.com/TVRemotePlus/status/1849174297333703001" target="_blank">詳しくはこちら！</a>
+                    </blockquote>
+                    <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         【📢重要なお知らせ】 NX-Jikkyo から本家ニコニコ実況へコメントを投稿できるようになりました！！🎉🎊<br>
                         本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
                         連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。
@@ -16,7 +20,6 @@
                         <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフいただけると大変モチベ上がるのでぜひ🙇🙏</a>
                     </div>
                     <div class="mt-1">
-                        試行錯誤を重ね、<a class="link" href="https://x.com/TVRemotePlus/status/1824379610189955321" target="_blank">サーバーの安定性を大幅に改善しました！</a> コメント詰まりや接続切断もほぼ起きなくなっているはずです…！<br>
                         📢 <a class="link" href="https://forms.gle/C4jnW2jGX4H5AApSA" target="_blank">利用者アンケート・フィードバック</a> 📢 を実施中です！ぜひ率直なご意見をお聞かせください🙏🙏
                     </div>
                 </div>

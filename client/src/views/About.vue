@@ -10,7 +10,11 @@
                     連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。
                 </blockquote>
                 <blockquote class="mt-5">
-                    <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong>
+                    <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong><br>
+                    <p class="mt-2">
+                        <strong>さらに、<a class="link" href="https://play.google.com/store/apps/details?id=net.tsukumijima.nxjikkyo.android" target="_blank">NX-Jikkyo の Android 版アプリ</a> をリリースしました！🎉🎊</strong><br>
+                        「ホーム画面に追加」でインストールしたアプリ (PWA) との機能的な違いはありませんが、100人以上インストール数がないとアプリ検索に全然載らないみたいなので、ぜひインストールを🙏 <a class="link" href="https://x.com/TVRemotePlus/status/1849174297333703001" target="_blank">詳しくはこちら！</a>
+                    </p>
                 </blockquote>
                 <h1 class="mt-5">NX-Jikkyo とは</h1>
                 <p class="mt-4 text-text-darken-1">
