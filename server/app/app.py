@@ -80,8 +80,9 @@ CORS_ORIGINS = ['*'] if CONFIG.ENVIRONMENT == 'Develop' else []
 app.add_middleware(
     CORSMiddleware,
     allow_origins = CORS_ORIGINS,
-    allow_methods = CORS_ORIGINS,
-    allow_headers = CORS_ORIGINS,
+    # すべての HTTP メソッドと HTTP ヘッダーを許可
+    allow_methods = ['*'],
+    allow_headers = ['*'],
     allow_credentials = True,
 )
 
