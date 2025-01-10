@@ -277,8 +277,13 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
             # jk の prefix つきのチャンネル ID
             channel_id = f'jk{channel_id_int}'
 
+            # 既存のログがあれば、肥大化を防ぐためにログファイルを削除
+            log_file_path = LOGS_DIR / f'NDGRClient-{channel_id}.log'
+            if log_file_path.is_file():
+                log_file_path.unlink()
+
             # NDGRClient を初期化
-            ndgr_client = NDGRClient(channel_id, verbose=True, log_path=LOGS_DIR / f'NDGRClient-{channel_id}.log')
+            ndgr_client = NDGRClient(channel_id, verbose=True, log_path=log_file_path)
 
             # コメントのストリーミング処理を開始
             ## NDGRClient.streamComments() は通常エンドレスに実行され続ける
@@ -387,7 +392,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                     logging.error(traceback.format_exc())
                     logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 10 seconds...')
                     # NDGRClient を再初期化
-                    ndgr_client = NDGRClient(channel_id, verbose=True, log_path=LOGS_DIR / f'NDGRClient-{channel_id}.log')
+                    ndgr_client = NDGRClient(channel_id, verbose=True, log_path=log_file_path)
                     await asyncio.sleep(10)
                 else:
                     break  # エラーが発生しなかった場合はループを抜ける
