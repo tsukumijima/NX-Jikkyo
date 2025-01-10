@@ -57,6 +57,8 @@ JIKKYO_ID_TO_TVER_BROADCASTER_INFO_MAP: dict[str, TVerBroadcasterInfo] = {
     'jk191': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=20),
     'jk192': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=21),
     'jk193': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=22),
+    'jk200': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=23),
+    'jk201': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=24),
     'jk211': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=26),
     'jk222': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=27),
     'jk236': TVerBroadcasterInfo(type='bs', area=23, broadcaster_id=31),
