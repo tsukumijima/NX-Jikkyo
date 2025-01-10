@@ -40,6 +40,11 @@
                         <span class="navigation__link-text">公式 Twitter</span>
                     </a>
                     <a v-ripple class="navigation__link" active-class="navigation__link--active"
+                        href="https://play.google.com/store/apps/details?id=net.tsukumijima.nxjikkyo.android" target="_blank">
+                        <Icon class="navigation__link-icon" icon="basil:android-outline" width="26px" />
+                        <span class="navigation__link-text">Android アプリ</span>
+                    </a>
+                    <a v-ripple class="navigation__link" active-class="navigation__link--active"
                         href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank"
                         :class="{
                             'navigation__link--develop-version': versionStore.is_client_develop_version,

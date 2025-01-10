@@ -32,6 +32,13 @@
                             公式 Twitter
                         </span>
                     </v-btn>
+                    <v-btn variant="flat" class="settings-navigation__button"
+                        href="https://play.google.com/store/apps/details?id=net.tsukumijima.nxjikkyo.android" target="_blank">
+                        <Icon icon="basil:android-outline" width="26px" />
+                        <span class="ml-4">
+                            Android アプリ
+                        </span>
+                    </v-btn>
                     <v-btn variant="flat" class="settings-navigation__button settings-navigation__button--version"
                         :class="{'settings-navigation__button--version-highlight': versionStore.is_update_available}"
                         href="https://github.com/tsukumijima/NX-Jikkyo" target="_blank">
