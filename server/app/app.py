@@ -186,7 +186,6 @@ tortoise.contrib.fastapi.register_tortoise(
 if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
     # サーバーの初回起動時のみ、チャンネル情報をマスタデータとして登録
-    @app.on_event('startup')
     async def RegisterMasterChannels():
 
         # マスタデータのチャンネル情報
@@ -253,7 +252,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
     # サーバー起動時にチャンネルごとに同時接続数カウントを 0 にリセット
     ## サーバーは再起動しても Redis サーバーは再起動しない場合があり、そうした状況でカウントの整合性を保つために必要
-    @app.on_event('startup')
     async def ResetViewerCount():
 
         # チャンネルごとに保存された同時接続数カウントをリセット
@@ -265,7 +263,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     # サーバー起動時にニコニコ実況の各実況チャンネルのコメントのリアルタイムストリーミングを開始
     # ストリーミングで取得したコメントは随時 NX-Jikkyo のコメントとして「投稿」する
     ## この処理はサーバー起動時に 1 回だけ実行される
-    @app.on_event('startup')
     async def StartStreamNicoliveComments():
 
         # ニコニコ実況で実装されている実況チャンネル (jk の prefix なし)
@@ -404,8 +401,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
 
     # 10秒に1回、現在のチャンネル情報を DB から取得し、Redis にキャッシュとして格納する
-    ## wait_first を指定していないので起動時にも実行される
-    @app.on_event('startup')
     async def CacheChannelResponses():
 
         # 最新のチャンネル情報を取得
@@ -424,8 +419,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
 
     # 念のため、1時間に1回採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
-    ## wait_first を指定していないので起動時にも実行される
-    @app.on_event('startup')
     async def SyncCommentCounters():
 
         threads = await Thread.all()
@@ -447,8 +440,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
     # 1時間に1回、明日分の全実況チャンネルのスレッド予定が DB に登録されているかを確認し、もしなければ登録する
     # スレッドは同じ実況チャンネル内では絶対に放送時間が被ってはならないし、基本放送時間は 04:00 〜 翌朝 04:00 の 24 時間
-    ## wait_first を指定していないので起動時にも実行される
-    @app.on_event('startup')
     async def RegisterThreads():
 
         # 今日と明日用のスレッドが登録されているかを確認し、もしなければ登録する
@@ -538,7 +529,12 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     async def StartScheduler():
         """ APScheduler のジョブを登録して開始する """
 
-        # 各ジョブを登録（非同期関数用の設定を追加）
+        # 初回起動時に実行する処理群
+        await RegisterMasterChannels()
+        await ResetViewerCount()
+        await StartStreamNicoliveComments()
+
+        # 各定期実行ジョブを登録
         scheduler.add_job(
             CacheChannelResponses,
             'interval',
@@ -561,7 +557,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
             replace_existing = True,
         )
 
-        # 起動時に一度実行（非同期関数なので await で実行）
+        # ジョブを起動時に一度実行
         await CacheChannelResponses()
         await SyncCommentCounters()
         await RegisterThreads()
