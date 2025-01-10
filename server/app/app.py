@@ -8,12 +8,12 @@ import traceback
 import tortoise.contrib.fastapi
 import tortoise.log
 import uuid
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi_utils.tasks import repeat_every
 from ndgr_client import NDGRClient
 from pathlib import Path
 from pydantic import TypeAdapter
@@ -406,7 +406,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     # 10秒に1回、現在のチャンネル情報を DB から取得し、Redis にキャッシュとして格納する
     ## wait_first を指定していないので起動時にも実行される
     @app.on_event('startup')
-    @repeat_every(seconds=10, logger=logging.logger)
     async def CacheChannelResponses():
 
         # 最新のチャンネル情報を取得
@@ -427,12 +426,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     # 念のため、1時間に1回採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
     ## wait_first を指定していないので起動時にも実行される
     @app.on_event('startup')
-    @repeat_every(seconds=60 * 60, logger=logging.logger)
     async def SyncCommentCounters():
-
-        # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
-        if CONFIG.SPECIFIED_SERVER_PORT != CONFIG.SERVER_PORT:
-            return
 
         threads = await Thread.all()
         for thread in threads:
@@ -455,7 +449,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     # スレッドは同じ実況チャンネル内では絶対に放送時間が被ってはならないし、基本放送時間は 04:00 〜 翌朝 04:00 の 24 時間
     ## wait_first を指定していないので起動時にも実行される
     @app.on_event('startup')
-    @repeat_every(seconds=60 * 60, logger=logging.logger)
     async def RegisterThreads():
 
         # 今日と明日用のスレッドが登録されているかを確認し、もしなければ登録する
@@ -536,3 +529,49 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
         ## 必ず発生するわけではないが、一度起きると次の日のスレッドがずっと作成されない致命的な問題になる
         ## おそらくイベントループ関連の稀な症状を引いてしまっているみたいだが、とりあえずこれで直る
         await asyncio.sleep(0.1)
+
+    # APScheduler を初期化
+    scheduler = AsyncIOScheduler()
+
+    # サーバー起動時に APScheduler のジョブを登録
+    @app.on_event('startup')
+    async def StartScheduler():
+        """ APScheduler のジョブを登録して開始する """
+
+        # 各ジョブを登録（非同期関数用の設定を追加）
+        scheduler.add_job(
+            CacheChannelResponses,
+            'interval',
+            seconds = 10,  # 10秒ごとに実行
+            id = 'cache_channel_responses',
+            replace_existing = True,
+        )
+        scheduler.add_job(
+            SyncCommentCounters,
+            'interval',
+            hours = 1,  # 1時間ごとに実行
+            id = 'sync_comment_counters',
+            replace_existing = True,
+        )
+        scheduler.add_job(
+            RegisterThreads,
+            'interval',
+            hours = 1,  # 1時間ごとに実行
+            id = 'register_threads',
+            replace_existing = True,
+        )
+
+        # 起動時に一度実行（非同期関数なので await で実行）
+        await CacheChannelResponses()
+        await SyncCommentCounters()
+        await RegisterThreads()
+
+        # スケジューラーを開始
+        scheduler.start()
+
+
+    # サーバー終了時に APScheduler を停止
+    @app.on_event('shutdown')
+    async def StopScheduler():
+        """ APScheduler を停止する """
+        scheduler.shutdown()
