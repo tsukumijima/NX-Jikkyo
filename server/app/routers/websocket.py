@@ -137,6 +137,26 @@ async def WatchSessionAPI(
     ニコ生の視聴セッション WebSocket 互換 API
     """
 
+    # チャンネル ID のリダイレクト処理
+    ## jk263 (BSJapanext) への接続は jk200 (BS10) にリダイレクトする
+    ## ただし、過去ログ取得時 (thread_id が指定されている場合) はリダイレクトしない
+    original_channel_id = channel_id
+    if channel_id == 'jk263':
+        # thread_id が指定されている場合は、そのスレッドが jk263 のものかを確認
+        if thread_id is not None:
+            thread = await Thread.filter(id=thread_id).first()
+            if thread and thread.channel_id == 263:
+                # jk263 の過去ログの場合はリダイレクトしない
+                pass
+            else:
+                # thread_id が存在しないか、jk263 以外のスレッドの場合は jk200 にリダイレクト
+                channel_id = 'jk200'
+                logging.info(f'WatchSessionAPI: Channel {original_channel_id} redirected to {channel_id} (thread not found or not jk263).')
+        else:
+            # 通常の接続時は jk200 にリダイレクト
+            channel_id = 'jk200'
+            logging.info(f'WatchSessionAPI: Channel {original_channel_id} redirected to {channel_id}.')
+
     # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得
     try:
         channel_id_int = int(channel_id.replace('jk', ''))
@@ -577,7 +597,16 @@ async def CommentSessionAPI(
     # コメントセッションはあくまで WebSocket でリクエストされたスレッド ID に基づいて送るので、
     # チャンネル ID はログ出力とフォールバック以外では使わない
 
+    # チャンネル ID のリダイレクト処理
+    ## jk263 (BSJapanext) への接続は jk200 (BS10) にリダイレクトする
+    ## ただし、thread コマンドで指定されたスレッドが jk263 のものの場合はリダイレクトしない
+    original_channel_id = channel_id
+    if channel_id == 'jk263':
+        channel_id = 'jk200'  # 一旦 jk200 にリダイレクト
+        logging.info(f'CommentSessionAPI: Channel {original_channel_id} redirected to {channel_id}.')
+
     # チャンネル ID (jk の prefix 付きなので一旦数値に置換してから) を取得
+    ## この channel_id_int はスレッド ID 指定が省略された場合にのみ利用される
     try:
         channel_id_int = int(channel_id.replace('jk', ''))
     except ValueError:
@@ -621,6 +650,10 @@ async def CommentSessionAPI(
         """
 
         nonlocal sender_task
+        nonlocal channel_id  # channel_id を変更可能にする
+
+        # jk263 の場合のみ、スレッドの所属チャンネル確認処理が必要
+        need_check_thread_owner = original_channel_id == 'jk263'
 
         while True:
 
@@ -664,6 +697,13 @@ async def CommentSessionAPI(
                         # thread: スレッド ID
                         if 'thread' in message['thread'] and message['thread']['thread'] != '':
                             thread_id = int(message['thread']['thread'])
+                            # jk263 の場合のみ、スレッドの所属チャンネル確認処理を実行
+                            if need_check_thread_owner:
+                                thread = await Thread.filter(id=thread_id).first()
+                                if thread and thread.channel_id == 263:
+                                    # jk263 の過去ログの場合は channel_id を jk263 に戻す
+                                    channel_id = original_channel_id
+                                    logging.info(f'CommentSessionAPI: Channel {channel_id} restored for jk263 thread.')
                         else:
                             # スレッド ID が省略されたとき、現在アクティブな (放送中の) スレッドの ID を取得 (NX-Jikkyo 独自仕様)
                             ## 旧ニコ生のコメントサーバーではスレッド ID の指定は必須だった

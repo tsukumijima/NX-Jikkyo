@@ -76,7 +76,7 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
         FROM channels c
         LEFT JOIN threads t ON c.id = t.channel_id
         LEFT JOIN comment_counters cc ON t.id = cc.thread_id
-        WHERE 1=1
+        WHERE c.id != 263
     '''
     if not full:
         query += ' AND t.start_at >= DATE_SUB(NOW(), INTERVAL 4 DAY)'
@@ -85,6 +85,17 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
 
     # 現在放送中・次の放送予定の番組情報を取得
     program_infos = await GetNowAndNextProgramInfos()
+
+    # jk200 のアクティブなスレッド情報を取得 (jk263 用)
+    now = timezone.now()
+    active_thread_jk200 = None
+    for row in channels:
+        if row['id'] == 200:  # jk200
+            start_at = row['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+            end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+            if start_at <= now <= end_at:
+                active_thread_jk200 = row
+                break
 
     channel_responses: list[ChannelResponse] = []
     current_channel_id: int | None = None
@@ -148,6 +159,7 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
             comments = cast(int, row['comments_count']),
         ))
 
+    # 最後のチャンネルの情報を追加
     if current_channel_id is not None:
         channel_responses.append(ChannelResponse(
             id = f'jk{current_channel_id}',
@@ -156,6 +168,55 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
             program_following = program_infos.get(f'jk{current_channel_id}', (None, None))[1],
             threads = threads,
         ))
+
+    # jk263 の情報を追加（アクティブなスレッドと明日のスレッドの情報を jk200 から取得）
+    threads_jk263: list[ThreadResponse] = []
+
+    # アクティブなスレッドの情報を jk200 から取得
+    if active_thread_jk200 is not None:
+        start_at = active_thread_jk200['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+        end_at = active_thread_jk200['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+        threads_jk263.append(ThreadResponse(
+            id = cast(int, active_thread_jk200['thread_id']),
+            start_at = start_at,
+            end_at = end_at,
+            duration = cast(int, active_thread_jk200['duration']),
+            title = cast(str, active_thread_jk200['title']),
+            description = cast(str, active_thread_jk200['thread_description']),
+            status = 'ACTIVE',
+            jikkyo_force = await REDIS_CLIENT.zcount(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:jk200', time.time() - 60, time.time()),
+            viewers = int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, 'jk200') or 0),
+            comments = cast(int, active_thread_jk200['comments_count']),
+        ))
+
+    # 明日のスレッドの情報を jk200 から取得
+    for row in channels:
+        if row['id'] == 200:  # jk200
+            start_at = row['start_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+            if start_at > now:  # 未来のスレッド
+                threads_jk263.append(ThreadResponse(
+                    id = cast(int, row['thread_id']),
+                    start_at = start_at,
+                    end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo')),
+                    duration = cast(int, row['duration']),
+                    title = cast(str, row['title']),
+                    description = cast(str, row['thread_description']),
+                    status = 'UPCOMING',
+                    jikkyo_force = None,
+                    viewers = None,
+                    comments = cast(int, row['comments_count']),
+                ))
+
+    # チャンネルレスポンスを ID でソートし直す
+    # jk263 を適切な位置（jk260 と jk265 の間）に挿入
+    channel_responses.append(ChannelResponse(
+        id = 'jk263',
+        name = 'BSJapanext',
+        program_present = program_infos.get('jk200', (None, None))[0],  # jk200 の番組情報を使用
+        program_following = program_infos.get('jk200', (None, None))[1],  # jk200 の番組情報を使用
+        threads = threads_jk263,
+    ))
+    channel_responses.sort(key=lambda x: int(x.id.replace('jk', '')))
 
     return channel_responses
 

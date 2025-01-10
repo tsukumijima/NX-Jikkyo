@@ -214,12 +214,14 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
             'jk191': {'name': 'WOWOW PRIME'},
             'jk192': {'name': 'WOWOW LIVE'},
             'jk193': {'name': 'WOWOW CINEMA'},
+            'jk200': {'name': 'BS10'},  # 旧BSJapanext
+            'jk201': {'name': 'BS10スターチャンネル'},
             'jk211': {'name': 'BS11'},
             'jk222': {'name': 'BS12'},
             'jk236': {'name': 'BSアニマックス'},
             'jk252': {'name': 'WOWOW PLUS'},
             'jk260': {'name': 'BS松竹東急'},
-            'jk263': {'name': 'BSJapanext'},
+            'jk263': {'name': 'BSJapanext'},  # 後方互換性のために維持。WebSocket 接続時は jk200 にリダイレクト
             'jk265': {'name': 'BSよしもと'},
             'jk333': {'name': 'AT-X'},
         }
@@ -459,6 +461,10 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
         # 今日と明日用のスレッドが登録されているかを確認し、もしなければ登録する
         channels = await Channel.all()
         for channel in channels:
+
+            # jk263 (BSJapanext) は jk200 (BS10) のエイリアスなので、新規スレッドは作成しない
+            if channel.id == 263:
+                continue
 
             # 今日の日付を取得
             now = timezone.now()
