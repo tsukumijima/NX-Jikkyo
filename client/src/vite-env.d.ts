@@ -1,5 +1,4 @@
 /// <reference types="vite/client" />
-/// <reference types="vite-plugin-comlink/client" />
 
 import { Icon } from '@iconify/vue';
 
