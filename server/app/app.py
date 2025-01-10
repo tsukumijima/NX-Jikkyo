@@ -204,7 +204,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
             'jk13': {'name': 'サンテレビ'},
             'jk14': {'name': 'KBS京都'},
             'jk101': {'name': 'NHK BS'},
-            'jk103': {'name': 'NHK BSプレミアム'},
+            'jk103': {'name': 'NHK BSプレミアム4K'},
             'jk141': {'name': 'BS日テレ'},
             'jk151': {'name': 'BS朝日'},
             'jk161': {'name': 'BS-TBS'},
