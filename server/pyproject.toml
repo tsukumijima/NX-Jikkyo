@@ -19,7 +19,7 @@ cryptography = "^43.0.3"
 fastapi = "^0.115.3"
 fastapi-utils = "^0.7.0"
 httpx = {version = "^0.27.2", extras = ["http2"]}
-ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "5c597a23a5c1379c5f6b6fd2b1d8c9a7138dd84c" }
+ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "b5124e67c17e0643cc355ae36811ab3302e768d3" }
 pydantic = "^2.9.2"
 pydantic-settings = "~2.5.2"
 python-jose = "^3.3.0"
