@@ -6,13 +6,12 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto" style="max-width: 850px">
-                        【📢お知らせ】 <a class="link" href="https://play.google.com/store/apps/details?id=net.tsukumijima.nxjikkyo.android" target="_blank">NX-Jikkyo の Android 版アプリ</a> をリリースしました！🎉🎊<br>
-                        この Web サイトから「ホーム画面に追加」でインストールしたアプリ (PWA) との機能的な違いはありませんが、100人以上インストール数がないとアプリ検索に全然載らないみたいなので、ぜひインストールを🙏 <a class="link" href="https://x.com/TVRemotePlus/status/1849174297333703001" target="_blank">詳しくはこちら！</a>
+                        【📢お知らせ】 01/10 中に断続的に発生した、利用している <a class="link" href="https://www.cloudflare.com/ja-jp/learning/cdn/what-is-a-cdn/" target="_blank">CDN</a> の <a class="link" href="https://www.cloudflare.com/" target="_blank">Cloudflare</a> の障害 or バグで NX-Jikkyo のブラウザキャッシュに不正なデータが混入したことにより、一部環境ではエラーが発生し動作しなくなっています。<br>
+                        ブラウザの URL バーの左側のアイコンから「サイトの設定」を開きサイトデータを消去、可能であればブラウザのキャッシュも削除し、ページを再読み込みすることで通常解決しますので、一度お試しください。<a class="link" href="https://x.com/TVRemotePlus/status/1877755182236487831" target="_blank">詳細はこちら</a>
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
-                        【📢重要なお知らせ】 NX-Jikkyo から本家ニコニコ実況へコメントを投稿できるようになりました！！🎉🎊<br>
-                        本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
-                        連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。
+                        📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
+                        <span style="font-weight: normal;">連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。</span>
                     </blockquote>
                     <div class="mt-1">
                         <!-- eslint-disable-next-line no-irregular-whitespace -->

@@ -5,11 +5,10 @@
             <Navigation />
             <div class="px-5 py-8" style="width: 100%; max-width: 850px; margin: 0 auto; line-height: 1.65;">
                 <blockquote class="font-weight-bold" style="font-size: 15px;">
-                    【📢重要なお知らせ】 NX-Jikkyo から本家ニコニコ実況へコメントを投稿できるようになりました！！🎉🎊<br>
-                    本家ニコニコ実況へのコメント投稿には <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
-                    連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。
+                    📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
+                    <span style="font-weight: normal;">連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。</span>
                 </blockquote>
-                <blockquote class="mt-5">
+                <blockquote class="mt-5" style="font-size: 15px;">
                     <strong>NX-Jikkyo を「<a class="link" href="https://support.google.com/chrome/answer/9658361" target="_blank">ホーム画面に追加</a>」することで、PC のデスクトップやスマホのホーム画面から普通のアプリのように起動できます！特にスマホで実況している方におすすめです。</strong><br>
                     <p class="mt-2">
                         <strong>さらに、<a class="link" href="https://play.google.com/store/apps/details?id=net.tsukumijima.nxjikkyo.android" target="_blank">NX-Jikkyo の Android 版アプリ</a> をリリースしました！🎉🎊</strong><br>
@@ -188,7 +187,7 @@
                     </ul>
                 </div>
                 <p class="mt-5 text-text-darken-1 text-right">
-                    2024/06/10 (Last Update: 2024/09/09)<br>
+                    2024/06/10 (Last Update: 2025/01/11)<br>
                     <a class="link" href="https://blog.tsukumijima.net" target="_blank">tsukumi</a>
                     (<a class="link" href="https://twitter.com/TVRemotePlus" target="_blank">Twitter@TVRemotePlus</a> /
                     <a class="link" href="https://blog.tsukumijima.net/" target="_blank">Blog</a> /
