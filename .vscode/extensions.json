@@ -4,6 +4,7 @@
         "editorconfig.editorconfig",
         "ms-python.python",
         "ms-python.vscode-pylance",
+        "vue.volar",
         "yzhang.markdown-all-in-one",
     ]
 }
