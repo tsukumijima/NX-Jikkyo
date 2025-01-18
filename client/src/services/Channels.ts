@@ -202,6 +202,8 @@ class Channels {
                                 return 8;
                             case 'jk191':
                                 return 9;
+                            case 'jk200':
+                                return 10;
                             case 'jk211':
                                 return 11;
                             case 'jk222':

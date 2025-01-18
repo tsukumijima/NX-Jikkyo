@@ -97,6 +97,12 @@ class APIClient {
             clarifyTimeoutError: true,
         };
 
+        // API へのリクエスト URL にタイムスタンプを付与して、万が一 HTTP 301 無限リダイレクトが発生した場合の緩和策を講じる
+        if (request.url?.startsWith('http') === false) {
+            const timestamp = new Date().getTime();
+            request.url = `${request.url}${request.url?.includes('?') ? '&' : '?'}_=${timestamp}`;
+        }
+
         // Axios で HTTP リクエストを送信し、レスポンスを受け取る
         const result: AxiosResponse<T> | AxiosError<IErrorResponseData> = await axios.request(request).catch((error) => error);
 
