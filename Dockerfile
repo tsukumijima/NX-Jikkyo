@@ -1,6 +1,6 @@
 
 # Python の公式イメージをベースにする
-FROM python:3.11.9-bookworm
+FROM python:3.13.1-bookworm
 
 # タイムゾーンを東京に設定
 ENV TZ=Asia/Tokyo

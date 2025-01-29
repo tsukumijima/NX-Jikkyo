@@ -10,7 +10,7 @@ dev    = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose
 aerich = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose run --rm --service-ports --volume=${PWD}/server/app/:/code/server/app/ --entrypoint=/code/server/.venv/bin/aerich nx-jikkyo"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.13,<3.14"
 aerich = "^0.7.2"
 aiomysql = "^0.2.0"
 apscheduler = "^3.11.0"
@@ -19,7 +19,7 @@ cryptography = "^43.0.3"
 fastapi = "^0.115.3"
 fastapi-utils = "^0.7.0"
 httpx = {version = "^0.27.2", extras = ["http2"]}
-ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "b5124e67c17e0643cc355ae36811ab3302e768d3" }
+ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "094c3beb7a8b18616d1e2fe17a519c4f0c38b78d" }
 pydantic = "^2.9.2"
 pydantic-settings = "~2.5.2"
 python-jose = "^3.3.0"
