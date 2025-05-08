@@ -5,10 +5,6 @@
             <Navigation />
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
-                    <blockquote class="text-left mx-auto" style="max-width: 850px">
-                        【📢お知らせ】 NX-Jikkyo で利用している <a class="link" href="https://www.cloudflare.com/ja-jp/learning/cdn/what-is-a-cdn/" target="_blank">CDN</a> の <a class="link" href="https://www.cloudflare.com/" target="_blank">Cloudflare</a> の障害により 01/10・01/18 中に瞬間的な HTTP 301 無限リダイレクトが発生した関係で、一部環境ではエラーが発生し動作しなくなっています。<br>
-                        デベロッパーツールを開いた状態 → リロードボタンを右クリック →「キャッシュの消去とハード再読み込み」か、ブラウザの URL バーの左側のアイコンから「サイトの設定」→ サイトデータの消去、ブラウザキャッシュの削除で通常解決しますので、一度お試しください。<a class="link" href="https://blog.tsukumijima.net/article/nx-jikkyo-not-working/" target="_blank">詳しい説明記事はこちら</a>
-                    </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
                         <span style="font-weight: normal;">連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。</span>
