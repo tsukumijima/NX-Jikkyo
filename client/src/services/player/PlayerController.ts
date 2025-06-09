@@ -6,7 +6,6 @@ import Hls from 'hls.js';
 import mpegts from 'mpegts.js';
 
 
-import APIClient from '@/services/APIClient';
 import DocumentPiPManager from '@/services/player/managers/DocumentPiPManager';
 import KeyboardShortcutManager from '@/services/player/managers/KeyboardShortcutManager';
 import LiveCommentManager from '@/services/player/managers/LiveCommentManager';
@@ -591,7 +590,7 @@ class PlayerController {
         this.player.controller.setAutoHide = (time: number) => {};
 
         // DPlayer に動画再生系のイベントハンドラーを登録する
-        // this.setupVideoPlaybackHandler();
+        this.setupVideoPlaybackHandler();
 
         // DPlayer のフルスクリーン関係のメソッドを無理やり上書きし、NX-Jikkyo の UI と統合する
         this.setupFullscreenHandler();
@@ -886,28 +885,28 @@ class PlayerController {
         // ライブ視聴: 再生停止状態かつ現在の再生位置からバッファが 30 秒以上離れていないかを 60 秒おきに監視し、そうなっていたら強制的にシークする
         // mpegts.js の仕様上、MSE 側に未再生のバッファが貯まり過ぎると新規に SourceBuffer が追加できなくなるため、強制的に接続が切断されてしまう
         // 再生停止状態でも定期的にシークすることで、バッファが貯まりすぎないように調節する
-        if (this.playback_mode === 'Live') {
-            this.live_force_seek_interval_timer_cancel = Utils.setIntervalInWorker(() => {
-                if (this.player === null) return;
-                if ((this.player.video.paused && this.player.video.buffered.length >= 1) &&
-                    (this.player.video.buffered.end(0) - this.player.video.currentTime > 30)) {
-                    this.player.sync();
-                }
-            }, 60 * 1000);
-        }
+        // if (this.playback_mode === 'Live') {
+        //     this.live_force_seek_interval_timer_cancel = Utils.setIntervalInWorker(() => {
+        //         if (this.player === null) return;
+        //         if ((this.player.video.paused && this.player.video.buffered.length >= 1) &&
+        //             (this.player.video.buffered.end(0) - this.player.video.currentTime > 30)) {
+        //             this.player.sync();
+        //         }
+        //     }, 60 * 1000);
+        // }
 
         // ビデオ視聴: ビデオストリームのアクティブ状態を維持するために 5 秒おきに Keep-Alive API にリクエストを送る
         // HLS プレイリストやセグメントのリクエストが行われたタイミングでも Keep-Alive が行われるが、
         // それだけではタイミング次第では十分ではないため、定期的に Keep-Alive を行う
         // Keep-Alive が行われなくなったタイミングで、サーバー側で自動的にビデオストリームの終了処理 (エンコードタスクの停止) が行われる
-        if (this.playback_mode === 'Video') {
-            this.video_keep_alive_interval_timer_cancel = Utils.setIntervalInWorker(async () => {
-                // 画質切り替えでベース URL が変わることも想定し、あえて毎回 API URL を取得している
-                if (this.player === null) return;
-                const api_quality = PlayerUtils.extractVideoAPIQualityFromDPlayer(this.player);
-                await APIClient.put(`${Utils.api_base_url}/streams/video/${player_store.recorded_program.id}/${api_quality}/keep-alive`);
-            }, 5 * 1000);
-        }
+        // if (this.playback_mode === 'Video') {
+        //     this.video_keep_alive_interval_timer_cancel = Utils.setIntervalInWorker(async () => {
+        //         // 画質切り替えでベース URL が変わることも想定し、あえて毎回 API URL を取得している
+        //         if (this.player === null) return;
+        //         const api_quality = PlayerUtils.extractVideoAPIQualityFromDPlayer(this.player);
+        //         await APIClient.put(`${Utils.api_base_url}/streams/video/${player_store.recorded_program.id}/${api_quality}/keep-alive`);
+        //     }, 5 * 1000);
+        // }
 
         // 再生/停止されたときのイベント
         // デバイスの通知バーからの制御など、ブラウザの画面以外から動画の再生/停止が行われる事もあるため必要
@@ -926,22 +925,34 @@ class PlayerController {
         this.player.on('play', on_play_or_pause);
         this.player.on('pause', on_play_or_pause);
 
+        // ビデオ視聴: 再生位置が変更されたときのイベント
+        // コメントの再生位置追従機能のために使用する
+        if (this.playback_mode === 'Video') {
+            this.player.on('timeupdate', () => {
+                if (this.player === null) return;
+                // PlaybackPositionChanged イベントを発行し、コメントパネルに現在の再生位置を通知
+                player_store.event_emitter.emit('PlaybackPositionChanged', {
+                    playback_position: this.player.video.currentTime,
+                });
+            });
+        }
+
         // 再生が一時的に止まってバッファリングしているとき/再び再生されはじめたときのイベント
         // バッファリングの Progress Circular の表示を制御する
-        this.player.on('waiting', () => {
-            // Progress Circular を表示する
-            player_store.is_video_buffering = true;
-        });
-        this.player.on('playing', () => {
-            // ロード中 (映像が表示されていない) でなければ Progress Circular を非表示にする
-            if (player_store.is_loading === false) {
-                player_store.is_video_buffering = false;
-            }
-            // ライブ視聴: 再生が開始できていない場合に再生状態の復旧を試みる
-            if (this.playback_mode === 'Live') {
-                this.recoverPlayback();
-            }
-        });
+        // this.player.on('waiting', () => {
+        //     // Progress Circular を表示する
+        //     player_store.is_video_buffering = true;
+        // });
+        // this.player.on('playing', () => {
+        //     // ロード中 (映像が表示されていない) でなければ Progress Circular を非表示にする
+        //     if (player_store.is_loading === false) {
+        //         player_store.is_video_buffering = false;
+        //     }
+        //     // ライブ視聴: 再生が開始できていない場合に再生状態の復旧を試みる
+        //     if (this.playback_mode === 'Live') {
+        //         this.recoverPlayback();
+        //     }
+        // });
 
         // 今回 (DPlayer 初期化直後) と画質切り替え開始時の両方のタイミングで実行する必要がある処理
         // mpegts.js などの DPlayer のプラグインは画質切り替え時に一旦破棄されるため、再度イベントハンドラーを登録する必要がある
@@ -1144,10 +1155,10 @@ class PlayerController {
         };
 
         // 初回実行
-        on_init_or_quality_change();
+        // on_init_or_quality_change();
 
         // 画質切り替え開始時のイベント
-        this.player.on('quality_start', on_init_or_quality_change);
+        // this.player.on('quality_start', on_init_or_quality_change);
 
         // 動画の統計情報の表示/非表示を切り替える隠しコマンドのイベントハンドラーを登録
         // iOS / iPadOS Safari では DPlayer 側の contextmenu が長押ししても発火しないため、代替の表示手段として用意

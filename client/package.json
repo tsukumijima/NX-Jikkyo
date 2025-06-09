@@ -33,6 +33,7 @@
         "swiper": "^11.1.11",
         "tslib": "^2.7.0",
         "typescript-cookie": "^1.0.6",
+        "virtua": "^0.41.5",
         "vue": "^3.4.38",
         "vue-router": "^4.4.3",
         "vue-virtual-scroller": "^2.0.0-beta.8",

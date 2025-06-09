@@ -45,6 +45,10 @@ export type PlayerEvents = {
     CommentSendCompleted: {
         comment: ICommentData;  // 送信したコメントデータ (を整形したもの)
     }
+    // ビデオ視聴: プレイヤーの再生位置が変更されたことを通知する
+    PlaybackPositionChanged: {
+        playback_position: number;  // 現在の再生位置 (秒単位)
+    }
 };
 
 
