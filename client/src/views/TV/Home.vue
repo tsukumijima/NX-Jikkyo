@@ -6,7 +6,8 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
-                        📢 本家ニコニコ実況に <a class="link" href="https://blog.nicovideo.jp/niconews/250549.html" target="_blank">サンテレビ</a> が追加されたことに伴い、<br>NX-Jikkyo でもニコ生側のコメント取り込み・コメント投稿に対応しました！
+                        📢 <a class="link" href="https://blog.nicovideo.jp/niconews/250549.html" target="_blank">ニコニコ実況へのサンテレビの追加</a> に伴い、NX-Jikkyo でもニコ生側のコメント取り込み・投稿に対応しました！<br>
+                        そして NX-Jikkyo 自体も、<a class="link" href="https://x.com/TVRemotePlus/status/1932106830664327246" target="_blank">2025/06/10 で運営開始から1周年を迎えました！</a> 🎉🎊 開発に苦労した甲斐があり、半年以上安定運用できていて安堵しています。今後も可能な限り維持していきますのでよろしくお願いします…！
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
