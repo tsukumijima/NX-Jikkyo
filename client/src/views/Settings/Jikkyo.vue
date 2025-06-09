@@ -108,6 +108,17 @@
                     :step="1" :min="20" :max="60" v-model="settingsStore.settings.comment_font_size">
                 </v-slider>
             </div>
+            <div class="settings__item">
+                <div class="settings__item-heading">コメント表示の遅延時間 (NEW!)</div>
+                <div class="settings__item-label">
+                    リアルタイムでコメントを受信した際に、コメント描画やコメントリストへの表示を遅らせる秒数を設定します。<br>
+                    ネット配信でテレビを視聴している場合や、意図的にコメントを遅らせて表示したい場合に便利です。<br>
+                    デフォルトは 0 秒（遅延なし）です。<br>
+                </div>
+                <v-slider class="settings__item-form" color="primary" show-ticks="always" thumb-label hide-details
+                    :step="0.5" :min="0" :max="60" v-model="settingsStore.settings.comment_delay_seconds">
+                </v-slider>
+            </div>
             <div class="settings__item settings__item--switch">
                 <label class="settings__item-heading" for="close_comment_form_after_sending">コメント送信後にコメント入力フォームを閉じる</label>
                 <label class="settings__item-label" for="close_comment_form_after_sending">

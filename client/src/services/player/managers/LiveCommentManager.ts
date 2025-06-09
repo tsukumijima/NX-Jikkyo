@@ -581,17 +581,25 @@ class LiveCommentManager implements PlayerManager {
                 return;
             }
 
-            // 配信で発生する遅延分待ってから
-            // おおよその遅延時間は video.buffered.end(0) - video.currentTime で取得できる
+            // 配信で発生する遅延分とユーザー設定の遅延分を計算
+            // おおよその配信遅延時間は video.buffered.end(0) - video.currentTime で取得できる
             let buffered_end = 0;
             if (this.player.video.buffered.length >= 1) {
                 buffered_end = this.player.video.buffered.end(0);
             }
-            const comment_delay_time = Math.max(buffered_end - this.player.video.currentTime, 0);
+            const auto_delay_time = Math.max(buffered_end - this.player.video.currentTime, 0);
+
+            // ユーザー設定の遅延時間を取得
+            const settings_store = useSettingsStore();
+            const user_delay_time = settings_store.settings.comment_delay_seconds;
+
+            // 総遅延時間は配信遅延とユーザー設定遅延の合計
+            const total_delay_time = auto_delay_time + user_delay_time;
+
             if (Utils.isSafari() === false) {
-                console.debug(`[LiveCommentManager][CommentSession] Delay: ${comment_delay_time} sec.`);
+                console.debug(`[LiveCommentManager][CommentSession] Auto delay: ${auto_delay_time} sec, User delay: ${user_delay_time} sec, Total delay: ${total_delay_time} sec.`);
             }
-            await Utils.sleep(comment_delay_time);
+            await Utils.sleep(total_delay_time);
 
             // コメントを一時バッファに格納し、スロットルを設定してイベントリスナーに送信する
             // コメントの受信間隔が 333ms 以上あれば、今回のコールバックで取得したコメントがダイレクトにイベントリスナーに送信される

@@ -51,6 +51,7 @@ export interface IClientSettings {
     comment_speed_rate: number;
     comment_font_size: number;
     close_comment_form_after_sending: boolean;
+    comment_delay_seconds: number;
     mute_nicolive_comments: boolean;
     mute_nxjikkyo_comments: boolean;
     mute_vulgar_comments: boolean;

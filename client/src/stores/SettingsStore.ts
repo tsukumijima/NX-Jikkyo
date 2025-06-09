@@ -51,6 +51,7 @@ export interface ILocalClientSettings extends IClientSettings {
     comment_speed_rate: number;
     comment_font_size: number;
     close_comment_form_after_sending: boolean;
+    comment_delay_seconds: number;
     mute_nicolive_comments: boolean;
     mute_nxjikkyo_comments: boolean;
     mute_vulgar_comments: boolean;
@@ -170,6 +171,8 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     comment_font_size: 34,
     // コメント送信後にコメント入力フォームを閉じる (Default: オフ)
     close_comment_form_after_sending: false,
+    // コメント表示の遅延秒数 (Default: 0秒)
+    comment_delay_seconds: 0,
 
     // ***** 設定 → ニコニコ実況 (ミュート設定) *****
 
@@ -247,6 +250,7 @@ const SYNCABLE_SETTINGS_KEYS: (keyof IClientSettings)[] = [
     'comment_speed_rate',
     'comment_font_size',
     'close_comment_form_after_sending',
+    'comment_delay_seconds',
     'mute_nicolive_comments',
     'mute_nxjikkyo_comments',
     'mute_vulgar_comments',
