@@ -6,6 +6,9 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
+                        📢 本家ニコニコ実況に <a class="link" href="https://blog.nicovideo.jp/niconews/250549.html" target="_blank">サンテレビ</a> が追加されたことに伴い、<br>NX-Jikkyo でもニコ生側のコメント取り込み・コメント投稿に対応しました！
+                    </blockquote>
+                    <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
                         <span style="font-weight: normal;">連携時に取得したアカウント情報やアクセストークンはお使いのブラウザの Cookie (<code>NX-Niconico-User</code>) にのみ保存され、NX-Jikkyo のサーバーには一切保存されません。ご安心ください。</span>
                     </blockquote>
