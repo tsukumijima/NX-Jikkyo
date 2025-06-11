@@ -226,6 +226,7 @@ export default defineComponent({
             }
             &--active {
                 opacity: 1;
+                z-index: 15;
                 visibility: visible;
                 content-visibility: auto;
             }
@@ -246,7 +247,7 @@ export default defineComponent({
             transition: opacity 0.2s, visibility 0.2s;
             opacity: 0;
             visibility: hidden;
-            z-index: 10;
+            z-index: 20;
 
             @media (hover: none) {
                 transition: none;
