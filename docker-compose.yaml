@@ -7,8 +7,7 @@ services:
     build:
       context: .
     restart: unless-stopped
-    ports:
-      - "${SERVER_PORT}:${SERVER_PORT}"
+    # ポートは Caddy 経由でのみアクセスするため、ホストに直接公開しない
     volumes:
       - type: bind
         source: './.env'
@@ -25,8 +24,6 @@ services:
     depends_on:
       - nx-jikkyo-mysql
       - nx-jikkyo-redis
-    networks:
-      - proxy-network
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -50,8 +47,6 @@ services:
       - type: bind
         source: './my.cnf'
         target: '/etc/mysql/conf.d/my.cnf'
-    networks:
-      - proxy-network
 
   nx-jikkyo-redis:
     image: redis:6.2
@@ -61,9 +56,30 @@ services:
       - type: bind
         source: './server/data/redis/'
         target: '/data'
-    networks:
-      - proxy-network
 
-networks:
-  proxy-network:
-    external: true
+  # 外部向け Caddy リバースプロキシサーバー
+  # Let's Encrypt 自動取得と TLS 終端を提供する
+  # 開発環境では証明書取得は失敗するが、HTTP リバースプロキシとして動作
+  nx-jikkyo-caddy:
+    image: caddy:2-alpine
+    container_name: nx-jikkyo-caddy
+    restart: unless-stopped
+    ports:
+      # 外部向け HTTP/HTTPS ポート
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+    volumes:
+      - type: bind
+        source: './Caddyfile'
+        target: '/etc/caddy/Caddyfile'
+        read_only: true
+      # Let's Encrypt 証明書データの永続化
+      - type: bind
+        source: './server/data/caddy/'
+        target: '/data/caddy/'
+      # Caddy ログの出力先
+      - type: bind
+        source: './server/logs/'
+        target: '/var/log/caddy/'
+    depends_on:
+      - nx-jikkyo

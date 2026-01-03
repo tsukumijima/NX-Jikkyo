@@ -1,0 +1,72 @@
+# NX-Jikkyo リバースプロキシサーバー
+# Let's Encrypt の自動取得と TLS 終端を提供する
+
+# グローバルオプション
+{
+	# Let's Encrypt の設定
+	email tsukumizima@gmail.com
+
+	# サーバー設定
+	servers {
+		# HTTP/3 は日本においては逆に遅くなるので無効化する
+		# デフォルトでは利用可能な場合 HTTP/3 サーバーが有効になるので明示的な指定が必要
+		protocols h1 h2
+
+		timeouts {
+			idle 86400s  # アイドル 24 時間（長時間 WebSocket 対応）
+			write 0s     # ストリーミングを途中で切らない
+		}
+	}
+
+	# サーバーログ (エラーログなど)
+	# Caddy サーバー自体のログ (アクセスログは含まない)
+	log {
+		output file /var/log/caddy/Caddy-Server.log {
+			roll_size 100mb
+			roll_keep 5
+			roll_keep_for 720h
+		}
+	}
+}
+
+# NX-Jikkyo コンテナへのリバースプロキシ
+nx-jikkyo.tsukumijima.net {
+	# 複数ワーカーへのロードバランシング
+	reverse_proxy nx-jikkyo:3100 nx-jikkyo:3101 nx-jikkyo:3102 nx-jikkyo:3103 {
+		# ロードバランシングポリシー
+		lb_policy round_robin
+
+		# ヘッダーの転送設定
+		# X-Forwarded 系ヘッダーは既定で自動設定されるので、ここでは設定しない
+		header_up Host {http.request.host}
+		header_up X-Real-IP {http.request.remote}
+		header_up X-Forwarded-Proto {scheme}
+
+		# ストリーミングのためにレスポンスのバッファリングを無効化
+		flush_interval -1
+
+		# タイムアウト設定（長時間 WebSocket 対応）
+		transport http {
+			keepalive 3m               # Keep-Alive を有効化 (3分)
+			dial_timeout 5s            # 接続タイムアウト (5秒)
+			response_header_timeout 86400s  # レスポンスヘッダーの読み取りタイムアウト (24時間)
+			read_timeout 86400s        # レスポンスボディの読み取りタイムアウト (24時間)
+		}
+
+		# ヘルスチェック設定
+		health_uri /api/v1/channels
+		health_interval 30s
+		health_timeout 5s
+	}
+
+	# アクセスログ
+	# このサイトへのリクエストに関するログ
+	log {
+		output file /var/log/caddy/Caddy-Access.log {
+			roll_size 100mb
+			roll_keep 5
+			roll_keep_for 720h
+		}
+		format json
+	}
+}
