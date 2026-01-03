@@ -8,9 +8,6 @@
         "preview": "vite preview",
         "lint": "eslint . --fix --ignore-path .gitignore"
     },
-    "engines": {
-        "node": "20.16.0"
-    },
     "dependencies": {
         "@github/mini-throttle": "^2.1.1",
         "assert": "^2.1.0",
@@ -19,9 +16,9 @@
         "comlink": "^4.4.1",
         "copy-image-clipboard": "^2.1.2",
         "dayjs": "^1.11.13",
-        "dplayer": "github:tsukumijima/DPlayer#v1.31.3",
+        "dplayer": "github:tsukumijima/DPlayer#v1.32.7",
         "floating-vue": "^5.2.2",
-        "hls.js": "^1.6.0-beta.1",
+        "hls.js": "^1.6.9",
         "js-base64": "^3.7.7",
         "mitt": "^3.0.1",
         "mpegts.js": "github:tsukumijima/mpegts.js#ecd5e86761c0c696fb9ce25665b49cffffbe3e7a",
@@ -38,7 +35,7 @@
         "vue-router": "^4.4.3",
         "vue-virtual-scroller": "^2.0.0-beta.8",
         "vuedraggable": "^4.1.0",
-        "vuetify": "^3.7.1"
+        "vuetify": "~3.7.1"
     },
     "devDependencies": {
         "@babel/types": "^7.25.4",
