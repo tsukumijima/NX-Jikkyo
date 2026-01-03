@@ -5,6 +5,7 @@ import random
 import time
 import traceback
 import websockets.exceptions
+from dataclasses import dataclass
 from datetime import datetime
 from fastapi import (
     APIRouter,
@@ -31,6 +32,7 @@ from app.models.comment import (
     Comment,
     CommentCounter,
     XMLCompatibleCommentResponse,
+    XMLCompatibleCommentResponseChat,
     Thread,
 )
 from app.utils import GenerateClientID
@@ -44,6 +46,356 @@ router = APIRouter(
 
 # 現在アクティブなスレッドの情報を保存する辞書
 __active_threads: dict[int, Thread] = {}
+
+# コメント配信遅延がこの秒数を超えた場合は、配信遅延の回復を優先してコメントを破棄する
+COMMENT_DELAY_THRESHOLD_SECONDS = 5.0
+
+# 接続ごとのコメント送信キューの最大サイズ
+COMMENT_QUEUE_MAX_SIZE = 200
+
+
+@dataclass(slots=True)
+class CommentBroadcastMessage:
+    """
+    Redis Pub/Sub から受信したコメントを接続ごとの送信キューに流すためのメッセージ
+
+    Attributes:
+        raw_json (str): Redis Pub/Sub から受信した生の JSON 文字列
+        base_comment (XMLCompatibleCommentResponse): JSON をデコードしたコメントデータ
+        comment_time (float): コメントの投稿時刻 (UNIX タイムスタンプ)
+        user_id (str): コメント投稿者のユーザー ID
+    """
+
+    raw_json: str
+    base_comment: XMLCompatibleCommentResponse
+    comment_time: float
+    user_id: str
+
+
+@dataclass(slots=True)
+class CommentSubscriber:
+    """
+    リアルタイムコメント配信用の接続情報
+
+    Attributes:
+        client_id (str): コメントセッションのクライアント ID
+        thread_key (str): thread コマンドで指定された threadkey
+        queue (asyncio.Queue[CommentBroadcastMessage]): 接続ごとのコメント送信キュー
+    """
+
+    client_id: str
+    thread_key: str
+    queue: asyncio.Queue[CommentBroadcastMessage]
+
+
+def CopyXMLCompatibleCommentResponse(response: XMLCompatibleCommentResponse) -> XMLCompatibleCommentResponse:
+    """
+    XMLCompatibleCommentResponse を浅くコピーして返す
+
+    Args:
+        response (XMLCompatibleCommentResponse): コピー対象のコメントデータ
+
+    Returns:
+        XMLCompatibleCommentResponse: コピーされたコメントデータ
+    """
+
+    copied_response = dict(response)
+    copied_response['chat'] = cast(XMLCompatibleCommentResponseChat, dict(response['chat']))
+    return cast(XMLCompatibleCommentResponse, copied_response)
+
+
+def GetCommentUnixTimeSeconds(response: XMLCompatibleCommentResponse) -> float:
+    """
+    コメントの投稿時刻 (UNIX タイムスタンプ) を取得する
+
+    Args:
+        response (XMLCompatibleCommentResponse): コメントデータ
+
+    Returns:
+        float: コメントの投稿時刻 (UNIX タイムスタンプ)
+    """
+
+    try:
+        date = int(response['chat']['date'])
+        date_usec = int(response['chat'].get('date_usec', 0))
+    except Exception:
+        return time.time()
+
+    comment_time = date + (date_usec / 1000000)
+    current_time = time.time()
+    if comment_time <= 0:
+        return current_time
+    if comment_time > (current_time + 60):
+        return current_time
+    if comment_time < (current_time - 3600):
+        return current_time
+    return comment_time
+
+
+def EnqueueBroadcastMessage(
+    subscriber: CommentSubscriber,
+    message: CommentBroadcastMessage,
+) -> None:
+    """
+    接続ごとの送信キューへコメントを追加する
+
+    Args:
+        subscriber (CommentSubscriber): コメント送信先の接続情報
+        message (CommentBroadcastMessage): 配信するコメント
+    """
+
+    if subscriber.queue.full() is True:
+        # キューが溢れそうな場合は古いコメントを捨てる
+        try:
+            subscriber.queue.get_nowait()
+        except asyncio.QueueEmpty:
+            pass
+
+    try:
+        subscriber.queue.put_nowait(message)
+    except asyncio.QueueFull:
+        # ここに到達するのは非常に稀だが、念のため握りつぶす
+        pass
+
+
+def DrainBroadcastQueue(queue: asyncio.Queue[CommentBroadcastMessage]) -> None:
+    """
+    送信キュー内のコメントをすべて破棄する
+
+    Args:
+        queue (asyncio.Queue[CommentBroadcastMessage]): 破棄対象の送信キュー
+    """
+
+    while True:
+        try:
+            queue.get_nowait()
+        except asyncio.QueueEmpty:
+            return
+
+
+class ThreadCommentBroadcaster:
+    """
+    スレッド単位で Redis Pub/Sub を購読し、接続ごとの送信キューにコメントを配信する
+    """
+
+    def __init__(self, thread_id: int) -> None:
+        """
+        Args:
+            thread_id (int): コメント配信対象のスレッド ID
+        """
+
+        self.thread_id = thread_id
+        self.subscribers: dict[str, CommentSubscriber] = {}
+        self.lock = asyncio.Lock()
+        self._run_task: asyncio.Task[None] | None = None
+
+    async def addSubscriber(self, subscriber_id: str, subscriber: CommentSubscriber) -> None:
+        """
+        コメント配信対象の接続を追加する
+
+        Args:
+            subscriber_id (str): 接続を識別する ID
+            subscriber (CommentSubscriber): 追加する接続情報
+        """
+
+        # 接続一覧は複数タスクから同時に更新されるためロックで保護する
+        async with self.lock:
+            # 接続情報を登録する
+            self.subscribers[subscriber_id] = subscriber
+            # 配信タスクが未起動または終了済みなら新しいタスクを開始する
+            # _run_task.done() は正常終了・例外終了・キャンセル済みのいずれも True を返す
+            ## これにより、_run() が予期せぬ例外で終了した場合でも、次の購読者追加時に自動的に再起動される
+            if self._run_task is None or self._run_task.done():
+                self._run_task = asyncio.create_task(self._run())
+
+    async def removeSubscriber(self, subscriber_id: str, subscriber: CommentSubscriber) -> None:
+        """
+        コメント配信対象の接続を削除する
+
+        Args:
+            subscriber_id (str): 削除する接続の ID
+            subscriber (CommentSubscriber): 削除対象の接続情報
+        """
+
+        # 接続一覧は複数タスクから同時に更新されるためロックで保護する
+        # タスクのキャンセルと待機もロック内で行い、レースコンディションを防ぐ
+        ## キャンセルされたタスクは即座に終了するため、ロック内での await でもデッドロックは発生しない
+        async with self.lock:
+            # 接続が登録されている場合のみ削除する
+            if subscriber_id in self.subscribers and self.subscribers[subscriber_id] is subscriber:
+                del self.subscribers[subscriber_id]
+            # 接続が存在しなくなった場合は配信タスクを停止する
+            if len(self.subscribers) == 0 and self._run_task is not None:
+                self._run_task.cancel()
+                try:
+                    await self._run_task
+                except asyncio.CancelledError:
+                    pass
+                self._run_task = None
+
+    async def getSubscriberCount(self) -> int:
+        """
+        現在の接続数を取得する
+
+        Returns:
+            int: 現在の接続数
+        """
+
+        # 接続一覧は複数タスクから同時に更新されるためロックで保護する
+        async with self.lock:
+            return len(self.subscribers)
+
+    async def _getSubscriberSnapshot(self) -> list[CommentSubscriber]:
+        """
+        コメント配信対象の接続一覧をスナップショットとして取得する
+
+        Returns:
+            list[CommentSubscriber]: コメント配信対象の接続一覧
+        """
+
+        # 配信時は現在の接続一覧のスナップショットを使う
+        ## 配信中に接続一覧が変わっても影響しないようにする
+        async with self.lock:
+            return list(self.subscribers.values())
+
+    async def _run(self) -> None:
+        """
+        Redis Pub/Sub を購読し、接続ごとの送信キューにコメントを配信する
+
+        予期せぬ例外が発生した場合は指数バックオフでリトライし、配信を継続する。
+        CancelledError が発生した場合のみタスクを終了する。
+        """
+
+        # リトライ用のバックオフ設定
+        retry_delay = 1.0  # 初期リトライ間隔 (秒)
+        max_retry_delay = 30.0  # 最大リトライ間隔 (秒)
+
+        while True:
+            pubsub = REDIS_CLIENT.pubsub()
+            should_retry = False
+
+            try:
+                # スレッド単位の Pub/Sub でコメントを受信する
+                await pubsub.subscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{self.thread_id}')
+
+                # 正常に接続できたらリトライ間隔をリセット
+                retry_delay = 1.0
+
+                while True:
+                    # コメントが来るまで最大 5 秒待機する
+                    message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
+                    if message is None:
+                        continue
+
+                    # Redis から受信したコメントを JSON 文字列として扱う
+                    raw_payload = message['data']
+                    if isinstance(raw_payload, (bytes, bytearray, memoryview)):
+                        raw_json = bytes(raw_payload).decode('utf-8')
+                    elif isinstance(raw_payload, str):
+                        raw_json = raw_payload
+                    else:
+                        raw_json = json.dumps(raw_payload, ensure_ascii=False)
+
+                    try:
+                        # Redis から受信した JSON をデコードする
+                        base_comment: XMLCompatibleCommentResponse = json.loads(raw_json)
+                    except json.JSONDecodeError:
+                        logging.error('ThreadCommentBroadcaster: Failed to decode comment JSON.')
+                        continue
+
+                    if 'chat' not in base_comment:
+                        logging.error('ThreadCommentBroadcaster: Comment JSON does not contain chat data.')
+                        continue
+
+                    # yourpost 判定や遅延判定に必要な情報を先に抽出する
+                    # yourpost が含まれている場合は非 yourpost に流れないように事前に除去する
+                    if 'yourpost' in base_comment['chat']:
+                        del base_comment['chat']['yourpost']
+                        raw_json = json.dumps(base_comment, ensure_ascii=False)
+
+                    user_id = str(base_comment['chat'].get('user_id', ''))
+                    comment_time = GetCommentUnixTimeSeconds(base_comment)
+                    broadcast_message = CommentBroadcastMessage(
+                        raw_json = raw_json,
+                        base_comment = base_comment,
+                        comment_time = comment_time,
+                        user_id = user_id,
+                    )
+
+                    # 現在接続中の全クライアントへ同一メッセージを配信する
+                    subscribers = await self._getSubscriberSnapshot()
+                    for subscriber in subscribers:
+                        EnqueueBroadcastMessage(subscriber, broadcast_message)
+
+            except asyncio.CancelledError:
+                # キャンセルされた場合はタスクを終了する
+                raise
+
+            except Exception as ex:
+                # 予期せぬ例外が発生した場合はログを出力してリトライする
+                logging.error(f'ThreadCommentBroadcaster: Unexpected error occurred while broadcasting. Retrying in {retry_delay} seconds...', exc_info=ex)
+                should_retry = True
+
+            finally:
+                # 各リトライごとに確実に購読解除する
+                try:
+                    await pubsub.unsubscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{self.thread_id}')
+                    await pubsub.close()
+                except Exception as cleanup_ex:
+                    logging.error('ThreadCommentBroadcaster: Failed to cleanup Redis pubsub connection.', exc_info=cleanup_ex)
+
+            if should_retry is True:
+                # 指数バックオフでリトライ間隔を増加させる
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay * 2, max_retry_delay)
+
+
+# スレッド単位のコメント配信用 Broadcaster を保存する辞書
+__thread_comment_broadcasters: dict[int, ThreadCommentBroadcaster] = {}
+__thread_comment_broadcasters_lock = asyncio.Lock()
+
+
+async def GetThreadCommentBroadcaster(thread_id: int) -> ThreadCommentBroadcaster:
+    """
+    スレッド単位のコメント配信用 Broadcaster を取得する
+
+    Args:
+        thread_id (int): コメント配信対象のスレッド ID
+
+    Returns:
+        ThreadCommentBroadcaster: スレッド単位のコメント配信用 Broadcaster
+    """
+
+    async with __thread_comment_broadcasters_lock:
+        broadcaster = __thread_comment_broadcasters.get(thread_id)
+        if broadcaster is None:
+            broadcaster = ThreadCommentBroadcaster(thread_id)
+            __thread_comment_broadcasters[thread_id] = broadcaster
+        return broadcaster
+
+
+async def CleanupThreadCommentBroadcaster(thread_id: int, broadcaster: ThreadCommentBroadcaster) -> None:
+    """
+    接続が存在しない Broadcaster を辞書から削除する
+
+    Args:
+        thread_id (int): 対象のスレッド ID
+        broadcaster (ThreadCommentBroadcaster): 対象の Broadcaster
+    """
+
+    # デッドロックを防ぐため、ロック取得順序を固定する
+    # 常に __thread_comment_broadcasters_lock → broadcaster.lock の順で取得する
+    ## getSubscriberCount() は内部で broadcaster.lock を取得するため、
+    ## __thread_comment_broadcasters_lock を保持した状態で呼び出すとネストされたロックになる
+    ## そのため、ここでは直接 subscribers の長さを確認してデッドロックを回避する
+    async with __thread_comment_broadcasters_lock:
+        current_broadcaster = __thread_comment_broadcasters.get(thread_id)
+        if current_broadcaster is not broadcaster:
+            return
+        # broadcaster.lock を取得して購読者数を確認し、0 なら削除する
+        async with broadcaster.lock:
+            if len(broadcaster.subscribers) == 0:
+                del __thread_comment_broadcasters[thread_id]
 
 
 async def GetActiveThread(channel_id_int: int) -> Thread | None:
@@ -816,9 +1168,20 @@ async def CommentSessionAPI(
             thread_key (str): スレッドキー (互換性のためにこの名前になっているが、実際には接続先クライアントの watch_session_client_id)
         """
 
-        # Redis Pub/Sub で指定スレッドに投稿されたコメントの購読を開始する
-        pubsub = REDIS_CLIENT.pubsub()
-        await pubsub.subscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}')
+        # 接続ごとの送信キューを初期化
+        subscriber_queue: asyncio.Queue[CommentBroadcastMessage] = asyncio.Queue(maxsize=COMMENT_QUEUE_MAX_SIZE)
+        current_sender_task = asyncio.current_task()
+        sender_task_id = id(current_sender_task) if current_sender_task is not None else time.time_ns()
+        subscriber_id = f'{comment_session_client_id}:{id(websocket)}:{sender_task_id}'
+        subscriber = CommentSubscriber(
+            client_id = comment_session_client_id,
+            thread_key = thread_key,
+            queue = subscriber_queue,
+        )
+
+        # スレッド単位の Broadcaster に接続を登録する
+        broadcaster = await GetThreadCommentBroadcaster(thread.id)
+        await broadcaster.addSubscriber(subscriber_id, subscriber)
 
         # スレッドの放送終了時刻の Unix 時間
         thread_end_time = thread.end_at.timestamp()
@@ -826,15 +1189,28 @@ async def CommentSessionAPI(
         try:
             while True:
 
-                # 最新コメントを Redis Pub/Sub から随時取得
-                ## この get_message() は最大 5 秒間コメントの受信を待機し、5 秒間に一度もコメントがなかった場合は None を返す
-                ## こうすることで、可能な限りループ回数を削減して負荷を削減しつつ、5 秒に 1 回は確実に接続確認処理を回せるようになる
-                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
-                if message is not None:
+                # 送信キューからコメントを取得する
+                ## この待機は最大 5 秒でタイムアウトし、タイムアウト時は接続状態や放送終了判定だけを行う
+                try:
+                    broadcast_message = await asyncio.wait_for(subscriber_queue.get(), timeout=5.0)
+                except asyncio.TimeoutError:
+                    broadcast_message = None
+
+                if broadcast_message is not None:
+
+                    # コメントの遅延が閾値を超えている場合は配信を破棄して追いつく
+                    current_time = time.time()
+                    comment_delay = max(0.0, current_time - broadcast_message.comment_time)
+                    if comment_delay > COMMENT_DELAY_THRESHOLD_SECONDS:
+                        DrainBroadcastQueue(subscriber_queue)
+                        continue
 
                     # 取得したコメントに必要に応じて yourpost フラグを設定してから送信
-                    xml_compatible_comment: XMLCompatibleCommentResponse = json.loads(message['data'])
-                    await websocket.send_json(SetYourPostFlag(xml_compatible_comment, thread_key))
+                    if subscriber.thread_key == broadcast_message.user_id:
+                        yourpost_response = CopyXMLCompatibleCommentResponse(broadcast_message.base_comment)
+                        await websocket.send_json(SetYourPostFlag(yourpost_response, subscriber.thread_key))
+                    else:
+                        await websocket.send_text(broadcast_message.raw_json)
 
                 # 接続が切れたらタスクを終了
                 ## 通常は Receiver Task 側で接続切断を検知した後このタスク自体がキャンセルされるため、ここには到達しないはず
@@ -847,10 +1223,10 @@ async def CommentSessionAPI(
                     await websocket.close(code=1000)  # 正常終了扱い
                     return
 
-        # タスク終了時に確実に Redis Pub/Sub の購読を解除する
         finally:
-            await pubsub.unsubscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}')
-            await pubsub.close()
+            # タスク終了時に確実に接続を削除する
+            await broadcaster.removeSubscriber(subscriber_id, subscriber)
+            await CleanupThreadCommentBroadcaster(thread.id, broadcaster)
 
     try:
 
