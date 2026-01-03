@@ -6,9 +6,11 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
-                        📢 <a class="link" href="https://blog.nicovideo.jp/niconews/250549.html" target="_blank">ニコニコ実況へのサンテレビの追加</a> に伴い、NX-Jikkyo でもニコ生側のコメント取り込み・投稿に対応しました！<br>
-                        さらに <router-link class="link" to="/log/jk1/20241231235900-20250101001500">過去ログ再生でのコメント自動スクロール</router-link>や、<router-link class="link" to="/settings/jikkyo">リアルタイム実況時のコメント遅延設定</router-link> も実装しました。<br>
-                        そして NX-Jikkyo 自体も、<a class="link" href="https://x.com/TVRemotePlus/status/1932106830664327246" target="_blank">2025/06/10 で運営開始から1周年を迎えました！</a> 🎉🎊 開発に苦労した甲斐があり、半年以上安定運用できていて安堵しています。今後も可能な限り維持していきますのでよろしくお願いします…！！
+                        🎍 あけましておめでとうございます！大晦日の紅白は <a class="link" href="https://x.com/TVRemotePlus/status/2006317247338557807" target="_blank">たびたびコメントが詰まってしまい</a> すみませんでした…。<br>
+                        去年は乗り切れていましたが、<a class="link" href="https://x.com/TVRemotePlus/status/2007007786878787810" target="_blank">今年は視聴者が紅白に集中していたこと</a> もあって高負荷になってしまったようです。<br>
+                        <div class="mt-1"></div>
+                        今回の紅白でのコメント詰まりを踏まえ、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/commit/7c3aadccaeeab3aae34721049c5c05fb81f8063a" target="_blank">コメント配信の仕組みを抜本的に改善しました！</a><br>
+                        今後はコメントが遅れたり止まったりすることはかなり減るはずです。もし不具合があればご報告ください🙏
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
@@ -20,7 +22,8 @@
                         <a class="link" href="https://www.amazon.co.jp/hz/wishlist/ls/3AZ4RI13SW2PV?tag=tsukumijima-22" target="_blank">干し芋 or アマギフいただけると大変モチベ上がるのでぜひ🙇🙏</a>
                     </div>
                     <div class="mt-1">
-                        📢 <a class="link" href="https://forms.gle/C4jnW2jGX4H5AApSA" target="_blank">利用者アンケート・フィードバック</a> 📢 を実施中です！ぜひ率直なご意見をお聞かせください🙏🙏
+                        📢 <a class="link" href="https://forms.gle/C4jnW2jGX4H5AApSA" target="_blank">利用者アンケート・フィードバック</a> 📢 を実施中です！ぜひ率直なご意見をお聞かせください🙏🙏<br>
+                        <a class="link" href="https://x.com/TVRemotePlus/status/1998599759251255576" target="_blank">多忙でなかなか更新できていません</a> が、時間のある時に一括で修正予定ですのでもうしばらくお待ちください🙇
                     </div>
                 </div>
                 <div class="channels-tab">
