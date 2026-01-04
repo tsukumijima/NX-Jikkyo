@@ -11,28 +11,27 @@ aerich = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
-aerich = "^0.7.2"
-aiomysql = "^0.2.0"
+aerich = ">=0.7.2,<1.0.0"
+aiomysql = ">=0.2.0,<1.0.0"
 apscheduler = "^3.11.0"
 async-lru = "^2.0.4"
 cryptography = "^43.0.3"
-fastapi = "^0.115.3"
-fastapi-utils = "^0.7.0"
-httpx = {version = "^0.27.2", extras = ["http2"]}
+fastapi = "~0.115.3"
+httpx = {version = ">=0.27.2,<1.0.0", extras = ["http2"]}
 ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "92c34cdddf5663a9fdf645ecb1e40b2dd0d6ea65" }
 pydantic = "^2.9.2"
 pydantic-settings = "~2.5.2"
 python-jose = "^3.3.0"
-python-multipart = "^0.0.12"
+python-multipart = ">=0.0.12,<1.0.0"
 redis = "==4.6.0"
 rich = "^13.9.3"
 taskipy = "^1.14.0"
-tortoise-orm = "^0.21.7"
-typer = "^0.12.3"
+tortoise-orm = ">=0.21.7,<1.0.0"
+typer = ">=0.21.0,<1.0.0"
 types-redis = "^4.6.0.20241004"
-typing-inspect = "^0.9.0"
-uvicorn = {version = "^0.32.0", extras = ["standard"]}
-uvloop = {version = "^0.21.0", platform = "linux"}
+typing-inspect = ">=0.9.0,<1.0.0"
+uvicorn = {version = ">=0.32.0,<1.0.0", extras = ["standard"]}
+uvloop = {version = ">=0.21.0,<1.0.0", platform = "linux"}
 websockets = "^12.0"
 
 [tool.poetry.group.dev.dependencies]
