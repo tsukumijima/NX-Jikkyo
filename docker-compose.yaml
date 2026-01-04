@@ -52,6 +52,8 @@ services:
     image: redis:6.2
     container_name: nx-jikkyo-redis
     restart: unless-stopped
+    environment:
+      TZ: Asia/Tokyo
     volumes:
       - type: bind
         source: './server/data/redis/'
