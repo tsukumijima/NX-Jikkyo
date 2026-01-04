@@ -11,7 +11,7 @@ aerich = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
-aerich = ">=0.7.2,<1.0.0"
+aerich = "==0.9.1"
 aiomysql = ">=0.2.0,<1.0.0"
 apscheduler = "^3.11.0"
 async-lru = "^2.0.4"
