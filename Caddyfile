@@ -13,8 +13,8 @@
 		protocols h1 h2
 
 		timeouts {
-			idle 86400s  # アイドル 24 時間（長時間 WebSocket 対応）
-			write 0s     # ストリーミングを途中で切らない
+			idle 86400s # アイドル 24 時間（長時間 WebSocket 対応）
+			write 0s # ストリーミングを途中で切らない
 		}
 	}
 
@@ -32,7 +32,7 @@
 # NX-Jikkyo コンテナへのリバースプロキシ
 nx-jikkyo.tsukumijima.net {
 	# 複数ワーカーへのロードバランシング
-	reverse_proxy nx-jikkyo:3100 nx-jikkyo:3101 nx-jikkyo:3102 nx-jikkyo:3103 {
+	reverse_proxy nx-jikkyo:5610 nx-jikkyo:5611 nx-jikkyo:5612 nx-jikkyo:5613 {
 		# ロードバランシングポリシー
 		lb_policy round_robin
 
@@ -47,10 +47,10 @@ nx-jikkyo.tsukumijima.net {
 
 		# タイムアウト設定（長時間 WebSocket 対応）
 		transport http {
-			keepalive 3m               # Keep-Alive を有効化 (3分)
-			dial_timeout 5s            # 接続タイムアウト (5秒)
-			response_header_timeout 86400s  # レスポンスヘッダーの読み取りタイムアウト (24時間)
-			read_timeout 86400s        # レスポンスボディの読み取りタイムアウト (24時間)
+			keepalive 3m # Keep-Alive を有効化 (3分)
+			dial_timeout 5s # 接続タイムアウト (5秒)
+			response_header_timeout 86400s # レスポンスヘッダーの読み取りタイムアウト (24時間)
+			read_timeout 86400s # レスポンスボディの読み取りタイムアウト (24時間)
 		}
 
 		# ヘルスチェック設定
