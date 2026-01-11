@@ -294,7 +294,7 @@ class ThreadCommentBroadcaster:
                     elif isinstance(raw_payload, str):
                         raw_json = raw_payload
                     else:
-                        raw_json = json.dumps(raw_payload, ensure_ascii=False)
+                        raw_json = json.dumps(raw_payload, ensure_ascii=False, separators=(',', ':'))
 
                     try:
                         # Redis から受信した JSON をデコードする
@@ -311,7 +311,7 @@ class ThreadCommentBroadcaster:
                     # yourpost が含まれている場合は非 yourpost に流れないように事前に除去する
                     if 'yourpost' in base_comment['chat']:
                         del base_comment['chat']['yourpost']
-                        raw_json = json.dumps(base_comment, ensure_ascii=False)
+                        raw_json = json.dumps(base_comment, ensure_ascii=False, separators=(',', ':'))
 
                     user_id = str(base_comment['chat'].get('user_id', ''))
                     comment_time = GetCommentUnixTimeSeconds(base_comment)
