@@ -38,7 +38,13 @@ __model_list = [name for _, name, _ in pkgutil.iter_modules(path=['app/models'])
 DATABASE_CONFIG = {
     'timezone': 'Asia/Tokyo',
     'connections': {
-        'default': f'mysql://{CONFIG.MYSQL_USER}:{CONFIG.MYSQL_PASSWORD}@nx-jikkyo-mysql:3306/{CONFIG.MYSQL_DATABASE}',
+        'default': (
+            # 接続確立待ちが長引くと WebSocket タスク全体が詰まるため、DB ダウン時は短時間で失敗させる
+            ## Tortoise ORM の URL パラメータとして connect_timeout が公式に受理され、aiomysql へ引き渡される
+            ## 3 秒は「瞬断時の再試行余地」と「障害時の素早いフォールバック」のバランスを取った値
+            ## pool_recycle は長寿命接続を定期的に作り直し、古い接続再利用による失敗率を下げるために指定する
+            f'mysql://{CONFIG.MYSQL_USER}:{CONFIG.MYSQL_PASSWORD}@nx-jikkyo-mysql:3306/{CONFIG.MYSQL_DATABASE}?connect_timeout=3&pool_recycle=1800'
+        ),
     },
     'apps': {
         'models': {
@@ -173,3 +179,5 @@ REDIS_KEY_CHANNEL_INFOS_CACHE = 'nx-jikkyo:channel_infos_cache'
 REDIS_KEY_JIKKYO_FORCE_COUNT = 'nx-jikkyo:jikkyo_force_counts'
 # Redis 上の同時接続数カウントのキー
 REDIS_KEY_VIEWER_COUNT = 'nx-jikkyo:viewer_counts'
+# Redis 上のスレッドごとの最新コメ番キャッシュのキー
+REDIS_KEY_THREAD_COMMENT_COUNTER = 'nx-jikkyo:thread_comment_counters'

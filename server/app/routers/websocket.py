@@ -21,6 +21,7 @@ from starlette.websockets import (
 )
 from tortoise import timezone
 from tortoise.backends.base.client import TransactionalDBClient
+from tortoise.exceptions import DoesNotExist
 
 from app import logging
 from app.constants import (
@@ -37,7 +38,14 @@ from app.models.comment import (
     XMLCompatibleCommentResponseChat,
 )
 from app.utils import GenerateClientID
-from app.utils.transaction import RunTransactionWithReconnectRetry
+from app.utils.comment_counter_cache import (
+    GetThreadCommentCounterCache,
+    UpdateThreadCommentCounterCache,
+)
+from app.utils.transaction import (
+    IsDatabaseConnectionUnavailableError,
+    RunTransactionWithReconnectRetry,
+)
 
 
 # ルーター
@@ -552,9 +560,13 @@ async def WatchSessionAPI(
 
     # 接続を受け入れる
     await websocket.accept()
+    # startWatching 時に送信した comments 値を sender task の初期フォールバック値へ引き継ぐ
+    initial_statistics_comment_count: int | None = None
 
     async def RunReceiverTask() -> None:
         """ クライアントからのメッセージを受信するタスク """
+
+        nonlocal initial_statistics_comment_count
 
         # 最後にコメントを投稿した時刻
         last_comment_time: float = 0
@@ -654,15 +666,25 @@ async def WatchSessionAPI(
                 })
 
                 # 視聴の統計情報を送信
+                initial_viewer_count = 0
+                try:
+                    initial_viewer_count = int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0)
+                except Exception as ex:
+                    logging.warning(
+                        f'WatchSessionAPI [{channel_id}]: Failed to fetch viewer counter for initial statistics. Falling back to zero.',
+                        exc_info = ex,
+                    )
+                initial_comment_count = (await CommentCounter.get(thread_id=thread.id)).max_no
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
-                        'viewers': int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0),
-                        'comments': (await CommentCounter.get(thread_id=thread.id)).max_no,
+                        'viewers': initial_viewer_count,
+                        'comments': initial_comment_count,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
                 })
+                initial_statistics_comment_count = initial_comment_count
 
             # 座席維持リクエスト
             ## 本家ニコ生では keepSeat メッセージが一定期間の間に送られてこなかった場合に接続を切断するが、モックなので今の所何もしない
@@ -781,6 +803,18 @@ async def WatchSessionAPI(
                         operation_name = f'WatchSessionAPI [{channel_id}]',
                     )
 
+                    # スレッドごとの最新コメ番キャッシュを更新
+                    ## 投稿成功直後に反映しておくことで、statistics 送信時の DB アクセス頻度を抑える
+                    try:
+                        await UpdateThreadCommentCounterCache(thread.id, comment.no)
+                    except Exception as ex:
+                        # キャッシュ更新はベストエフォートで扱う
+                        ## ここで例外を再送出すると投稿成功レスポンスまで失敗するため、ログのみ残して継続する
+                        logging.warning(
+                            f'WatchSessionAPI [{channel_id}]: Failed to update thread comment counter cache.',
+                            exc_info = ex,
+                        )
+
                     # ニコ生 XML 互換コメント形式に変換した上で、Redis Pub/Sub でコメントを送信
                     ## この段階ではまだ yourpost フラグを設定してはならない
                     ## yourpost フラグはコメントセッション WebSocket 側で設定しないと、意図しないコメントに yourpost フラグが付与されてしまう
@@ -843,6 +877,20 @@ async def WatchSessionAPI(
         last_server_time_time = time.time()
         # 最後に ping を送信した時刻
         last_ping_time = time.time()
+        # 最後に送信したコメント数
+        ## startWatching が sender task より後に処理される場合を考慮し、未確定を None で表現する
+        last_statistics_comment_count: int | None = None
+        # 最後にコメント数取得エラーをログ出力した時刻
+        last_comment_counter_error_log_time = 0.0
+        # 最後に視聴者数取得エラーをログ出力した時刻
+        last_viewer_counter_error_log_time = 0.0
+        # DB からのコメント数再取得を再試行するまで待機する時刻
+        next_comment_counter_db_retry_time = 0.0
+        # Redis キャッシュ値を DB で検証する間隔 (秒)
+        comment_counter_db_validation_interval_seconds = 600.0
+        # 次回 Redis キャッシュ値を DB で検証する時刻
+        ## DB 接続断時の再試行抑制時刻とは責務を分離し、意図を明確化する
+        next_comment_counter_validation_time = 0.0
 
         # 処理開始時点でスレッドが放送中かどうか
         is_on_air = thread.start_at < timezone.now() < thread.end_at
@@ -851,16 +899,146 @@ async def WatchSessionAPI(
 
             # 60 秒に 1 回最新の視聴統計情報を送信 (互換性のため)
             if (time.time() - last_statistics_time) > 60:
+                current_time = time.time()
+                if last_statistics_comment_count is not None:
+                    comment_count = last_statistics_comment_count
+                elif initial_statistics_comment_count is not None:
+                    comment_count = initial_statistics_comment_count
+                else:
+                    comment_count = 0
+                try:
+                    cached_comment_counter: int | None = None
+                    try:
+                        # まず Redis キャッシュを参照し、通常時は DB クエリを避ける
+                        cached_comment_counter = await GetThreadCommentCounterCache(thread.id)
+                    except Exception as cache_ex:
+                        # Redis 読み取り失敗時も DB フォールバックを継続し、コメント数の更新停止を防ぐ
+                        if (current_time - last_comment_counter_error_log_time) > 15:
+                            logging.warning(
+                                f'WatchSessionAPI [{channel_id}]: Failed to fetch comment counter cache. Falling back to DB.',
+                                exc_info = cache_ex,
+                            )
+                            last_comment_counter_error_log_time = current_time
+
+                    if cached_comment_counter is not None:
+                        comment_count = cached_comment_counter
+                        # キャッシュがあっても無期限に信用しない
+                        ## 一定間隔で DB の CommentCounter と突合し、キャッシュの stale 化を防ぐ
+                        should_validate_cached_counter = (
+                            current_time >= next_comment_counter_db_retry_time
+                            and current_time >= next_comment_counter_validation_time
+                        )
+                        if should_validate_cached_counter is True:
+                            # DB 値を正として再同期し、誤ったキャッシュを自己修復する
+                            comment_count = (await CommentCounter.get(thread_id=thread.id)).max_no
+                            try:
+                                await UpdateThreadCommentCounterCache(thread.id, comment_count)
+                            except Exception as cache_ex:
+                                logging.warning(
+                                    f'WatchSessionAPI [{channel_id}]: Failed to update validated comment counter cache.',
+                                    exc_info = cache_ex,
+                                )
+                            next_comment_counter_db_retry_time = 0.0
+                            next_comment_counter_validation_time = current_time + comment_counter_db_validation_interval_seconds
+                    elif current_time >= next_comment_counter_db_retry_time:
+                        # キャッシュ欠損時は DB から復元し、その値を Redis へ戻す
+                        comment_count = (await CommentCounter.get(thread_id=thread.id)).max_no
+                        try:
+                            await UpdateThreadCommentCounterCache(thread.id, comment_count)
+                        except Exception as cache_ex:
+                            logging.warning(
+                                f'WatchSessionAPI [{channel_id}]: Failed to update restored comment counter cache.',
+                                exc_info = cache_ex,
+                            )
+                        next_comment_counter_db_retry_time = 0.0
+                        next_comment_counter_validation_time = current_time + comment_counter_db_validation_interval_seconds
+                except DoesNotExist as ex:
+                    # 稀に採番テーブルのレコードが欠損している場合は、現存コメント数から再作成して回復を試みる
+                    if (current_time - last_comment_counter_error_log_time) > 15:
+                        logging.warning(
+                            f'WatchSessionAPI [{channel_id}]: CommentCounter record is missing. Trying to recover from comments table.',
+                            exc_info = ex,
+                        )
+                        last_comment_counter_error_log_time = current_time
+                    if current_time >= next_comment_counter_db_retry_time:
+                        try:
+                            latest_comment = await Comment.filter(thread_id=thread.id).order_by('-no').first()
+                            comment_count = latest_comment.no if latest_comment is not None else 0
+                            existing_comment_counter = await CommentCounter.filter(thread_id=thread.id).first()
+                            synchronized_comment_count = comment_count
+                            if existing_comment_counter is not None:
+                                synchronized_comment_count = max(existing_comment_counter.max_no, comment_count)
+                                if existing_comment_counter.max_no != synchronized_comment_count:
+                                    existing_comment_counter.max_no = synchronized_comment_count
+                                    await existing_comment_counter.save(update_fields=['max_no'])
+                            else:
+                                await CommentCounter.create(
+                                    thread_id = thread.id,
+                                    max_no = synchronized_comment_count,
+                                )
+                            try:
+                                await UpdateThreadCommentCounterCache(thread.id, synchronized_comment_count)
+                            except Exception as cache_ex:
+                                logging.warning(
+                                    f'WatchSessionAPI [{channel_id}]: Failed to update recovered comment counter cache.',
+                                    exc_info = cache_ex,
+                                )
+                            comment_count = synchronized_comment_count
+                            next_comment_counter_db_retry_time = 0.0
+                            next_comment_counter_validation_time = current_time + comment_counter_db_validation_interval_seconds
+                        except Exception as recovery_ex:
+                            if IsDatabaseConnectionUnavailableError(recovery_ex) is True:
+                                next_comment_counter_db_retry_time = max(next_comment_counter_db_retry_time, current_time + 15)
+                            if (current_time - last_comment_counter_error_log_time) > 15:
+                                logging.warning(
+                                    f'WatchSessionAPI [{channel_id}]: Failed to recover missing CommentCounter. Falling back to cached value.',
+                                    exc_info = recovery_ex,
+                                )
+                                last_comment_counter_error_log_time = current_time
+                except Exception as ex:
+                    if IsDatabaseConnectionUnavailableError(ex) is True:
+                        # DB ダウン中に毎ループで再試行すると負荷が跳ねるため、再試行時刻を先送りする
+                        next_comment_counter_db_retry_time = max(next_comment_counter_db_retry_time, current_time + 15)
+                        # DB 接続断が継続している間は、同一エラーのログ連打を抑止する
+                        if (current_time - last_comment_counter_error_log_time) > 15:
+                            logging.warning(
+                                f'WatchSessionAPI [{channel_id}]: Failed to fetch comment counter. Falling back to cached value.',
+                                exc_info = ex,
+                            )
+                            last_comment_counter_error_log_time = current_time
+                    else:
+                        # Redis 障害など DB 接続断以外の取得失敗時も、接続維持を優先して前回値にフォールバックする
+                        ## 短時間の障害でセッション自体を切断しないことを優先する
+                        if (current_time - last_comment_counter_error_log_time) > 15:
+                            logging.warning(
+                                f'WatchSessionAPI [{channel_id}]: Failed to fetch comment counter by unexpected error. Falling back to cached value.',
+                                exc_info = ex,
+                            )
+                            last_comment_counter_error_log_time = current_time
+
+                # 送信した値を次回フォールバック値として保持する
+                last_statistics_comment_count = comment_count
+                viewer_count = 0
+                try:
+                    viewer_count = int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0)
+                except Exception as ex:
+                    # Redis 障害時でも statistics 送信を継続し、接続体験の劣化を最小限に抑える
+                    if (current_time - last_viewer_counter_error_log_time) > 15:
+                        logging.warning(
+                            f'WatchSessionAPI [{channel_id}]: Failed to fetch viewer counter. Falling back to zero.',
+                            exc_info = ex,
+                        )
+                        last_viewer_counter_error_log_time = current_time
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
-                        'viewers': int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0),
-                        'comments': (await CommentCounter.get(thread_id=thread.id)).max_no,
+                        'viewers': viewer_count,
+                        'comments': comment_count,
                         'adPoints': 0,  # NX-Jikkyo では常に 0 を返す
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
                 })
-                last_statistics_time = time.time()
+                last_statistics_time = current_time
 
             # 45 秒に 1 回サーバー時刻を送信 (互換性のため)
             if (time.time() - last_server_time_time) > 45:
@@ -936,9 +1114,15 @@ async def WatchSessionAPI(
     finally:
         # ここまできたら確実に接続が切断されているので同時接続数カウントを 1 減らす
         ## 最低でも 0 未満にはならないようにする
-        current_count = int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0)
-        if current_count > 0:
-            await REDIS_CLIENT.hincrby(REDIS_KEY_VIEWER_COUNT, channel_id, -1)
+        try:
+            current_count = int(await REDIS_CLIENT.hget(REDIS_KEY_VIEWER_COUNT, channel_id) or 0)
+            if current_count > 0:
+                await REDIS_CLIENT.hincrby(REDIS_KEY_VIEWER_COUNT, channel_id, -1)
+        except Exception as ex:
+            logging.warning(
+                f'WatchSessionAPI [{channel_id}]: Failed to decrement viewer counter on disconnect.',
+                exc_info = ex,
+            )
 
 
 @router.websocket('/channels/{channel_id}/ws/comment')

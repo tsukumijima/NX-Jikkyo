@@ -53,7 +53,11 @@ from app.routers import (
     websocket,
 )
 from app.routers.websocket import ConvertToXMLCompatibleCommentResponse
-from app.utils.transaction import RunTransactionWithReconnectRetry
+from app.utils.comment_counter_cache import UpdateThreadCommentCounterCache
+from app.utils.transaction import (
+    IsDatabaseConnectionUnavailableError,
+    RunTransactionWithReconnectRetry,
+)
 
 
 # FastAPI を初期化
@@ -289,6 +293,8 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
             # NDGRClient を初期化
             ndgr_client = NDGRClient(channel_id, verbose=True, log_path=log_file_path)
+            # DB 接続断時のログ連打を抑止するため、最後に DB 接続断エラーをログ出力した時刻を保持する
+            last_db_connection_error_log_time = 0.0
 
             # コメントのストリーミング処理を開始
             ## NDGRClient.streamComments() は通常エンドレスに実行され続ける
@@ -330,7 +336,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                             # 受信したコメントデータを XML 互換コメント形式に変換
                             xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
 
-                            async def create_comment_in_transaction(connection: TransactionalDBClient) -> Comment:
+                            async def CreateCommentInTransaction(connection: TransactionalDBClient) -> Comment:
 
                                 # 採番テーブルに記録されたコメ番をインクリメント
                                 await connection.execute_query(
@@ -367,9 +373,21 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
                             # コメントを DB に登録
                             comment = await RunTransactionWithReconnectRetry(
-                                operation = create_comment_in_transaction,
+                                operation = CreateCommentInTransaction,
                                 operation_name = f'StreamNicoliveComments [{channel_id}]',
                             )
+
+                            # スレッドごとの最新コメ番キャッシュを更新
+                            ## statistics 送信で DB 負荷を下げるため、投稿完了時に最新コメ番を即時反映する
+                            try:
+                                await UpdateThreadCommentCounterCache(active_thread.id, comment.no)
+                            except Exception as ex:
+                                # キャッシュ更新失敗でコメント投稿自体を失敗させない
+                                ## コメント本体の保存成功を優先し、整合性は後段の再検証・定期同期で回復する
+                                logging.warning(
+                                    f'StreamNicoliveComments [{channel_id}]: Failed to update thread comment counter cache.',
+                                    exc_info = ex,
+                                )
 
                             # ニコ生 XML 互換コメント形式に変換した上で、Redis Pub/Sub でコメントを送信
                             ## この段階ではまだ yourpost フラグを設定してはならない
@@ -393,7 +411,20 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                             logging.info(f'StreamNicoliveComments [{channel_id}]: User {xml_compatible_comment.user_id} posted a comment.')
 
                         # 何らかの理由でコメント投稿に失敗した場合はエラーログを出力
-                        except Exception:
+                        except Exception as ex:
+                            # DB 接続断時は同種エラーが一気に発生するため、ログ出力頻度を抑えつつ短時間待機して再試行する
+                            if IsDatabaseConnectionUnavailableError(ex) is True:
+                                current_time = time.time()
+                                if (current_time - last_db_connection_error_log_time) > 10:
+                                    logging.error(
+                                        f'StreamNicoliveComments [{channel_id}]: Failed to import comment because database is unavailable.',
+                                        exc_info = ex,
+                                    )
+                                    last_db_connection_error_log_time = current_time
+                                # DB 停止中に busy loop で CPU を燃やさないよう、最小限待機してから再試行する。
+                                await asyncio.sleep(0.2)
+                                continue
+
                             logging.error(f'StreamNicoliveComments [{channel_id}]: Failed to import comment.')
                             logging.error(traceback.format_exc())
 
@@ -436,13 +467,35 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     # 念のため、1時間に1回採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
     async def SyncCommentCounters():
 
+        # 各スレッドの実コメント数を DB から集計し、採番テーブルを補正する
+        ## 稀な障害時にカウンタがずれても、定期的に自己修復できるようにしている
         threads = await Thread.all()
         for thread in threads:
-            comment_count = await Comment.filter(thread_id=thread.id).count()
-            await CommentCounter.update_or_create(
-                thread_id = thread.id,
-                defaults = {'max_no': comment_count}
-            )
+            latest_comment = await Comment.filter(thread_id=thread.id).order_by('-no').first()
+            latest_comment_no = latest_comment.no if latest_comment is not None else 0
+            existing_comment_counter = await CommentCounter.filter(thread_id=thread.id).first()
+            synchronized_comment_count = latest_comment_no
+            if existing_comment_counter is not None:
+                # max_no は採番済みコメ番の最大値として扱い、既存値より小さい値で巻き戻さない
+                synchronized_comment_count = max(existing_comment_counter.max_no, latest_comment_no)
+                if existing_comment_counter.max_no != synchronized_comment_count:
+                    existing_comment_counter.max_no = synchronized_comment_count
+                    await existing_comment_counter.save(update_fields=['max_no'])
+            else:
+                await CommentCounter.create(
+                    thread_id = thread.id,
+                    max_no = synchronized_comment_count,
+                )
+            # Redis 側のキャッシュも同じ値に揃える
+            ## ランタイムでキャッシュ更新に失敗しても、この同期処理で最終的に回復できる
+            try:
+                await UpdateThreadCommentCounterCache(thread.id, synchronized_comment_count)
+            except Exception as ex:
+                # Redis の瞬断で同期ジョブ全体を止めない
+                logging.warning(
+                    f'SyncCommentCounters: Failed to update thread comment counter cache. thread_id: {thread.id}',
+                    exc_info = ex,
+                )
 
         logging.info('Comment counters have been synchronized.')
 
