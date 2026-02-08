@@ -20,7 +20,7 @@ from starlette.websockets import (
     WebSocketState,
 )
 from tortoise import timezone
-from tortoise.transactions import in_transaction
+from tortoise.backends.base.client import TransactionalDBClient
 
 from app import logging
 from app.constants import (
@@ -37,6 +37,7 @@ from app.models.comment import (
     XMLCompatibleCommentResponseChat,
 )
 from app.utils import GenerateClientID
+from app.utils.transaction import RunTransactionWithReconnectRetry
 
 
 # ルーター
@@ -747,8 +748,7 @@ async def WatchSessionAPI(
                     ## これにより、0.5 秒以内の機械的な連投が続く場合に最初の1回以外の全コメントをサイレントに弾ける
                     last_comment_time = current_time
 
-                    # コメントを DB に登録
-                    async with in_transaction() as connection:
+                    async def CreateCommentInTransaction(connection: TransactionalDBClient) -> Comment:
 
                         # 採番テーブルに記録されたコメ番をインクリメント
                         await connection.execute_query(
@@ -764,7 +764,7 @@ async def WatchSessionAPI(
                         new_no = new_no_result[0]['max_no']
 
                         # 新しいコメントを作成
-                        comment = await Comment.create(
+                        return await Comment.create(
                             thread_id = thread.id,
                             no = new_no,
                             vpos = message['data']['vpos'],  # リクエストで与えられた vpos をそのまま入れる
@@ -774,6 +774,12 @@ async def WatchSessionAPI(
                             anonymity = message['data']['isAnonymous'] is True,
                             content = message['data']['text'],
                         )
+
+                    # コメントを DB に登録
+                    comment = await RunTransactionWithReconnectRetry(
+                        operation = CreateCommentInTransaction,
+                        operation_name = f'WatchSessionAPI [{channel_id}]',
+                    )
 
                     # ニコ生 XML 互換コメント形式に変換した上で、Redis Pub/Sub でコメントを送信
                     ## この段階ではまだ yourpost フラグを設定してはならない

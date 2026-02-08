@@ -24,7 +24,7 @@ from rich.rule import Rule
 from rich.style import Style
 from starlette.middleware.base import BaseHTTPMiddleware
 from tortoise import timezone
-from tortoise.transactions import in_transaction
+from tortoise.backends.base.client import TransactionalDBClient
 
 from app import logging
 from app.config import CONFIG
@@ -53,6 +53,7 @@ from app.routers import (
     websocket,
 )
 from app.routers.websocket import ConvertToXMLCompatibleCommentResponse
+from app.utils.transaction import RunTransactionWithReconnectRetry
 
 
 # FastAPI を初期化
@@ -322,39 +323,38 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                             logging.info(f'StreamNicoliveComments [{channel_id}]: Active thread has been updated.')
 
                         # 現在アクティブなスレッドの情報を取得
-                        thread = active_threads[channel_id_int]
+                        active_thread = active_threads[channel_id_int]
 
                         try:
 
-                            # コメントを DB に登録
-                            async with in_transaction() as connection:
+                            # 受信したコメントデータを XML 互換コメント形式に変換
+                            xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
+
+                            async def create_comment_in_transaction(connection: TransactionalDBClient) -> Comment:
 
                                 # 採番テーブルに記録されたコメ番をインクリメント
                                 await connection.execute_query(
                                     'UPDATE comment_counters SET max_no = max_no + 1 WHERE thread_id = %s',
-                                    [thread.id]
+                                    [active_thread.id]
                                 )
                                 # インクリメント後のコメ番を取得
                                 ## 採番テーブルを使うことでコメ番の重複を防いでいる
                                 new_no_result = await connection.execute_query_dict(
                                     'SELECT max_no FROM comment_counters WHERE thread_id = %s',
-                                    [thread.id]
+                                    [active_thread.id]
                                 )
                                 new_no = new_no_result[0]['max_no']
 
                                 # vpos はスレッドの放送開始時刻から起算した秒 1/100 秒 (10ミリ秒) 単位のタイムスタンプ
                                 ## NX-Jikkyo 側でのスレッド放送開始時刻と、NDGR メッセージサーバーから受信したコメント投稿時刻の差分から算出する
-                                vpos = int((ndgr_comment.at.timestamp() - thread.start_at.timestamp()) * 100)
-
-                                # 受信したコメントデータを XML 互換コメント形式に変換
-                                xml_compatible_comment = NDGRClient.convertToXMLCompatibleComment(ndgr_comment)
+                                vpos = int((ndgr_comment.at.timestamp() - active_thread.start_at.timestamp()) * 100)
 
                                 # 新しいコメントを作成
                                 ## NDGR メッセージサーバーのコメ番はベストエフォートで一意性が保証されない上齟齬も出るため、当面 NX-Jikkyo 側に合わせている
                                 ## vpos はニコニコ実況で運用されているがスレッド開始時刻が両者で異なるため、NX-Jikkyo 側で別途算出した値を入れる
                                 ## 本家ニコニコ実況のリセット時刻が今の所わからないのもある
-                                comment = await Comment.create(
-                                    thread_id = thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
+                                return await Comment.create(
+                                    thread_id = active_thread.id,  # NX-Jikkyo 側のスレッド ID を入れる
                                     no = new_no,  # NX-Jikkyo 側で算出した値を入れる
                                     vpos = vpos,  # NX-Jikkyo 側で算出した値を入れる
                                     date = ndgr_comment.at,  # NX-Jikkyo 側では自動生成せず、NDGR メッセージサーバーから受信したコメント投稿時刻を入れる
@@ -365,11 +365,17 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                                     content = xml_compatible_comment.content,
                                 )
 
+                            # コメントを DB に登録
+                            comment = await RunTransactionWithReconnectRetry(
+                                operation = create_comment_in_transaction,
+                                operation_name = f'StreamNicoliveComments [{channel_id}]',
+                            )
+
                             # ニコ生 XML 互換コメント形式に変換した上で、Redis Pub/Sub でコメントを送信
                             ## この段階ではまだ yourpost フラグを設定してはならない
                             ## yourpost フラグはコメントセッション WebSocket 側で設定しないと、意図しないコメントに yourpost フラグが付与されてしまう
                             await REDIS_CLIENT.publish(
-                                channel = f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{thread.id}',
+                                channel = f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{active_thread.id}',
                                 message = json.dumps(ConvertToXMLCompatibleCommentResponse(comment), ensure_ascii=False),
                             )
 
