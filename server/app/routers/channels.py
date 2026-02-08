@@ -4,6 +4,9 @@ import hashlib
 import pathlib
 import time
 import xml.etree.ElementTree as ET
+from typing import Annotated, Literal, cast
+from zoneinfo import ZoneInfo
+
 from async_lru import alru_cache
 from fastapi import (
     APIRouter,
@@ -16,13 +19,9 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import TypeAdapter
-from tortoise import connections
-from tortoise import timezone
-from typing import Annotated, cast, Literal
-from zoneinfo import ZoneInfo
+from tortoise import connections, timezone
 
-from app import logging
-from app import schemas
+from app import logging, schemas
 from app.constants import (
     LOGO_DIR,
     REDIS_CLIENT,
@@ -426,7 +425,7 @@ def ChannelLogoAPI(
     # 同梱のロゴファイルも Mirakurun や EDCB からのロゴもない場合は、デフォルトのロゴ画像を返す
     return FileResponse(LOGO_DIR / 'default.png', headers={
         'Cache-Control': CACHE_CONTROL,
-        'ETag': GetETag('default'.encode()),
+        'ETag': GetETag(b'default'),
     })
 
 

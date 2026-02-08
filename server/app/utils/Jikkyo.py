@@ -3,14 +3,13 @@
 # ref: https://stackoverflow.com/a/33533514/17124142
 from __future__ import annotations
 
-import httpx
-from bs4 import BeautifulSoup
-from bs4 import Tag
-from fastapi import Request
-from typing import cast, ClassVar
+from typing import ClassVar, cast
 
-from app import logging
-from app import schemas
+import httpx
+from bs4 import BeautifulSoup, Tag
+from fastapi import Request
+
+from app import logging, schemas
 from app.constants import API_REQUEST_HEADERS, HTTPX_CLIENT
 
 

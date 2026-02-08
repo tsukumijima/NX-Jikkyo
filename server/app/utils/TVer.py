@@ -1,12 +1,13 @@
 
 import asyncio
 import traceback
-from pydantic import BaseModel
 from datetime import datetime, timedelta
 from time import time
 from typing import Any, Literal
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
+
+from pydantic import BaseModel
 
 from app import logging
 from app.constants import HTTPX_CLIENT
@@ -168,7 +169,7 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
 
                     # ジャンルは "0xA" のようになぜか16進数表記の文字列で入っているので、適切に int に変換してからジャンル名にする
                     genre = None
-                    if 'genre' in program and program['genre']:
+                    if program.get('genre'):
                         genre_id = int(program['genre'], 16)
                         genre = GENRE_ID_TO_GENRE_NAME_MAP.get(genre_id)
 

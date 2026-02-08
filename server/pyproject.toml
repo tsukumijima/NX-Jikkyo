@@ -8,6 +8,8 @@ package-mode = false
 serve  = "cd ../ && docker compose build && docker compose run --rm --service-ports nx-jikkyo"
 dev    = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose run --rm --service-ports --volume=${PWD}/server/app/:/code/server/app/ nx-jikkyo --reload"
 aerich = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose run --rm --service-ports --volume=${PWD}/server/app/:/code/server/app/ --entrypoint=/code/server/.venv/bin/aerich nx-jikkyo"
+lint = "ruff check --fix . ; pyright"
+typecheck = "pyright"
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
@@ -35,6 +37,8 @@ uvloop = {version = ">=0.21.0,<1.0.0", platform = "linux"}
 websockets = "^12.0"
 
 [tool.poetry.group.dev.dependencies]
+pyright = "^1.1.403"
+ruff = ">=0.9.1,<1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -44,3 +48,56 @@ build-backend = "poetry.core.masonry.api"
 tortoise_orm = "app.constants.DATABASE_CONFIG"
 location = "./app/migrations/"
 src_folder = "./"
+
+[tool.ruff]
+# インデントの幅を4スペースに設定
+indent-width = 4
+# Python 3.13 を利用する
+target-version = "py313"
+# data/ ディレクトリは対象から除外する
+extend-exclude = ["data/"]
+
+[tool.ruff.lint]
+# flake8, pycodestyle, pyupgrade, isort, Ruff 固有のルールを使う
+select = ["F", "E", "W", "UP", "I", "RUF", "TID251"]
+ignore = [
+    "E501",    # 1行の長さを超えている場合の警告を抑制
+    "E731",    # Do not assign a `lambda` expression, use a `def` を抑制
+    "RUF001",  # 全角記号など `ambiguous unicode character` も使いたいため
+    "RUF002",  # 全角記号など `ambiguous unicode character` も使いたいため
+    "RUF003",  # 全角記号など `ambiguous unicode character` も使いたいため
+    "RUF012",
+]
+
+[tool.ruff.lint.isort]
+# インポートブロックの後に2行空ける
+lines-after-imports = 2
+
+[tool.pyright]
+# Python バージョンを指定
+pythonVersion = "3.13"
+# TypeCheckingMode を strict に設定（VSCode の設定と同等）
+typeCheckingMode = "strict"
+# プロジェクトルートを指定
+pythonPlatform = "All"
+# インクルードするパッケージパス
+include = ["app/"]
+# 除外するパス
+exclude = [
+    "**/__pycache__",
+    "**/.venv",
+    "**/node_modules",
+    "data/",
+    "logs/",
+]
+# VSCode の settings.json の diagnosticSeverityOverrides に対応する設定
+reportConstantRedefinition = "none"
+reportDeprecated = "warning"
+reportMissingTypeStubs = "none"
+reportPrivateImportUsage = "none"
+reportShadowedImports = "none"
+reportUnnecessaryComparison = "none"
+reportUnknownArgumentType = "none"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnusedFunction = "none"

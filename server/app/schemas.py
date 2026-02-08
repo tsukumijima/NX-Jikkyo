@@ -2,8 +2,8 @@
 import httpx
 from pydantic import BaseModel
 
-from app.constants import API_REQUEST_HEADERS, HTTPX_CLIENT
 from app.config import CONFIG
+from app.constants import API_REQUEST_HEADERS, HTTPX_CLIENT
 
 
 class NiconicoUser(BaseModel):

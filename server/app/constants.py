@@ -1,9 +1,10 @@
 
-import httpx
 import pkgutil
 from pathlib import Path
-from redis.asyncio.client import Redis
 from typing import Any
+
+import httpx
+from redis.asyncio.client import Redis
 
 from app.config import CONFIG
 

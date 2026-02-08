@@ -1,19 +1,16 @@
 
 import base64
-import httpx
 import json
-from fastapi import APIRouter
-from fastapi import Query
-from fastapi import Request
-from fastapi import status
-from fastapi.security.utils import get_authorization_scheme_param
-from jose import jwt
 from typing import Annotated
 
-from app import logging
-from app import schemas
-from app.constants import API_REQUEST_HEADERS, HTTPX_CLIENT
+import httpx
+from fastapi import APIRouter, Query, Request, status
+from fastapi.security.utils import get_authorization_scheme_param
+from jose import jwt
+
+from app import logging, schemas
 from app.config import CONFIG
+from app.constants import API_REQUEST_HEADERS, HTTPX_CLIENT
 from app.utils.OAuthCallbackResponse import OAuthCallbackResponse
 
 

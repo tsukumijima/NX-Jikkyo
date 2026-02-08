@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal, NotRequired, TypedDict
+
 from pydantic import BaseModel
 from tortoise import fields
 from tortoise.models import Model as TortoiseModel
-from typing import Literal, NotRequired, TypedDict
 
 from app.utils.TVer import ProgramInfo
 

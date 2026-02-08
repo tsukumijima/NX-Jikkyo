@@ -22,10 +22,11 @@ from __future__ import annotations
 import argparse
 import json
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 from urllib.parse import urlsplit
 
 
@@ -72,9 +73,8 @@ def iter_lines() -> Iterable[str]:
     ログファイルから行を読み込みます。
     """
     log_path = get_log_file_path()
-    with open(log_path, "r", encoding="utf-8", errors="replace") as f:
-        for line in f:
-            yield line
+    with open(log_path, encoding="utf-8", errors="replace") as f:
+        yield from f
 
 
 def get_first_header(headers: Any, key: str) -> str | None:
@@ -140,7 +140,7 @@ def handle_record(obj: Any) -> tuple[float, str, str] | None:
 
     # Caddy アクセスログのタイムスタンプフィールドは通常 'ts' で、Unix 秒（float）です。
     ts = obj.get("ts")
-    if not isinstance(ts, (int, float)):
+    if not isinstance(ts, int | float):
         # 欠落している場合は「不明な時刻」として扱います。
         ts = 0.0
     else:
@@ -187,7 +187,7 @@ def format_epoch(ts: float) -> str:
     """
     if ts <= 0:
         return "unknown"
-    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+    dt = datetime.fromtimestamp(ts, tz=UTC)
     return dt.isoformat()
 
 

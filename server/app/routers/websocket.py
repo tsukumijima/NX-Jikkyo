@@ -4,9 +4,11 @@ import json
 import random
 import time
 import traceback
-import websockets.exceptions
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Annotated, cast
+
+import websockets.exceptions
 from fastapi import (
     APIRouter,
     Path,
@@ -19,7 +21,6 @@ from starlette.websockets import (
 )
 from tortoise import timezone
 from tortoise.transactions import in_transaction
-from typing import Annotated, cast
 
 from app import logging
 from app.constants import (
@@ -31,9 +32,9 @@ from app.constants import (
 from app.models.comment import (
     Comment,
     CommentCounter,
+    Thread,
     XMLCompatibleCommentResponse,
     XMLCompatibleCommentResponseChat,
-    Thread,
 )
 from app.utils import GenerateClientID
 
@@ -289,7 +290,7 @@ class ThreadCommentBroadcaster:
 
                     # Redis から受信したコメントを JSON 文字列として扱う
                     raw_payload = message['data']
-                    if isinstance(raw_payload, (bytes, bytearray, memoryview)):
+                    if isinstance(raw_payload, bytes | bytearray | memoryview):
                         raw_json = bytes(raw_payload).decode('utf-8')
                     elif isinstance(raw_payload, str):
                         raw_json = raw_payload
@@ -1193,7 +1194,7 @@ async def CommentSessionAPI(
                 ## この待機は最大 5 秒でタイムアウトし、タイムアウト時は接続状態や放送終了判定だけを行う
                 try:
                     broadcast_message = await asyncio.wait_for(subscriber_queue.get(), timeout=5.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     broadcast_message = None
 
                 if broadcast_message is not None:

@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 import asyncio
-import time
-import typer
-import uvicorn
 import subprocess
 import sys
+import time
 import warnings
+
+import typer
+import uvicorn
 from aerich import Command
 from tortoise import Tortoise
 from tortoise.exceptions import DBConnectionError
@@ -14,11 +15,11 @@ from uvicorn.supervisors.watchfilesreload import WatchFilesReload
 
 from app.config import CONFIG
 from app.constants import (
-    NX_JIKKYO_ACCESS_LOG_PATH,
-    NX_JIKKYO_SERVER_LOG_PATH,
     BASE_DIR,
     DATABASE_CONFIG,
     LOGGING_CONFIG,
+    NX_JIKKYO_ACCESS_LOG_PATH,
+    NX_JIKKYO_SERVER_LOG_PATH,
     VERSION,
 )
 

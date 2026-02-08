@@ -5,25 +5,26 @@ import mimetypes
 import random
 import time
 import traceback
+import uuid
+from collections.abc import Awaitable, Callable
+from datetime import datetime, timedelta
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
 import tortoise.contrib.fastapi
 import tortoise.log
-import uuid
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from ndgr_client import NDGRClient
-from pathlib import Path
 from pydantic import TypeAdapter
 from rich.rule import Rule
 from rich.style import Style
 from starlette.middleware.base import BaseHTTPMiddleware
 from tortoise import timezone
 from tortoise.transactions import in_transaction
-from typing import Awaitable, Callable
-from zoneinfo import ZoneInfo
 
 from app import logging
 from app.config import CONFIG
@@ -271,6 +272,9 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
         # 現在アクティブなスレッドの情報を保存する辞書
         active_threads: dict[int, Thread] = {}
 
+        # バックグラウンドタスクの参照を保持する
+        background_tasks: list[asyncio.Task[None]] = []
+
         # ニコニコ実況のコメントをリアルタイムに受信する非同期関数
         async def StreamNicoliveComments(channel_id_int: int) -> None:
 
@@ -400,7 +404,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
         # ニコニコ実況の各実況チャンネルに対し、バックグラウンドでストリーミングを開始
         ## 一度にアクセスするとアクセス規制を喰らう可能性があるので、0.1 秒ずつ遅らせてタスクを起動する
         for nicolive_jikkyo_channel_id_int in NICOLIVE_JIKKYO_CHANNELS:
-            asyncio.create_task(StreamNicoliveComments(nicolive_jikkyo_channel_id_int))
+            background_tasks.append(asyncio.create_task(StreamNicoliveComments(nicolive_jikkyo_channel_id_int)))
             await asyncio.sleep(0.1)
             logging.info(f'StartStreamNicoliveComments [jk{nicolive_jikkyo_channel_id_int}]: Streaming started.')
 
