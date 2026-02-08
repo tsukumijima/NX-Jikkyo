@@ -674,7 +674,16 @@ async def WatchSessionAPI(
                         f'WatchSessionAPI [{channel_id}]: Failed to fetch viewer counter for initial statistics. Falling back to zero.',
                         exc_info = ex,
                     )
-                initial_comment_count = (await CommentCounter.get(thread_id=thread.id)).max_no
+                initial_comment_count = 0
+                try:
+                    initial_comment_count = (await CommentCounter.get(thread_id=thread.id)).max_no
+                except DoesNotExist as ex:
+                    # 稀に採番テーブルのレコードが欠損している場合は、0 にフォールバックして接続を継続する
+                    ## 定期 statistics 送信側の回復ロジック (SyncCommentCounters) で最終的に修復される
+                    logging.warning(
+                        f'WatchSessionAPI [{channel_id}]: CommentCounter record is missing for initial statistics. Falling back to zero.',
+                        exc_info = ex,
+                    )
                 await websocket.send_json({
                     'type': 'statistics',
                     'data': {
