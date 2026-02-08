@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import ClassVar, cast
 
 import httpx
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from fastapi import Request
 
 from app import logging, schemas
@@ -158,7 +158,7 @@ class Jikkyo:
                 if live_now:
                     live_link = live_now.find('a', href=lambda href: bool(href and href.startswith('https://live.nicovideo.jp/watch/lv')))  # type: ignore
                     if live_link:
-                        nicolive_program_id = cast(str, cast(Tag, live_link).get('href')).split('/')[-1]
+                        nicolive_program_id = cast(str, live_link.get('href')).split('/')[-1]
 
             # 何らかの理由で放送中のニコニコ生放送番組が取得できなかった
             ## メンテナンス中などで実況番組が放送されていないか、ニコニコチャンネルの HTML 構造が変更された可能性が高い
