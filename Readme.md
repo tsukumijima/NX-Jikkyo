@@ -18,12 +18,15 @@
 
 ### 対応サードパーティーアプリ
 
-NX-Jikkyo の WebSocket API を利用してコメント取得・表示が可能なアプリです。
+以下のアプリでは、NX-Jikkyo の WebSocket API を利用してコメント取得・表示が可能です。  
+私が把握している以外にも、多くのアプリやコメント収集ツール (NicoJKLogCMD など) にて対応していただいています。
 
 - **[jkcommentviewer](https://air.fem.jp/jkcommentviewer/)** v2.3.7.3 以降
-- **[TVTest](https://github.com/DBCTRADO/TVTest) + [NicoJK](https://github.com/xtne6f/NicoJK/releases)** master-240613 以降
-- **[TVTComment](https://github.com/noriokun4649/TVTComment)** v3.0.1 以降
-- **[KonomiTV](https://github.com/tsukumijima/KonomiTV/releases)** 0.10.1 以降
+- [TVTest](https://github.com/DBCTRADO/TVTest) プラグイン
+  - **[NicoJK](https://github.com/xtne6f/NicoJK/releases)** master-240613 以降
+  - **[TVTComment](https://github.com/noriokun4649/TVTComment/releases)** v3.0.1 以降
+- **[KonomiTV](https://github.com/tsukumijima/KonomiTV/releases)** v0.10.1 以降
+- **[JKCommentCrawler](https://github.com/tsukumijima/JKCommentCrawler)** v2.0.0 以降
 
 ## Architecture
 
@@ -80,7 +83,8 @@ WebSocket API は 2 つの独立したエンドポイントで構成されてい
 
 #### 視聴セッション WebSocket (`/api/v1/channels/{channel_id}/ws/watch`)
 
-ニコ生互換の視聴セッション管理を行います。統計情報（視聴者数・コメント数）の取得、サーバー時刻同期、コメント投稿、コメント受信用 WebSocket の接続情報 (`room` メッセージ) の取得が可能です。
+ニコ生互換の視聴セッション管理を行います。  
+統計情報（視聴者数・コメント数）の取得、サーバー時刻同期、コメント投稿、コメント受信用 WebSocket の接続情報 (`room` メッセージ) の取得が可能です。
 
 **クライアント → サーバー:**
 | メッセージ | 説明 |
@@ -116,7 +120,9 @@ WebSocket API は 2 つの独立したエンドポイントで構成されてい
     "date": 1704067200,
     "date_usec": 123456,
     "mail": "184 white naka medium",
-    "user_id": "z7edP-AgH...",
+    // NX-Jikkyo で生成されるユーザー ID は SHA-1: 40 文字 (初期に投稿されたコメントのみ UUID v4: 36 文字) のため、
+    // 35 文字以上であれば確実に NX-Jikkyo に投稿されたコメントだと判定できる
+    "user_id": "(ランダムなユーザー ID)",
     "premium": 1,
     "anonymity": 1,
     "yourpost": 1,
@@ -126,6 +132,29 @@ WebSocket API は 2 つの独立したエンドポイントで構成されてい
 ```
 
 `premium`, `anonymity`, `yourpost` は値が 0 の場合、本家ニコ生の仕様に合わせてフィールド自体が省略されます。
+
+### REST API エンドポイント
+
+| エンドポイント | 説明 |
+|:--|:--|
+| `GET /api/v1/channels` | チャンネル一覧取得 (`full=True` で全スレッド取得) |
+| `GET /api/v1/channels/xml` | XML 互換チャンネル情報 (NicoJK.ini 対応) |
+| `GET /api/v1/channels/{channel_id}/logo` | チャンネルロゴ (PNG) |
+| `GET /api/v1/channels/{channel_id}/threads` | チャンネルのスレッド履歴 |
+| `GET /api/v1/channels/{channel_id}/jikkyo` | ニコニコ実況 WebSocket 情報 |
+| `WS  /api/v1/channels/{channel_id}/ws/watch` | 視聴セッション WebSocket |
+| `WS  /api/v1/channels/{channel_id}/ws/comment` | コメントセッション WebSocket |
+| `GET /api/v1/threads/{thread_id}` | スレッド情報と全コメント取得 |
+| `GET /api/niconico/auth` | ニコニコ OAuth 認証 URL 発行 |
+| `GET /api/niconico/callback` | ニコニコ OAuth コールバック |
+
+## Development
+
+### 前提条件
+
+- **Docker** & **Docker Compose**
+- **Python 3.13** + **[Poetry](https://python-poetry.org/)**
+- **Node.js** + **Yarn** (フロントエンド開発時)
 
 ### プロジェクト構成
 
@@ -178,29 +207,6 @@ NX-Jikkyo/
 ├── .env.example                  # 環境変数テンプレート
 └── mysqldump.sh                  # MySQL バックアップスクリプト
 ```
-
-### REST API エンドポイント
-
-| エンドポイント | 説明 |
-|:--|:--|
-| `GET /api/v1/channels` | チャンネル一覧取得 (`full=True` で全スレッド取得) |
-| `GET /api/v1/channels/xml` | XML 互換チャンネル情報 (NicoJK.ini 対応) |
-| `GET /api/v1/channels/{channel_id}/threads` | チャンネルのスレッド履歴 |
-| `GET /api/v1/channels/{channel_id}/logo` | チャンネルロゴ (PNG) |
-| `GET /api/v1/channels/{channel_id}/jikkyo` | ニコニコ実況 WebSocket 情報 |
-| `GET /api/v1/threads/{thread_id}` | スレッド情報と全コメント取得 |
-| `WS /api/v1/channels/{channel_id}/ws/watch` | 視聴セッション WebSocket |
-| `WS /api/v1/channels/{channel_id}/ws/comment` | コメントセッション WebSocket |
-| `GET /api/niconico/auth` | ニコニコ OAuth 認証 URL 発行 |
-| `GET /api/niconico/callback` | ニコニコ OAuth コールバック |
-
-## Development
-
-### 前提条件
-
-- **Docker** & **Docker Compose**
-- **Python 3.13** + **[Poetry](https://python-poetry.org/)**
-- **Node.js** + **Yarn** (フロントエンド開発時)
 
 ### セットアップ
 
@@ -285,15 +291,6 @@ yarn build
 # コード品質チェック (ESLint)
 yarn lint
 ```
-
-### Docker Compose 構成
-
-| サービス | イメージ | 説明 |
-|:--|:--|:--|
-| `nx-jikkyo` | `python:3.13.1-bookworm` ベース | FastAPI メインアプリケーション (Uvicorn) |
-| `nx-jikkyo-mysql` | `mysql:8.0` | データベース |
-| `nx-jikkyo-redis` | `redis:6.2` | キャッシュ・Pub/Sub |
-| `nx-jikkyo-caddy` | `caddy:2-alpine` | リバースプロキシ (TLS 終端・ロードバランシング) |
 
 ## License
 
