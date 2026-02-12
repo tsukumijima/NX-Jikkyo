@@ -1,6 +1,5 @@
 import asyncio
 from collections.abc import Awaitable, Callable
-from typing import TypeVar
 
 from tortoise import connections
 from tortoise.backends.base.client import TransactionalDBClient
@@ -9,7 +8,6 @@ from tortoise.transactions import in_transaction
 from app import logging
 
 
-TransactionResultType = TypeVar('TransactionResultType')
 # DB ダウン時にドライバ層から返る代表的なメッセージ断片を保持する
 ## 例外型だけでは取りこぼすケースがあるため、メッセージ判定を併用する
 DATABASE_CONNECTION_UNAVAILABLE_MESSAGES: list[str] = [
@@ -92,7 +90,7 @@ def RecoverStaleTransactionConnectionContext() -> bool:
     return True
 
 
-async def RunTransactionWithReconnectRetry(
+async def RunTransactionWithReconnectRetry[TransactionResultType](
     operation: Callable[[TransactionalDBClient], Awaitable[TransactionResultType]],
     operation_name: str,
     max_retry_attempts: int = 3,
