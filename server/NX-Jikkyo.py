@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import asyncio
+import os
 import subprocess
 import sys
 import time
@@ -72,6 +73,13 @@ def main(
 
     # バージョン情報をログに出力
     logging.info(f'NX-Jikkyo version {VERSION} (Port {CONFIG.SPECIFIED_SERVER_PORT})')
+    # 実行中プロセスの役割を明示し、運用時にメイン/サブのどちらが出しているログかを判別しやすくする
+    ## 機能上の挙動は変更せず、解析容易性のみを向上させる
+    process_role = 'main' if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT else 'sub'
+    logging.info(
+        f'NX-Jikkyo process started. role: {process_role}, pid: {os.getpid()}, '
+        f'ppid: {os.getppid()}, port: {CONFIG.SPECIFIED_SERVER_PORT}'
+    )
 
     # Aerich でデータベースをアップグレードする
     ## 特にデータベースのアップグレードが必要ない場合は何も起こらない
