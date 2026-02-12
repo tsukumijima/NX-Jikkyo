@@ -181,3 +181,49 @@ REDIS_KEY_JIKKYO_FORCE_COUNT = 'nx-jikkyo:jikkyo_force_counts'
 REDIS_KEY_VIEWER_COUNT = 'nx-jikkyo:viewer_counts'
 # Redis 上のスレッドごとの最新コメ番キャッシュのキー
 REDIS_KEY_THREAD_COMMENT_COUNTER = 'nx-jikkyo:thread_comment_counters'
+
+# マスタデータとして扱う実況チャンネル情報
+## app.py の RegisterMasterChannels() で channels テーブルへ反映するソースオブジェクト
+## WebSocket 側の既知チャンネル判定でも同じ定義を使い、重複定義による不整合を防ぐ
+MASTER_CHANNEL_INFOS: dict[str, dict[str, str]] = {
+    'jk1': {'name': 'NHK総合'},
+    'jk2': {'name': 'NHK Eテレ'},
+    'jk4': {'name': '日本テレビ'},
+    'jk5': {'name': 'テレビ朝日'},
+    'jk6': {'name': 'TBSテレビ'},
+    'jk7': {'name': 'テレビ東京'},
+    'jk8': {'name': 'フジテレビ'},
+    'jk9': {'name': 'TOKYO MX'},
+    'jk10': {'name': 'テレ玉'},
+    'jk11': {'name': 'tvk'},
+    'jk12': {'name': 'チバテレビ'},
+    'jk13': {'name': 'サンテレビ'},
+    'jk14': {'name': 'KBS京都'},
+    'jk101': {'name': 'NHK BS'},
+    'jk103': {'name': 'NHK BSプレミアム4K'},
+    'jk141': {'name': 'BS日テレ'},
+    'jk151': {'name': 'BS朝日'},
+    'jk161': {'name': 'BS-TBS'},
+    'jk171': {'name': 'BSテレ東'},
+    'jk181': {'name': 'BSフジ'},
+    'jk191': {'name': 'WOWOW PRIME'},
+    'jk192': {'name': 'WOWOW LIVE'},
+    'jk193': {'name': 'WOWOW CINEMA'},
+    'jk200': {'name': 'BS10'},  # 旧 BSJapanext
+    'jk201': {'name': 'BS10スターチャンネル'},
+    'jk211': {'name': 'BS11'},
+    'jk222': {'name': 'BS12'},
+    'jk236': {'name': 'BSアニマックス'},
+    'jk252': {'name': 'WOWOW PLUS'},
+    'jk260': {'name': 'BS松竹東急'},
+    'jk263': {'name': 'BSJapanext'},  # 後方互換性のために維持。WebSocket 接続時は jk200 にリダイレクト
+    'jk265': {'name': 'BSよしもと'},
+    'jk333': {'name': 'AT-X'},
+}
+
+# NX-Jikkyo が提供している実況チャンネル ID の集合
+## MASTER_CHANNEL_INFOS から機械的に生成し、参照側での重複定義を避ける
+KNOWN_JIKKYO_CHANNEL_IDS: frozenset[int] = frozenset(
+    int(channel_id.replace('jk', ''))
+    for channel_id in MASTER_CHANNEL_INFOS
+)

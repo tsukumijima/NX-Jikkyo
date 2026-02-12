@@ -25,6 +25,7 @@ from tortoise.exceptions import DoesNotExist
 
 from app import logging
 from app.constants import (
+    KNOWN_JIKKYO_CHANNEL_IDS,
     REDIS_CHANNEL_THREAD_COMMENTS_PREFIX,
     REDIS_CLIENT,
     REDIS_KEY_JIKKYO_FORCE_COUNT,
@@ -62,7 +63,6 @@ COMMENT_DELAY_THRESHOLD_SECONDS = 5.0
 
 # 接続ごとのコメント送信キューの最大サイズ
 COMMENT_QUEUE_MAX_SIZE = 200
-
 
 @dataclass(slots=True)
 class CommentBroadcastMessage:
@@ -527,6 +527,13 @@ async def WatchSessionAPI(
         await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
         return
 
+    # DB へ到達する前に既知チャンネルかを判定し、無効チャンネルアクセスで DB を消費しないようにする
+    ## サードパーティークライアント由来の jk309 などを早期拒否して、通常トラフィックへの影響を抑える
+    if channel_id_int not in KNOWN_JIKKYO_CHANNEL_IDS:
+        logging.error(f'WatchSessionAPI [{channel_id}]: Unknown channel ID.')
+        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
+        return
+
     # スレッド ID が指定されていなければ、現在アクティブな (放送中の) スレッドを取得
     if not thread_id:
         thread = await GetActiveThread(channel_id_int)
@@ -971,7 +978,9 @@ async def WatchSessionAPI(
                         last_comment_counter_error_log_time = current_time
                     if current_time >= next_comment_counter_db_retry_time:
                         try:
-                            latest_comment = await Comment.filter(thread_id=thread.id).order_by('-no').first()
+                            # no は採番テーブルで単調増加している前提なので、最新行判定には id を使って負荷を抑える
+                            ## 欠損回復時のみ実行される経路のため、ここでは最小コストで復旧を優先する
+                            latest_comment = await Comment.filter(thread_id=thread.id).order_by('-id').first()
                             comment_count = latest_comment.no if latest_comment is not None else 0
                             existing_comment_counter = await CommentCounter.filter(thread_id=thread.id).first()
                             synchronized_comment_count = comment_count

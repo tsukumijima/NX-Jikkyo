@@ -32,6 +32,7 @@ from app.constants import (
     CLIENT_DIR,
     DATABASE_CONFIG,
     LOGS_DIR,
+    MASTER_CHANNEL_INFOS,
     REDIS_CHANNEL_THREAD_COMMENTS_PREFIX,
     REDIS_CLIENT,
     REDIS_KEY_CHANNEL_INFOS_CACHE,
@@ -194,50 +195,14 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     # サーバーの初回起動時のみ、チャンネル情報をマスタデータとして登録
     async def RegisterMasterChannels():
 
-        # マスタデータのチャンネル情報
-        master_channels = {
-            'jk1': {'name': 'NHK総合'},
-            'jk2': {'name': 'NHK Eテレ'},
-            'jk4': {'name': '日本テレビ'},
-            'jk5': {'name': 'テレビ朝日'},
-            'jk6': {'name': 'TBSテレビ'},
-            'jk7': {'name': 'テレビ東京'},
-            'jk8': {'name': 'フジテレビ'},
-            'jk9': {'name': 'TOKYO MX'},
-            'jk10': {'name': 'テレ玉'},
-            'jk11': {'name': 'tvk'},
-            'jk12': {'name': 'チバテレビ'},
-            'jk13': {'name': 'サンテレビ'},
-            'jk14': {'name': 'KBS京都'},
-            'jk101': {'name': 'NHK BS'},
-            'jk103': {'name': 'NHK BSプレミアム4K'},
-            'jk141': {'name': 'BS日テレ'},
-            'jk151': {'name': 'BS朝日'},
-            'jk161': {'name': 'BS-TBS'},
-            'jk171': {'name': 'BSテレ東'},
-            'jk181': {'name': 'BSフジ'},
-            'jk191': {'name': 'WOWOW PRIME'},
-            'jk192': {'name': 'WOWOW LIVE'},
-            'jk193': {'name': 'WOWOW CINEMA'},
-            'jk200': {'name': 'BS10'},  # 旧BSJapanext
-            'jk201': {'name': 'BS10スターチャンネル'},
-            'jk211': {'name': 'BS11'},
-            'jk222': {'name': 'BS12'},
-            'jk236': {'name': 'BSアニマックス'},
-            'jk252': {'name': 'WOWOW PLUS'},
-            'jk260': {'name': 'BS松竹東急'},
-            'jk263': {'name': 'BSJapanext'},  # 後方互換性のために維持。WebSocket 接続時は jk200 にリダイレクト
-            'jk265': {'name': 'BSよしもと'},
-            'jk333': {'name': 'AT-X'},
-        }
-
         # 既存のチャンネル情報を取得
         existing_channels = await Channel.all()
         existing_channel_ids = {channel.id for channel in existing_channels}
 
-        # マスタデータのチャンネル情報を登録または更新
+        # constants.py のマスタデータを channels テーブルへ登録または更新
+        ## 参照元を 1 か所に集約することで、WebSocket 側の既知チャンネル判定と不整合が出ないようにする
         description = ''  # 当面未使用
-        for channel_id, channel_info in master_channels.items():
+        for channel_id, channel_info in MASTER_CHANNEL_INFOS.items():
             master_channel_id = int(channel_id.replace('jk', ''))
             if master_channel_id not in existing_channel_ids:
                 await Channel.create(
@@ -467,25 +432,31 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     # 念のため、1時間に1回採番テーブルに記録された最大コメ番とスレッドごとのコメント数を同期する
     async def SyncCommentCounters():
 
-        # 各スレッドの実コメント数を DB から集計し、採番テーブルを補正する
-        ## 稀な障害時にカウンタがずれても、定期的に自己修復できるようにしている
+        # 既存の採番テーブルは正として扱い、欠損レコードのみ補修する
+        ## 全スレッドで comments を走査すると高負荷になるため、通常時は comments テーブルを参照しない
         threads = await Thread.all()
+        existing_comment_counters = await CommentCounter.all()
+        comment_counter_map: dict[int, int] = {
+            comment_counter.thread_id: comment_counter.max_no
+            for comment_counter in existing_comment_counters
+        }
+
         for thread in threads:
-            latest_comment = await Comment.filter(thread_id=thread.id).order_by('-no').first()
-            latest_comment_no = latest_comment.no if latest_comment is not None else 0
-            existing_comment_counter = await CommentCounter.filter(thread_id=thread.id).first()
-            synchronized_comment_count = latest_comment_no
-            if existing_comment_counter is not None:
-                # max_no は採番済みコメ番の最大値として扱い、既存値より小さい値で巻き戻さない
-                synchronized_comment_count = max(existing_comment_counter.max_no, latest_comment_no)
-                if existing_comment_counter.max_no != synchronized_comment_count:
-                    existing_comment_counter.max_no = synchronized_comment_count
-                    await existing_comment_counter.save(update_fields=['max_no'])
-            else:
+
+            # 採番テーブルに存在するレコードは信頼し、その値をそのままキャッシュへ反映する
+            synchronized_comment_count = comment_counter_map.get(thread.id)
+            if synchronized_comment_count is None:
+
+                # 採番テーブルが欠損しているスレッドだけ、comments 側の最新コメントから再構築する
+                ## no は採番テーブルで単調増加している前提なので、最新行判定は負荷の軽い id を使う
+                latest_comment = await Comment.filter(thread_id=thread.id).order_by('-id').first()
+                synchronized_comment_count = latest_comment.no if latest_comment is not None else 0
                 await CommentCounter.create(
                     thread_id = thread.id,
                     max_no = synchronized_comment_count,
                 )
+                comment_counter_map[thread.id] = synchronized_comment_count
+
             # Redis 側のキャッシュも同じ値に揃える
             ## ランタイムでキャッシュ更新に失敗しても、この同期処理で最終的に回復できる
             try:
