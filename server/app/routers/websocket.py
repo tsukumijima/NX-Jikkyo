@@ -6,14 +6,10 @@ import time
 import traceback
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 import websockets.exceptions
-from fastapi import (
-    APIRouter,
-    Path,
-    Query,
-)
+from fastapi import APIRouter, Path, Query
 from starlette.websockets import (
     WebSocket,
     WebSocketDisconnect,
@@ -63,6 +59,14 @@ COMMENT_DELAY_THRESHOLD_SECONDS = 5.0
 
 # 接続ごとのコメント送信キューの最大サイズ
 COMMENT_QUEUE_MAX_SIZE = 200
+# unknown channel の拒否ログを集約して出力する間隔 (秒)
+UNKNOWN_CHANNEL_LOG_INTERVAL_SECONDS = 60.0
+# unknown channel ごとの拒否回数
+unknown_channel_reject_count_by_channel_id: dict[str, int] = {}
+# unknown channel 拒否ログを最後に出力した時刻
+last_unknown_channel_summary_log_time = 0.0
+# unknown channel 集約カウンタ更新の排他ロック
+unknown_channel_summary_lock = asyncio.Lock()
 
 @dataclass(slots=True)
 class CommentBroadcastMessage:
@@ -408,6 +412,63 @@ async def CleanupThreadCommentBroadcaster(thread_id: int, broadcaster: ThreadCom
                 del __thread_comment_broadcasters[thread_id]
 
 
+async def LogUnknownChannelRejected(channel_id: str) -> None:
+    """
+    unknown channel 拒否ログを 1 分単位で集約して出力する
+
+    Args:
+        channel_id (str): 拒否対象の実況チャンネル ID
+    """
+
+    global last_unknown_channel_summary_log_time
+
+    # ログ集約判定に使う現在時刻を取得する
+    current_time = time.time()
+    # ロック外で使う出力用の値を初期化する
+    should_log_summary = False
+    summary_total_count = 0
+    summary_detail = ''
+
+    # 集約カウンタは複数接続から同時に更新されるためロックで保護する
+    async with unknown_channel_summary_lock:
+        # チャンネルごとの拒否回数を加算する
+        current_count = unknown_channel_reject_count_by_channel_id.get(channel_id, 0)
+        unknown_channel_reject_count_by_channel_id[channel_id] = current_count + 1
+
+        # 初回呼び出し時に集約開始時刻を初期化する
+        if last_unknown_channel_summary_log_time == 0.0:
+            last_unknown_channel_summary_log_time = current_time
+
+        # まだ集約間隔に達していなければ次回へ持ち越す
+        elapsed_seconds = current_time - last_unknown_channel_summary_log_time
+        if elapsed_seconds < UNKNOWN_CHANNEL_LOG_INTERVAL_SECONDS:
+            return
+
+        # 現時点の集約結果をスナップショット化してカウンタをリセットする
+        snapshot = dict(unknown_channel_reject_count_by_channel_id)
+        unknown_channel_reject_count_by_channel_id.clear()
+        last_unknown_channel_summary_log_time = current_time
+
+        # 出力するチャンネル詳細は件数の多い順に上位 10 件までに絞る
+        summary_total_count = sum(snapshot.values())
+        sorted_snapshot = sorted(snapshot.items(), key=lambda item: item[1], reverse=True)
+        top_channels = sorted_snapshot[:10]
+        summary_detail = ', '.join(
+            f'{snapshot_channel_id}: {snapshot_count}'
+            for snapshot_channel_id, snapshot_count in top_channels
+        )
+        if summary_detail == '':
+            summary_detail = 'none'
+        should_log_summary = True
+
+    # ロック外で warning を出すことで、ロック保持時間を最小化する
+    if should_log_summary is True:
+        logging.warning(
+            'WatchSessionAPI: Rejected unknown channel requests in last 60 seconds. '
+            f'total: {summary_total_count}, details: {summary_detail}'
+        )
+
+
 async def GetActiveThread(channel_id_int: int) -> Thread | None:
     """
     現在アクティブな (放送されている) スレッド情報を取得する
@@ -489,6 +550,134 @@ def SetYourPostFlag(response: XMLCompatibleCommentResponse, thread_key: str) -> 
     return response
 
 
+def IsWebSocketDisconnected(websocket: WebSocket) -> bool:
+    """
+    WebSocket が既に切断済みかどうかを判定する
+
+    Args:
+        websocket (WebSocket): 判定対象の WebSocket
+
+    Returns:
+        bool: 切断済みの場合は True
+    """
+
+    # Starlette 側とアプリ側のどちらかが切断済みなら、送信処理は中止する
+    return (
+        websocket.client_state == WebSocketState.DISCONNECTED
+        or websocket.application_state == WebSocketState.DISCONNECTED
+    )
+
+
+def IsWebSocketClosedError(ex: Exception) -> bool:
+    """
+    WebSocket 切断済みで発生する想定内の送信例外かどうかを判定する
+
+    Args:
+        ex (Exception): 判定対象の例外
+
+    Returns:
+        bool: 想定内の切断例外の場合は True
+    """
+
+    # FastAPI / Starlette の標準的な切断例外
+    if isinstance(ex, WebSocketDisconnect):
+        return True
+    # websockets ライブラリが送出する切断例外
+    if isinstance(ex, websockets.exceptions.ConnectionClosed):
+        return True
+    # Starlette 実装で多発する close 済み送信例外
+    if isinstance(ex, RuntimeError):
+        return 'Cannot call "send" once a close message has been sent.' in str(ex)
+    # Uvicorn の内部例外はクラスを直接 import しづらいため名前で判定する
+    return ex.__class__.__name__ == 'ClientDisconnected'
+
+
+async def SendJSONSafely(websocket: WebSocket, payload: Any) -> bool:
+    """
+    切断済みソケットへの送信例外を抑制しつつ JSON を送信する
+
+    Args:
+        websocket (WebSocket): 送信先 WebSocket
+        payload (Any): JSON 送信する payload
+
+    Returns:
+        bool: 送信成功時は True、切断済みなどで送信不要な場合は False
+    """
+
+    # すでに切断済みなら送信せず即終了する
+    if IsWebSocketDisconnected(websocket) is True:
+        return False
+
+    try:
+        # 切断前であれば通常どおり送信する
+        await websocket.send_json(payload)
+        return True
+    except Exception as ex:
+        # 切断済み起因の例外は抑止し、それ以外は上位へ伝搬する
+        if IsWebSocketClosedError(ex) is True:
+            return False
+        raise
+
+
+async def SendTextSafely(websocket: WebSocket, text: str) -> bool:
+    """
+    切断済みソケットへの送信例外を抑制しつつテキストを送信する
+
+    Args:
+        websocket (WebSocket): 送信先 WebSocket
+        text (str): 送信するテキスト
+
+    Returns:
+        bool: 送信成功時は True、切断済みなどで送信不要な場合は False
+    """
+
+    # すでに切断済みなら送信せず即終了する
+    if IsWebSocketDisconnected(websocket) is True:
+        return False
+
+    try:
+        # 切断前であれば通常どおり送信する
+        await websocket.send_text(text)
+        return True
+    except Exception as ex:
+        # 切断済み起因の例外は抑止し、それ以外は上位へ伝搬する
+        if IsWebSocketClosedError(ex) is True:
+            return False
+        raise
+
+
+async def CloseWebSocketSafely(
+    websocket: WebSocket,
+    code: int = 1000,
+    reason: str | None = None,
+) -> bool:
+    """
+    切断済みソケットへの close 例外を抑制しつつ接続を閉じる
+
+    Args:
+        websocket (WebSocket): クローズ対象の WebSocket
+        code (int, optional): close code. Defaults to 1000.
+        reason (str | None, optional): close reason. Defaults to None.
+
+    Returns:
+        bool: close 実行時は True、既に切断済みの場合は False
+    """
+
+    # すでに切断済みなら close を再送しない
+    if IsWebSocketDisconnected(websocket) is True:
+        return False
+
+    try:
+        # close は 1 回だけ実行し、成功時は True を返す
+        await websocket.close(code=code, reason=reason)
+        return True
+    except Exception as ex:
+        # close 済み起因の例外は抑止し、それ以外は上位へ伝搬する
+        if IsWebSocketClosedError(ex) is True:
+            return False
+        raise
+
+
 @router.websocket('/channels/{channel_id}/ws/watch')
 async def WatchSessionAPI(
     websocket: WebSocket,
@@ -524,14 +713,14 @@ async def WatchSessionAPI(
         channel_id_int = int(channel_id.replace('jk', ''))
     except ValueError:
         logging.error(f'WatchSessionAPI [{channel_id}]: Invalid channel ID.')
-        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
+        await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
         return
 
     # DB へ到達する前に既知チャンネルかを判定し、無効チャンネルアクセスで DB を消費しないようにする
     ## サードパーティークライアント由来の jk309 などを早期拒否して、通常トラフィックへの影響を抑える
     if channel_id_int not in KNOWN_JIKKYO_CHANNEL_IDS:
-        logging.error(f'WatchSessionAPI [{channel_id}]: Unknown channel ID.')
-        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
+        await LogUnknownChannelRejected(channel_id)
+        await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
         return
 
     # スレッド ID が指定されていなければ、現在アクティブな (放送中の) スレッドを取得
@@ -540,7 +729,7 @@ async def WatchSessionAPI(
         if not thread:
             # 存在しないチャンネル ID を指定された場合にも発生して頻度が多すぎるのでログをコメントアウト中
             # logging.error(f'WatchSessionAPI [{channel_id}]: Active thread not found.')
-            await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
+            await CloseWebSocketSafely(websocket, code=1002, reason=f'[{channel_id}]: Active thread not found.')
             return
 
     # スレッド ID が指定されていれば、そのスレッドを取得
@@ -552,11 +741,11 @@ async def WatchSessionAPI(
         ).first()
         if not thread:
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread not found.')
-            await websocket.close(code=1002, reason=f'[{channel_id}]: Thread not found.')
+            await CloseWebSocketSafely(websocket, code=1002, reason=f'[{channel_id}]: Thread not found.')
             return
         if timezone.now() < thread.start_at:
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread is upcoming.')
-            await websocket.close(code=1002, reason=f'[{channel_id}]: Thread is upcoming.')
+            await CloseWebSocketSafely(websocket, code=1002, reason=f'[{channel_id}]: Thread is upcoming.')
             return
 
     # クライアント ID を生成
@@ -596,12 +785,14 @@ async def WatchSessionAPI(
                 message_type = message.get('type')
             except KeyError:
                 # メッセージに type がない場合はエラーを返す
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'error',
                     'data': {
                         'message': 'INVALID_MESSAGE',
                     },
                 })
+                if is_sent is False:
+                    return
                 continue
 
             # 視聴開始リクエスト
@@ -611,30 +802,36 @@ async def WatchSessionAPI(
             if message_type == 'startWatching':
 
                 # 現在のサーバー時刻 (ISO 8601) を送信
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'serverTime',
                     'data': {
                         'currentMs': timezone.now().isoformat(),
                     },
                 })
+                if is_sent is False:
+                    return
 
                 # 座席取得が完了した旨を送信
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'seat',
                     'data': {
                         # 「座席を維持するために送信する keepSeat メッセージ (クライアントメッセージ) の送信間隔時間（秒）」
                         'keepIntervalSec': 30,
                     },
                 })
+                if is_sent is False:
+                    return
 
                 # スレッドの放送開始時刻・放送終了時刻を送信
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'schedule',
                     'data': {
                         'begin': thread.start_at.isoformat(),
                         'end': thread.end_at.isoformat(),
                     },
                 })
+                if is_sent is False:
+                    return
 
                 # リクエスト元の URL を組み立てる
                 ## scheme はそのままだと多段プロキシの場合に ws:// になってしまうので、
@@ -644,7 +841,7 @@ async def WatchSessionAPI(
                 uri = f'{scheme}://{websocket.url.netloc}/api/v1/channels/{channel_id}/ws/comment'
 
                 # コメント部屋情報を送信
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'room',
                     'data': {
                         'messageServer': {
@@ -671,6 +868,8 @@ async def WatchSessionAPI(
                         'vposBaseTime': thread.start_at.isoformat(),
                     },
                 })
+                if is_sent is False:
+                    return
 
                 # 視聴の統計情報を送信
                 initial_viewer_count = 0
@@ -691,7 +890,7 @@ async def WatchSessionAPI(
                         f'WatchSessionAPI [{channel_id}]: CommentCounter record is missing for initial statistics. Falling back to zero.',
                         exc_info = ex,
                     )
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'statistics',
                     'data': {
                         'viewers': initial_viewer_count,
@@ -700,6 +899,8 @@ async def WatchSessionAPI(
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
                 })
+                if is_sent is False:
+                    return
                 initial_statistics_comment_count = initial_comment_count
 
             # 座席維持リクエスト
@@ -718,12 +919,14 @@ async def WatchSessionAPI(
 
                 # 放送が終了したスレッドにはコメントを投稿できない
                 if thread.end_at < timezone.now():
-                    await websocket.send_json({
+                    is_sent = await SendJSONSafely(websocket, {
                         'type': 'error',
                         'data': {
                             'message': 'NOT_ON_AIR',
                         },
                     })
+                    if is_sent is False:
+                        return
                     continue
 
                 try:
@@ -762,7 +965,7 @@ async def WatchSessionAPI(
                         last_comment_time = current_time
 
                         # ダミーのコメント投稿結果を返す
-                        await websocket.send_json({
+                        is_sent = await SendJSONSafely(websocket, {
                             'type': 'postCommentResult',
                             'data': {
                                 'chat': {
@@ -773,6 +976,8 @@ async def WatchSessionAPI(
                                 },
                             },
                         })
+                        if is_sent is False:
+                            return
 
                         silent_discard_count += 1
                         if silent_discard_count > SILENT_DISCARD_COUNT_THRESHOLD:
@@ -850,7 +1055,7 @@ async def WatchSessionAPI(
                         await REDIS_CLIENT.zremrangebyscore(f'{REDIS_KEY_JIKKYO_FORCE_COUNT}:{channel_id}', 0, current_time - 60)
 
                     # 投稿結果を返す
-                    await websocket.send_json({
+                    is_sent = await SendJSONSafely(websocket, {
                         'type': 'postCommentResult',
                         'data': {
                             'chat': {
@@ -866,22 +1071,28 @@ async def WatchSessionAPI(
                             },
                         },
                     })
+                    if is_sent is False:
+                        return
                     logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} posted a comment.')
 
                 # コメント投稿に失敗した場合はエラーを返す
-                except Exception:
+                except Exception as ex:
+                    if IsWebSocketClosedError(ex) is True:
+                        return
                     logging.error(f'WatchSessionAPI [{channel_id}]: Failed to post a comment.')
                     logging.error(message)
                     logging.error(traceback.format_exc())
-                    await websocket.send_json({
+                    is_sent = await SendJSONSafely(websocket, {
                         'type': 'error',
                         'data': {
                             'message': 'INVALID_MESSAGE',
                         },
                     })
+                    if is_sent is False:
+                        return
 
             # 接続が切れたらタスクを終了
-            if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
+            if IsWebSocketDisconnected(websocket) is True:
                 return
 
     async def RunSenderTask() -> None:
@@ -1047,7 +1258,7 @@ async def WatchSessionAPI(
                             exc_info = ex,
                         )
                         last_viewer_counter_error_log_time = current_time
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'statistics',
                     'data': {
                         'viewers': viewer_count,
@@ -1056,41 +1267,49 @@ async def WatchSessionAPI(
                         'giftPoints': 0,  # NX-Jikkyo では常に 0 を返す
                     },
                 })
+                if is_sent is False:
+                    return
                 last_statistics_time = current_time
 
             # 45 秒に 1 回サーバー時刻を送信 (互換性のため)
             if (time.time() - last_server_time_time) > 45:
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'serverTime',
                     'data': {
                         'serverTime': timezone.now().isoformat(),
                     },
                 })
+                if is_sent is False:
+                    return
                 last_server_time_time = time.time()
 
             # 30 秒に 1 回 ping を送信 (互換性のため)
             if (time.time() - last_ping_time) > 30:
-                await websocket.send_json({'type': 'ping'})
+                is_sent = await SendJSONSafely(websocket, {'type': 'ping'})
+                if is_sent is False:
+                    return
                 last_ping_time = time.time()
 
             # 処理開始時点では放送中だった場合のみ、スレッドの放送終了時刻を過ぎたら接続を切断する
             ## 最初から過去のスレッドだった場合は実行しない
             if is_on_air is True and timezone.now() > thread.end_at:
                 logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected because the thread ended.')
-                await websocket.send_json({
+                is_sent = await SendJSONSafely(websocket, {
                     'type': 'disconnect',
                     'data': {
                         'reason': 'END_PROGRAM',
                     },
                 })
-                await websocket.close(code=1000)  # 正常終了扱い
+                if is_sent is False:
+                    return
+                await CloseWebSocketSafely(websocket, code=1000)  # 正常終了扱い
                 return
 
             # 次の実行まで1秒待つ
             await asyncio.sleep(1)
 
             # 接続が切れたらタスクを終了
-            if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
+            if IsWebSocketDisconnected(websocket) is True:
                 return
 
     try:
@@ -1104,8 +1323,20 @@ async def WatchSessionAPI(
         # 定期的にサーバーからクライアントにメッセージを送信するタスクを実行開始
         sender_task = asyncio.create_task(RunSenderTask())
 
-        # 両方が完了するまで待機
-        await asyncio.gather(sender_task, receiver_task)
+        # どちらかのタスクが終了したら、もう片方を停止して接続終了処理へ移行する
+        ## 片側だけが残ると送信先切断後の余計な例外が増えるため、明示的にキャンセルして整える
+        done_tasks, pending_tasks = await asyncio.wait(
+            {sender_task, receiver_task},
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        for pending_task in pending_tasks:
+            pending_task.cancel()
+        if len(pending_tasks) > 0:
+            await asyncio.gather(*pending_tasks, return_exceptions=True)
+        for done_task in done_tasks:
+            done_task_exception = done_task.exception()
+            if done_task_exception is not None:
+                raise done_task_exception
 
     except (WebSocketDisconnect, websockets.exceptions.ConnectionClosedOK):
         # 接続が切れた時の処理
@@ -1116,18 +1347,22 @@ async def WatchSessionAPI(
         # 念のためこちらからも接続を切断しておく
         logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error.')
         logging.error(traceback.format_exc())
-        await websocket.close(code=1011, reason=f'[{channel_id}]: Unexpected error.')
+        await CloseWebSocketSafely(websocket, code=1011, reason=f'[{channel_id}]: Unexpected error.')
 
-    except Exception:
+    except Exception as ex:
+        if IsWebSocketClosedError(ex) is True:
+            logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
+            return
         logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
         logging.error(traceback.format_exc())
-        await websocket.send_json({
+        is_sent = await SendJSONSafely(websocket, {
             'type': 'disconnect',
             'data': {
                 'reason': 'SERVICE_TEMPORARILY_UNAVAILABLE',
             },
         })
-        await websocket.close(code=1011, reason=f'[{channel_id}]: Error during connection.')
+        if is_sent is True:
+            await CloseWebSocketSafely(websocket, code=1011, reason=f'[{channel_id}]: Error during connection.')
 
     finally:
         # ここまできたら確実に接続が切断されているので同時接続数カウントを 1 減らす
@@ -1172,7 +1407,7 @@ async def CommentSessionAPI(
         channel_id_int = int(channel_id.replace('jk', ''))
     except ValueError:
         logging.error(f'CommentSessionAPI [{channel_id}]: Invalid channel ID.')
-        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
+        await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid channel ID.')
         return
 
     # クライアント ID を生成
@@ -1229,7 +1464,7 @@ async def CommentSessionAPI(
             # リストでなかった場合はエラーを返す
             if not isinstance(messages, list):
                 logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message ({messages} not list).')
-                await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid message ({messages} not list).')
+                await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid message ({messages} not list).')
                 return
 
             # 送られてくるメッセージは必ず list[dict[str, Any]] となる
@@ -1238,7 +1473,7 @@ async def CommentSessionAPI(
                 # もし辞書型でなかった場合はエラーを返す
                 if not isinstance(message, dict):
                     logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message ({message} not dict).')
-                    await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid message ({message} not dict).')
+                    await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid message ({message} not dict).')
                     return
 
                 # ping コマンド
@@ -1249,7 +1484,9 @@ async def CommentSessionAPI(
                     ## コマンドのレスポンスは ping(rs:0), ping(ps:0), thread, chat(複数), ping(pf:0), ping(rf:0) の順で送信される
                     ## この挙動を利用すると、送られてくる chat メッセージがどこまで初回取得コメントかをクライアント側で判定できる
                     ## ref: https://scrapbox.io/rinsuki/%E3%83%8B%E3%82%B3%E3%83%8B%E3%82%B3%E7%94%9F%E6%94%BE%E9%80%81%E3%81%AE%E3%82%B3%E3%83%A1%E3%83%B3%E3%83%88%E3%82%92%E5%8F%96%E3%82%8B
-                    await websocket.send_json(message)
+                    is_sent = await SendJSONSafely(websocket, message)
+                    if is_sent is False:
+                        return
 
                 # thread コマンド
                 if 'thread' in message:
@@ -1272,7 +1509,7 @@ async def CommentSessionAPI(
                             thread = await GetActiveThread(channel_id_int)
                             if not thread:
                                 logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
-                                await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
+                                await CloseWebSocketSafely(websocket, code=1002, reason=f'[{channel_id}]: Active thread not found.')
                                 return
                             thread_id = thread.id
                         logging.info(f'CommentSessionAPI [{channel_id}]: Thread ID: {thread_id}')
@@ -1282,7 +1519,7 @@ async def CommentSessionAPI(
                         res_from = int(message['thread']['res_from'])
                         if res_from > 0:  # 1 以上の res_from には非対応 (本家ニコ生では正の値が来た場合コメ番換算で取得するらしい？)
                             logging.error(f'CommentSessionAPI [{channel_id}]: Invalid res_from: {res_from}')
-                            await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid res_from: {res_from}')
+                            await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid res_from: {res_from}')
                             return
 
                         # threadkey: スレッドキー
@@ -1303,12 +1540,14 @@ async def CommentSessionAPI(
                         else:
                             when = None
 
-                    except Exception:
+                    except Exception as ex:
+                        if IsWebSocketClosedError(ex) is True:
+                            return
                         # 送られてきた thread コマンドの形式が不正
                         logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message.')
                         logging.error(message)
                         logging.error(traceback.format_exc())
-                        await websocket.close(code=1008, reason=f'[{channel_id}]: Invalid message.')
+                        await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid message.')
                         return
 
                     # ここまできたらスレッド ID と res_from が取得できているので、当該スレッドの情報を取得
@@ -1316,7 +1555,7 @@ async def CommentSessionAPI(
                     if not thread:
                         # 指定された ID と一致するスレッドが見つからない
                         logging.error(f'CommentSessionAPI [{channel_id}]: Active thread not found.')
-                        await websocket.close(code=1002, reason=f'[{channel_id}]: Active thread not found.')
+                        await CloseWebSocketSafely(websocket, code=1002, reason=f'[{channel_id}]: Active thread not found.')
                         return
 
                     # 当該スレッドの最新 res_from 件のコメントを取得
@@ -1333,7 +1572,7 @@ async def CommentSessionAPI(
 
                     # スレッド情報を送る
                     ## この辺フォーマットがよくわからないので本家ニコ生と合ってるか微妙…
-                    await websocket.send_json({
+                    is_sent = await SendJSONSafely(websocket, {
                         'thread': {
                             "resultcode": 0,  # 成功
                             "thread": str(thread_id),
@@ -1343,12 +1582,19 @@ async def CommentSessionAPI(
                             "server_time": int(time.time()),
                         },
                     })
+                    if is_sent is False:
+                        return
                     logging.info(f'CommentSessionAPI [{channel_id}]: Thread info sent. thread: {thread_id} / last_res: {last_comment_no}')
 
                     # 初回取得コメントを連続送信する
                     ## XML 互換データ形式に変換した後、必要に応じて yourpost フラグを設定してから送信している
                     for comment in comments:
-                        await websocket.send_json(SetYourPostFlag(ConvertToXMLCompatibleCommentResponse(comment), thread_key))
+                        is_sent = await SendJSONSafely(
+                            websocket,
+                            SetYourPostFlag(ConvertToXMLCompatibleCommentResponse(comment), thread_key),
+                        )
+                        if is_sent is False:
+                            return
 
                     # when が指定されている場合は放送中かに関わらずここで終了し、次のコマンドを待ち受ける
                     ## when は取得するコメントの投稿日時の下限を示す UNIX タイムスタンプなので、指定時刻以降のコメントを送信する必要はない
@@ -1364,7 +1610,7 @@ async def CommentSessionAPI(
                         sender_task = asyncio.create_task(RunSenderTask(thread, thread_key))
 
             # 接続が切れたらタスクを終了
-            if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
+            if IsWebSocketDisconnected(websocket) is True:
                 return
 
     async def RunSenderTask(thread: Thread, thread_key: str) -> None:
@@ -1417,19 +1663,26 @@ async def CommentSessionAPI(
                     # 取得したコメントに必要に応じて yourpost フラグを設定してから送信
                     if subscriber.thread_key == broadcast_message.user_id:
                         yourpost_response = CopyXMLCompatibleCommentResponse(broadcast_message.base_comment)
-                        await websocket.send_json(SetYourPostFlag(yourpost_response, subscriber.thread_key))
+                        is_sent = await SendJSONSafely(
+                            websocket,
+                            SetYourPostFlag(yourpost_response, subscriber.thread_key),
+                        )
+                        if is_sent is False:
+                            return
                     else:
-                        await websocket.send_text(broadcast_message.raw_json)
+                        is_sent = await SendTextSafely(websocket, broadcast_message.raw_json)
+                        if is_sent is False:
+                            return
 
                 # 接続が切れたらタスクを終了
                 ## 通常は Receiver Task 側で接続切断を検知した後このタスク自体がキャンセルされるため、ここには到達しないはず
-                if websocket.client_state == WebSocketState.DISCONNECTED or websocket.application_state == WebSocketState.DISCONNECTED:
+                if IsWebSocketDisconnected(websocket) is True:
                     return
 
                 # 最新コメント配信中に当該スレッドの放送終了時刻を過ぎた場合は接続を切断する
                 if time.time() > thread_end_time:
                     logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected because the thread ended.')
-                    await websocket.close(code=1000)  # 正常終了扱い
+                    await CloseWebSocketSafely(websocket, code=1000)  # 正常終了扱い
                     return
 
         finally:
@@ -1452,12 +1705,15 @@ async def CommentSessionAPI(
         # 念のためこちらからも接続を切断しておく
         logging.error(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected by unexpected error.')
         logging.error(traceback.format_exc())
-        await websocket.close(code=1011, reason=f'[{channel_id}]: Unexpected error.')
+        await CloseWebSocketSafely(websocket, code=1011, reason=f'[{channel_id}]: Unexpected error.')
 
-    except Exception:
+    except Exception as ex:
+        if IsWebSocketClosedError(ex) is True:
+            logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
+            return
         logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection.')
         logging.error(traceback.format_exc())
-        await websocket.close(code=1011, reason=f'[{channel_id}]: Error during connection.')
+        await CloseWebSocketSafely(websocket, code=1011, reason=f'[{channel_id}]: Error during connection.')
 
     # コメントセッション WebSocket の接続切断時、Receiver Task 内から起動した
     # Sender Task を確実に終了する
@@ -1470,3 +1726,6 @@ async def CommentSessionAPI(
                 await sender_task
             except asyncio.CancelledError:
                 pass
+            except Exception as ex:
+                if IsWebSocketClosedError(ex) is False:
+                    raise

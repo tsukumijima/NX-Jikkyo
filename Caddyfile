@@ -32,9 +32,11 @@
 # NX-Jikkyo コンテナへのリバースプロキシ
 nx-jikkyo.tsukumijima.net {
 	# 複数ワーカーへのロードバランシング
-	reverse_proxy nx-jikkyo:5610 nx-jikkyo:5611 nx-jikkyo:5612 nx-jikkyo:5613 {
-		# ロードバランシングポリシー
-		lb_policy round_robin
+	# メインプロセス (5610) はニコ生コメント取り込み等のバックグラウンドタスク専用とし、Caddy からは除外する
+	# 5614 は MySQL / Redis / メインプロセスの CPU 余力を確保するために weight を半分にしている
+	reverse_proxy nx-jikkyo:5611 nx-jikkyo:5612 nx-jikkyo:5613 nx-jikkyo:5614 {
+		# ロードバランシングポリシー (weighted_round_robin: 5611/5612/5613 にフル、5614 に半分のリクエストを割り振る)
+		lb_policy weighted_round_robin 2 2 2 1
 
 		# ストリーミングのためにレスポンスのバッファリングを無効化
 		flush_interval -1

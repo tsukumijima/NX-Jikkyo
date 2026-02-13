@@ -260,6 +260,104 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
             ndgr_client = NDGRClient(channel_id, verbose=True, log_path=log_file_path)
             # DB 接続断時のログ連打を抑止するため、最後に DB 接続断エラーをログ出力した時刻を保持する
             last_db_connection_error_log_time = 0.0
+            # cache 更新時のログ連打を抑止するため、最後に cache 更新エラーをログ出力した時刻を保持する
+            last_thread_comment_counter_cache_error_log_time = 0.0
+            # スレッドごとの cache へ反映すべき最新コメ番
+            pending_thread_comment_counter_by_thread_id: dict[int, int] = {}
+            # スレッドごとに cache へ反映済みの最新コメ番
+            synchronized_thread_comment_counter_by_thread_id: dict[int, int] = {}
+            # スレッドごとに最後に cache 更新タスクを起動した時刻
+            last_thread_comment_counter_cache_update_time_by_thread_id: dict[int, float] = {}
+            # スレッドごとに実行中の cache 更新タスク
+            running_thread_comment_counter_cache_update_task_by_thread_id: dict[int, asyncio.Task[None]] = {}
+
+            async def UpdateThreadCommentCounterCacheBestEffort(
+                thread_id: int,
+                comment_no: int,
+            ) -> None:
+                """
+                Redis のスレッドごとの最新コメ番 cache をベストエフォートで更新する
+
+                Args:
+                    thread_id (int): 対象スレッド ID
+                    comment_no (int): 更新候補の最新コメ番
+                """
+
+                nonlocal last_thread_comment_counter_cache_error_log_time
+
+                try:
+                    # Redis キャッシュを最新候補で更新する
+                    await UpdateThreadCommentCounterCache(thread_id, comment_no)
+                    # 実際に同期できた値をローカル状態にも反映する
+                    current_synchronized_comment_no = synchronized_thread_comment_counter_by_thread_id.get(thread_id, 0)
+                    synchronized_thread_comment_counter_by_thread_id[thread_id] = max(current_synchronized_comment_no, comment_no)
+                except Exception as ex:
+                    # キャッシュ更新失敗はストリーミング継続を優先して握りつぶす
+                    current_time = time.time()
+                    # 同一系統の warning 連打を避けるため、最短 10 秒間隔でのみ出力する
+                    if (current_time - last_thread_comment_counter_cache_error_log_time) > 10:
+                        logging.warning(
+                            f'StreamNicoliveComments [{channel_id}]: Failed to update thread comment counter cache.',
+                            exc_info = ex,
+                        )
+                        last_thread_comment_counter_cache_error_log_time = current_time
+
+            def ScheduleThreadCommentCounterCacheUpdate(
+                thread_id: int,
+                comment_no: int,
+            ) -> None:
+                """
+                Redis cache 更新をスレッドごとに最大 1 秒に 1 回だけ起動する
+
+                Args:
+                    thread_id (int): 対象スレッド ID
+                    comment_no (int): 更新候補の最新コメ番
+                """
+
+                # 今回受信した no を pending 値にマージする
+                current_pending_comment_no = pending_thread_comment_counter_by_thread_id.get(thread_id, 0)
+                pending_thread_comment_counter_by_thread_id[thread_id] = max(current_pending_comment_no, comment_no)
+
+                # 更新起動間隔を見て、1 秒未満なら次回にまとめる
+                current_time = time.time()
+                last_update_time = last_thread_comment_counter_cache_update_time_by_thread_id.get(thread_id, 0.0)
+                if (current_time - last_update_time) < 1.0:
+                    return
+
+                # すでに同スレッドの更新タスクが走っている場合は多重起動しない
+                running_task = running_thread_comment_counter_cache_update_task_by_thread_id.get(thread_id)
+                if running_task is not None and running_task.done() is False:
+                    return
+
+                # 現時点の pending 値をスナップショットして更新タスクを起動する
+                scheduled_comment_no = pending_thread_comment_counter_by_thread_id[thread_id]
+                running_thread_comment_counter_cache_update_task_by_thread_id[thread_id] = asyncio.create_task(
+                    UpdateThreadCommentCounterCacheBestEffort(thread_id, scheduled_comment_no),
+                )
+                # 次回の起動間引き判定に使う時刻を更新する
+                last_thread_comment_counter_cache_update_time_by_thread_id[thread_id] = current_time
+
+            async def FlushThreadCommentCounterCacheUpdates() -> None:
+                """
+                実行中の cache 更新タスクと未反映の最新コメ番を可能な範囲で同期する
+                """
+
+                # 実行中タスクは短時間だけ待機し、終了済みなら参照を回収する
+                for thread_id, running_task in list(running_thread_comment_counter_cache_update_task_by_thread_id.items()):
+                    if running_task.done() is False:
+                        try:
+                            # 長時間ブロックを防ぐため、待機時間は 0.5 秒に制限する
+                            await asyncio.wait_for(asyncio.shield(running_task), timeout=0.5)
+                        except TimeoutError:
+                            # タイムアウト時は以降の flush を優先して次へ進む
+                            pass
+                    running_thread_comment_counter_cache_update_task_by_thread_id.pop(thread_id, None)
+
+                # pending 値が同期済み値を上回るスレッドだけ、最終同期を 1 回だけ実施する
+                for thread_id, pending_comment_no in pending_thread_comment_counter_by_thread_id.items():
+                    synchronized_comment_no = synchronized_thread_comment_counter_by_thread_id.get(thread_id, 0)
+                    if pending_comment_no > synchronized_comment_no:
+                        await UpdateThreadCommentCounterCacheBestEffort(thread_id, pending_comment_no)
 
             # コメントのストリーミング処理を開始
             ## NDGRClient.streamComments() は通常エンドレスに実行され続ける
@@ -342,18 +440,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                                 operation_name = f'StreamNicoliveComments [{channel_id}]',
                             )
 
-                            # スレッドごとの最新コメ番キャッシュを更新
-                            ## statistics 送信で DB 負荷を下げるため、投稿完了時に最新コメ番を即時反映する
-                            try:
-                                await UpdateThreadCommentCounterCache(active_thread.id, comment.no)
-                            except Exception as ex:
-                                # キャッシュ更新失敗でコメント投稿自体を失敗させない
-                                ## コメント本体の保存成功を優先し、整合性は後段の再検証・定期同期で回復する
-                                logging.warning(
-                                    f'StreamNicoliveComments [{channel_id}]: Failed to update thread comment counter cache.',
-                                    exc_info = ex,
-                                )
-
                             # ニコ生 XML 互換コメント形式に変換した上で、Redis Pub/Sub でコメントを送信
                             ## この段階ではまだ yourpost フラグを設定してはならない
                             ## yourpost フラグはコメントセッション WebSocket 側で設定しないと、意図しないコメントに yourpost フラグが付与されてしまう
@@ -361,6 +447,10 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                                 channel = f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{active_thread.id}',
                                 message = json.dumps(ConvertToXMLCompatibleCommentResponse(comment), ensure_ascii=False),
                             )
+
+                            # スレッドごとの最新コメ番 cache 更新は 1 秒間引きで後段実行する
+                            ## DB 保存とリアルタイム配信を優先し、cache 更新待ちでストリーミングを詰まらせない
+                            ScheduleThreadCommentCounterCacheUpdate(active_thread.id, comment.no)
 
                             # 実況勢いカウント用の Redis ソート済みセット型にエントリを追加
                             ## スコア (UNIX タイムスタンプ) が現在時刻から 60 秒以内の範囲のエントリの数が実況勢いとなる
@@ -397,10 +487,12 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                     logging.error(f'StreamNicoliveComments [{channel_id}]: Unexpected error occurred while streaming.')
                     logging.error(traceback.format_exc())
                     logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 10 seconds...')
+                    await FlushThreadCommentCounterCacheUpdates()
                     # NDGRClient を再初期化
                     ndgr_client = NDGRClient(channel_id, verbose=True, log_path=log_file_path)
                     await asyncio.sleep(10)
                 else:
+                    await FlushThreadCommentCounterCacheUpdates()
                     break  # エラーが発生しなかった場合はループを抜ける
 
         # ニコニコ実況の各実況チャンネルに対し、バックグラウンドでストリーミングを開始
