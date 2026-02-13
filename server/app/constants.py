@@ -77,38 +77,38 @@ LOGGING_CONFIG: dict[str, Any] = {
         'default': {
             '()': 'uvicorn.logging.DefaultFormatter',
             'datefmt': '%Y/%m/%d %H:%M:%S',
-            'format': '[%(asctime)s] %(levelprefix)s %(message)s',
+            'format': '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(message)s',
         },
         'default_file': {
             '()': 'uvicorn.logging.DefaultFormatter',
             'datefmt': '%Y/%m/%d %H:%M:%S',
-            'format': '[%(asctime)s] %(levelprefix)s %(message)s',
+            'format': '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(message)s',
             'use_colors': False,  # ANSI エスケープシーケンスを出力しない
         },
         # サーバーログ (デバッグ) 用のログフォーマッター
         'debug': {
             '()': 'uvicorn.logging.DefaultFormatter',
             'datefmt': '%Y/%m/%d %H:%M:%S',
-            'format': '[%(asctime)s] %(levelprefix)s %(pathname)s:%(lineno)s:\n'
-                '                                %(message)s',
+            'format': '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(pathname)s:%(lineno)s:\n'
+            '                                %(message)s',
         },
         'debug_file': {
             '()': 'uvicorn.logging.DefaultFormatter',
             'datefmt': '%Y/%m/%d %H:%M:%S',
-            'format': '[%(asctime)s] %(levelprefix)s %(pathname)s:%(lineno)s:\n'
-                '                                %(message)s',
+            'format': '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(pathname)s:%(lineno)s:\n'
+            '                                %(message)s',
             'use_colors': False,  # ANSI エスケープシーケンスを出力しない
         },
         # アクセスログ用のログフォーマッター
         'access': {
             '()': 'uvicorn.logging.AccessFormatter',
             'datefmt': '%Y/%m/%d %H:%M:%S',
-            'format': '[%(asctime)s] %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+            'format': '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
         },
         'access_file': {
             '()': 'uvicorn.logging.AccessFormatter',
             'datefmt': '%Y/%m/%d %H:%M:%S',
-            'format': '[%(asctime)s] %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+            'format': '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
             'use_colors': False,  # ANSI エスケープシーケンスを出力しない
         },
     },
