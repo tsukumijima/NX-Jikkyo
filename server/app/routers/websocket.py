@@ -54,9 +54,6 @@ router = APIRouter(
 # 現在アクティブなスレッドの情報を保存する辞書
 __active_threads: dict[int, Thread] = {}
 
-# コメント配信遅延がこの秒数を超えた場合は、配信遅延の回復を優先してコメントを破棄する
-COMMENT_DELAY_THRESHOLD_SECONDS = 5.0
-
 # 接続ごとのコメント送信キューの最大サイズ
 COMMENT_QUEUE_MAX_SIZE = 200
 # unknown channel の拒否ログを集約して出力する間隔 (秒)
@@ -76,13 +73,11 @@ class CommentBroadcastMessage:
     Attributes:
         raw_json (str): Redis Pub/Sub から受信した生の JSON 文字列
         base_comment (XMLCompatibleCommentResponse): JSON をデコードしたコメントデータ
-        comment_time (float): コメントの投稿時刻 (UNIX タイムスタンプ)
         user_id (str): コメント投稿者のユーザー ID
     """
 
     raw_json: str
     base_comment: XMLCompatibleCommentResponse
-    comment_time: float
     user_id: str
 
 
@@ -118,34 +113,6 @@ def CopyXMLCompatibleCommentResponse(response: XMLCompatibleCommentResponse) -> 
     return cast(XMLCompatibleCommentResponse, copied_response)
 
 
-def GetCommentUnixTimeSeconds(response: XMLCompatibleCommentResponse) -> float:
-    """
-    コメントの投稿時刻 (UNIX タイムスタンプ) を取得する
-
-    Args:
-        response (XMLCompatibleCommentResponse): コメントデータ
-
-    Returns:
-        float: コメントの投稿時刻 (UNIX タイムスタンプ)
-    """
-
-    try:
-        date = int(response['chat']['date'])
-        date_usec = int(response['chat'].get('date_usec', 0))
-    except Exception:
-        return time.time()
-
-    comment_time = date + (date_usec / 1000000)
-    current_time = time.time()
-    if comment_time <= 0:
-        return current_time
-    if comment_time > (current_time + 60):
-        return current_time
-    if comment_time < (current_time - 3600):
-        return current_time
-    return comment_time
-
-
 def EnqueueBroadcastMessage(
     subscriber: CommentSubscriber,
     message: CommentBroadcastMessage,
@@ -170,21 +137,6 @@ def EnqueueBroadcastMessage(
     except asyncio.QueueFull:
         # ここに到達するのは非常に稀だが、念のため握りつぶす
         pass
-
-
-def DrainBroadcastQueue(queue: asyncio.Queue[CommentBroadcastMessage]) -> None:
-    """
-    送信キュー内のコメントをすべて破棄する
-
-    Args:
-        queue (asyncio.Queue[CommentBroadcastMessage]): 破棄対象の送信キュー
-    """
-
-    while True:
-        try:
-            queue.get_nowait()
-        except asyncio.QueueEmpty:
-            return
 
 
 class ThreadCommentBroadcaster:
@@ -321,18 +273,16 @@ class ThreadCommentBroadcaster:
                         logging.error('ThreadCommentBroadcaster: Comment JSON does not contain chat data.')
                         continue
 
-                    # yourpost 判定や遅延判定に必要な情報を先に抽出する
+                    # yourpost 判定に必要な情報を先に抽出する
                     # yourpost が含まれている場合は非 yourpost に流れないように事前に除去する
                     if 'yourpost' in base_comment['chat']:
                         del base_comment['chat']['yourpost']
                         raw_json = json.dumps(base_comment, ensure_ascii=False, separators=(',', ':'))
 
                     user_id = str(base_comment['chat'].get('user_id', ''))
-                    comment_time = GetCommentUnixTimeSeconds(base_comment)
                     broadcast_message = CommentBroadcastMessage(
                         raw_json = raw_json,
                         base_comment = base_comment,
-                        comment_time = comment_time,
                         user_id = user_id,
                     )
 
@@ -1652,13 +1602,6 @@ async def CommentSessionAPI(
                     broadcast_message = None
 
                 if broadcast_message is not None:
-
-                    # コメントの遅延が閾値を超えている場合は配信を破棄して追いつく
-                    current_time = time.time()
-                    comment_delay = max(0.0, current_time - broadcast_message.comment_time)
-                    if comment_delay > COMMENT_DELAY_THRESHOLD_SECONDS:
-                        DrainBroadcastQueue(subscriber_queue)
-                        continue
 
                     # 取得したコメントに必要に応じて yourpost フラグを設定してから送信
                     if subscriber.thread_key == broadcast_message.user_id:
