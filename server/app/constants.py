@@ -54,7 +54,10 @@ DATABASE_CONFIG = {
             ## Tortoise ORM の URL パラメータとして connect_timeout が公式に受理され、aiomysql へ引き渡される
             ## 3 秒は「瞬断時の再試行余地」と「障害時の素早いフォールバック」のバランスを取った値
             ## pool_recycle は長寿命接続を定期的に作り直し、古い接続再利用による失敗率を下げるために指定する
-            f'mysql://{CONFIG.MYSQL_USER}:{CONFIG.MYSQL_PASSWORD}@nx-jikkyo-mysql:3306/{CONFIG.MYSQL_DATABASE}?connect_timeout=3&pool_recycle=1800'
+            ## maxsize はプロセスあたりの MySQL 接続プール上限で、デフォルト 5 だとメインプロセスの
+            ## StreamNicoliveComments タスク (10チャンネル分) や CacheChannelResponses でプール競合が発生しやすいため 15 に引き上げている
+            ## 5 プロセス × 15 = 最大 75 接続で、MySQL の max_connections=80 の範囲内に収まる
+            f'mysql://{CONFIG.MYSQL_USER}:{CONFIG.MYSQL_PASSWORD}@nx-jikkyo-mysql:3306/{CONFIG.MYSQL_DATABASE}?connect_timeout=3&pool_recycle=1800&maxsize=15'
         ),
     },
     'apps': {
