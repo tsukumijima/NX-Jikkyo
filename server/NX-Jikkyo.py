@@ -20,9 +20,9 @@ from app.constants import (
     DATABASE_CONFIG,
     LOGGING_CONFIG,
     NX_JIKKYO_ACCESS_LOG_PATH,
-    NX_JIKKYO_SERVER_LOG_PATH,
     VERSION,
 )
+from app.utils.log_rotation import SplitServerLogByDate
 
 
 # aerich テーブルが既に存在する警告を無視
@@ -53,10 +53,9 @@ def main(
         for count in range(CONFIG.SUB_SERVER_PROCESS_COUNT):
             subprocess.Popen([sys.executable, __file__, '--port', str(port + count + 1)])
 
-        # 前回のログをすべて削除する
+        # 前回のアクセスログを削除する
+        ## サーバーログは起動時分割で過去日付をアーカイブ化するため、ここでは削除しない
         try:
-            if NX_JIKKYO_SERVER_LOG_PATH.exists():
-                NX_JIKKYO_SERVER_LOG_PATH.unlink()
             if NX_JIKKYO_ACCESS_LOG_PATH.exists():
                 NX_JIKKYO_ACCESS_LOG_PATH.unlink()
         except PermissionError:
@@ -67,8 +66,14 @@ def main(
     else:
         time.sleep(5)
 
+    # サーバーログに過去日付のエントリが含まれている場合、日付別アーカイブに分割する
+    ## DailyRotatingFileHandler がファイルを開く前に分割を完了させるために、ロガーの初期化前に実行する必要がある
+    ## メインサーバープロセスのみで実行し、サブプロセスとの競合を避ける
+    if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
+        SplitServerLogByDate()
+
     # ここでロガーをインポートする
-    ## 前回のログを削除する前でないと正しく動作しない
+    ## ローテーション分割を実施した後でないと正しく動作しない
     from app import logging
 
     # バージョン情報をログに出力

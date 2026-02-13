@@ -2,6 +2,7 @@
 import pkgutil
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import httpx
 from redis.asyncio.client import Redis
@@ -11,6 +12,10 @@ from app.config import CONFIG
 
 # バージョン
 VERSION = '1.13.2'
+
+# 日本標準時 (JST, UTC+9) の ZoneInfo
+## このサーバーは主に日本向けのサービスのため、日時は JST で統一して扱う
+JST = ZoneInfo('Asia/Tokyo')
 
 # ベースディレクトリ
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,6 +33,12 @@ LOGO_DIR = STATIC_DIR / 'logos'
 
 # ログディレクトリ
 LOGS_DIR = BASE_DIR / 'logs'
+## サーバーログのアーカイブ（日付別ログ）を格納するサブディレクトリ
+## ログディレクトリ直下にアーカイブが大量に並ぶとノイズになるため、サブディレクトリに分離する
+LOGS_ARCHIVES_DIR = LOGS_DIR / 'archives'
+## サーバーログのアーカイブの保持期限 (日数)
+## 30 日を超えたアーカイブログを自動削除する
+SERVER_LOG_ARCHIVE_RETENTION_DAYS: int | None = 30
 ## NX-Jikkyo のサーバーログのパス
 NX_JIKKYO_SERVER_LOG_PATH = LOGS_DIR / 'NX-Jikkyo-Server.log'
 ## NX-Jikkyo のアクセスログのパス
@@ -110,10 +121,10 @@ LOGGING_CONFIG: dict[str, Any] = {
         },
         'default_file': {
             'formatter': 'default_file',
-            'class': 'logging.FileHandler',
+            'class': 'app.utils.log_rotation.DailyRotatingFileHandler',
             'filename': NX_JIKKYO_SERVER_LOG_PATH,
-            'mode': 'a',
             'encoding': 'utf-8',
+            'retention_days': SERVER_LOG_ARCHIVE_RETENTION_DAYS,
         },
         ## サーバーログ (デバッグ) は標準エラー出力と server/logs/NX-Jikkyo-Server.log の両方に出力する
         'debug': {
@@ -123,10 +134,10 @@ LOGGING_CONFIG: dict[str, Any] = {
         },
         'debug_file': {
             'formatter': 'debug_file',
-            'class': 'logging.FileHandler',
+            'class': 'app.utils.log_rotation.DailyRotatingFileHandler',
             'filename': NX_JIKKYO_SERVER_LOG_PATH,
-            'mode': 'a',
             'encoding': 'utf-8',
+            'retention_days': SERVER_LOG_ARCHIVE_RETENTION_DAYS,
         },
         ## アクセスログは標準出力と server/logs/NX-Jikkyo-Access.log の両方に出力する
         'access': {
