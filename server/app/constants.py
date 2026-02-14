@@ -11,7 +11,7 @@ from app.config import CONFIG
 
 
 # バージョン
-VERSION = '1.13.2'
+VERSION = '1.13.3'
 
 # 日本標準時 (JST, UTC+9) の ZoneInfo
 ## このサーバーは主に日本向けのサービスのため、日時は JST で統一して扱う
