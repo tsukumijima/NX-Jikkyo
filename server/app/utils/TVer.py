@@ -1,6 +1,5 @@
 
 import asyncio
-import traceback
 from datetime import datetime, timedelta
 from time import time
 from typing import Any, Literal
@@ -139,9 +138,8 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
                 logging.info(f'Successfully fetched programs from TVer API (type: {type_}, area: {area})')
                 CACHE[url] = (response_json, current_time + CACHE_TTL)
                 return response_json
-        except Exception as e:
-            logging.error(f'An error occurred while calling the TVer API: {e}')
-            logging.error(traceback.format_exc())
+        except Exception as ex:
+            logging.error('An error occurred while calling the TVer API:', exc_info = ex)
             return {}
 
     def get_current_and_next_programs(programs: list[dict[str, Any]]) -> tuple[ProgramInfo | None, ProgramInfo | None]:
@@ -188,9 +186,8 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
 
                 if current_program and next_program:
                     break
-            except Exception as e:
-                logging.error(f'An error occurred while processing the program information: {e}')
-                logging.error(traceback.format_exc())
+            except Exception as ex:
+                logging.error('An error occurred while processing the program information:', exc_info = ex)
                 continue
 
         return current_program, next_program
@@ -209,9 +206,8 @@ async def GetNowAndNextProgramInfos() -> dict[str, tuple[ProgramInfo | None, Pro
                 for jk_id, info in JIKKYO_ID_TO_TVER_BROADCASTER_INFO_MAP.items():
                     if info.broadcaster_id == broadcaster_id:
                         results[jk_id] = get_current_and_next_programs(content.get('programs', []))
-        except Exception as e:
-            logging.error(f'An error occurred while processing the response: {e}')
-            logging.error(traceback.format_exc())
+        except Exception as ex:
+            logging.error('An error occurred while processing the response:', exc_info = ex)
             continue
 
     return results

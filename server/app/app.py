@@ -4,7 +4,6 @@ import json
 import mimetypes
 import random
 import time
-import traceback
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
@@ -386,11 +385,10 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                                 )
                                 await asyncio.sleep(5)
                             else:
-                                logging.error(f'StreamNicoliveComments [{channel_id}]: Failed to import comment.', exc_info = ex)
+                                logging.error(f'StreamNicoliveComments [{channel_id}]: Failed to import comment:', exc_info = ex)
 
-                except Exception:
-                    logging.error(f'StreamNicoliveComments [{channel_id}]: Unexpected error occurred while streaming.')
-                    logging.error(traceback.format_exc())
+                except Exception as ex:
+                    logging.error(f'StreamNicoliveComments [{channel_id}]: Unexpected error occurred while streaming:', exc_info = ex)
                     logging.info(f'StreamNicoliveComments [{channel_id}]: Retrying in 10 seconds...')
                     # NDGRClient を再初期化
                     ndgr_client = NDGRClient(channel_id, verbose=True, log_path=log_file_path)

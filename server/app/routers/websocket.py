@@ -3,7 +3,6 @@ import asyncio
 import json
 import random
 import time
-import traceback
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Annotated, Any, cast
@@ -306,7 +305,7 @@ class ThreadCommentBroadcaster:
                     await pubsub.unsubscribe(f'{REDIS_CHANNEL_THREAD_COMMENTS_PREFIX}:{self.thread_id}')
                     await pubsub.close()
                 except Exception as cleanup_ex:
-                    logging.error('ThreadCommentBroadcaster: Failed to cleanup Redis pubsub connection.', exc_info=cleanup_ex)
+                    logging.error('ThreadCommentBroadcaster: Failed to cleanup Redis pubsub connection:', exc_info=cleanup_ex)
 
             if should_retry is True:
                 # 指数バックオフでリトライ間隔を増加させる
@@ -1029,9 +1028,7 @@ async def WatchSessionAPI(
                 except Exception as ex:
                     if IsWebSocketClosedError(ex) is True:
                         return
-                    logging.error(f'WatchSessionAPI [{channel_id}]: Failed to post a comment.')
-                    logging.error(message)
-                    logging.error(traceback.format_exc())
+                    logging.error(f'WatchSessionAPI [{channel_id}]: Failed to post a comment. message: {message}', exc_info = ex)
                     is_sent = await SendJSONSafely(websocket, {
                         'type': 'error',
                         'data': {
@@ -1292,19 +1289,17 @@ async def WatchSessionAPI(
         # 接続が切れた時の処理
         logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
 
-    except websockets.exceptions.WebSocketException:
+    except websockets.exceptions.WebSocketException as ex:
         # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
         # 念のためこちらからも接続を切断しておく
-        logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error.')
-        logging.error(traceback.format_exc())
+        logging.error(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected by unexpected error:', exc_info = ex)
         await CloseWebSocketSafely(websocket, code=1011, reason=f'[{channel_id}]: Unexpected error.')
 
     except Exception as ex:
         if IsWebSocketClosedError(ex) is True:
             logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected.')
             return
-        logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection.')
-        logging.error(traceback.format_exc())
+        logging.error(f'WatchSessionAPI [{channel_id}]: Error during connection:', exc_info = ex)
         is_sent = await SendJSONSafely(websocket, {
             'type': 'disconnect',
             'data': {
@@ -1494,9 +1489,7 @@ async def CommentSessionAPI(
                         if IsWebSocketClosedError(ex) is True:
                             return
                         # 送られてきた thread コマンドの形式が不正
-                        logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message.')
-                        logging.error(message)
-                        logging.error(traceback.format_exc())
+                        logging.error(f'CommentSessionAPI [{channel_id}]: Invalid message. message: {message}', exc_info = ex)
                         await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid message.')
                         return
 
@@ -1643,19 +1636,17 @@ async def CommentSessionAPI(
         # 接続が切れた時の処理
         logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
 
-    except websockets.exceptions.WebSocketException:
+    except websockets.exceptions.WebSocketException as ex:
         # 予期せぬエラー (向こう側のネットワーク接続問題など) で接続が切れた時の処理
         # 念のためこちらからも接続を切断しておく
-        logging.error(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected by unexpected error.')
-        logging.error(traceback.format_exc())
+        logging.error(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected by unexpected error:', exc_info = ex)
         await CloseWebSocketSafely(websocket, code=1011, reason=f'[{channel_id}]: Unexpected error.')
 
     except Exception as ex:
         if IsWebSocketClosedError(ex) is True:
             logging.info(f'CommentSessionAPI [{channel_id}]: Client {comment_session_client_id} disconnected.')
             return
-        logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection.')
-        logging.error(traceback.format_exc())
+        logging.error(f'CommentSessionAPI [{channel_id}]: Error during connection:', exc_info = ex)
         await CloseWebSocketSafely(websocket, code=1011, reason=f'[{channel_id}]: Error during connection.')
 
     # コメントセッション WebSocket の接続切断時、Receiver Task 内から起動した
