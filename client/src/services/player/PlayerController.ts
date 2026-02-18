@@ -354,6 +354,7 @@ class PlayerController {
                                     playback_position: comment.time,
                                     user_id: comment.author,
                                     my_post: false,
+                                    premium: comment.premium,
                                     // NX-Jikkyo で生成されるユーザー ID は SHA-1: 40 文字 (初期に投稿されたコメントのみ UUID v4: 36 文字) のため、
                                     // 35 文字以上であれば確実に NX-Jikkyo に投稿されたコメントであると判断できる
                                     comment_source: comment.author.length >= 35 ? 'NX' : 'ニコ実',
@@ -589,6 +590,16 @@ class PlayerController {
         // 上書き元のコードは https://github.com/tsukumijima/DPlayer/blob/v1.30.2/src/ts/controller.ts#L397-L405 にある
         this.player.controller.setAutoHide = (time: number) => {};
 
+        // コメント入力欄での右クリック時にブラウザ標準のコンテキストメニュー（コピー/貼り付け等）を表示する
+        // DPlayer はコンテナ全体で contextmenu イベントを横取りしてカスタムメニューを表示するため、
+        // コメント入力欄では伝播を止めてブラウザのネイティブメニューが出るようにする
+        const comment_input = this.player.container.querySelector<HTMLInputElement>('.dplayer-comment-input');
+        if (comment_input) {
+            comment_input.addEventListener('contextmenu', (e: MouseEvent) => {
+                e.stopPropagation();
+            });
+        }
+
         // DPlayer に動画再生系のイベントハンドラーを登録する
         this.setupVideoPlaybackHandler();
 
@@ -610,6 +621,34 @@ class PlayerController {
         player_store.event_emitter.on('SendNotification', (event) => {
             if (this.destroyed === true || this.player === null) return;
             this.player.notice(event.message, event.duration, event.opacity, event.color);
+        });
+
+        // UI コンポーネントからコメントの送信を要求されたときのイベントハンドラーを登録する
+        // このイベントは常にアプリケーション上で1つだけ登録されていなければならない
+        player_store.event_emitter.off('SendComment');  // SendComment イベントの全てのイベントハンドラーを削除
+        player_store.event_emitter.on('SendComment', (event) => {
+            if (this.destroyed === true || this.player === null) {
+                event.onError('プレイヤーが初期化されていません。');
+                return;
+            }
+            // 既存の LiveCommentManager.sendComment() フローを再利用
+            for (const player_manager of this.player_managers) {
+                if (player_manager instanceof LiveCommentManager) {
+                    player_manager.sendComment({
+                        data: {
+                            text: event.text,
+                            color: event.color,
+                            type: event.type,
+                            size: event.size,
+                            time: 0,
+                        },
+                        success: () => event.onSuccess(),
+                        error: (msg) => event.onError(msg ?? 'コメントの送信に失敗しました。'),
+                    });
+                    return;
+                }
+            }
+            event.onError('コメント送信マネージャーが見つかりません。');
         });
 
         /*

@@ -5,11 +5,42 @@
                 <Icon class="comment-header__title-icon" icon="bi:chat-left-text-fill" height="18.5px" />
                 <span class="comment-header__title-text">コメント</span>
             </h2>
-            <button v-ripple class="comment-header__button ml-auto" @click="comment_mute_settings_modal = !comment_mute_settings_modal">
-                <Icon icon="heroicons-solid:filter" height="11px" />
-                <span class="ml-1">ミュート設定</span>
+            <v-switch class="comment-header__toggle ml-auto" density="compact" hide-details
+                v-model="show_comment_status" color="primary" />
+            <button v-ripple class="comment-header__button" @click="comment_mute_settings_modal = !comment_mute_settings_modal">
+                <Icon icon="fluent:settings-20-filled" height="11px" />
+                <span class="ml-1">コメント設定</span>
             </button>
         </section>
+        <section class="comment-status" v-show="show_comment_status">
+            <div class="comment-status__force"
+                :class="`comment-status__force--${ChannelUtils.getChannelForceType(channelsStore.channel.current.jikkyo_force)}`">
+                <Icon icon="fa-solid:fire-alt" height="13px" />
+                <span class="ml-1">勢い:</span>
+                <span class="ml-1">{{channelsStore.channel.current.jikkyo_force ?? '--'}} コメ/分</span>
+            </div>
+            <div class="comment-status__comments ml-3">
+                <Icon icon="bi:chat-left-text-fill" height="12px" />
+                <span class="ml-1">累計コメント数:</span>
+                <span class="ml-1">{{channelsStore.channel.current.viewer_count}}</span>
+            </div>
+        </section>
+        <div class="comment-column-header" v-if="hasColumnHeaders" :style="columnWidthStyles">
+            <span class="comment-column-header__no" v-if="settingsStore.settings.show_comment_number">
+                No
+                <div class="comment-column-header__resize" @mousedown="startColumnResize($event, 'no')"></div>
+            </span>
+            <span class="comment-column-header__user-id" v-if="settingsStore.settings.show_comment_user_id">
+                ユーザーID
+                <div class="comment-column-header__resize" @mousedown="startColumnResize($event, 'user_id')"></div>
+            </span>
+            <span class="comment-column-header__text">コメント</span>
+            <span class="comment-column-header__type" v-if="settingsStore.settings.show_comment_type">
+                タイプ
+                <div class="comment-column-header__resize" @mousedown="startColumnResize($event, 'type')"></div>
+            </span>
+            <span class="comment-column-header__time">時間</span>
+        </div>
         <section class="comment-list-wrapper" ref="comment_list_wrapper">
             <div class="comment-list-dropdown" :class="{'comment-list-dropdown--display': is_comment_list_dropdown_display}"
                 :style="{'--comment-list-dropdown-top': `${comment_list_dropdown_top}px`}">
@@ -37,12 +68,16 @@
             <div class="comment-list-cover" :class="{'comment-list-cover--display': is_comment_list_dropdown_display}"
                 @click="hideCommentListDropdown()"></div>
             <template v-if="playback_mode === 'Live'">
-                <DynamicScroller class="comment-list" :direction="'vertical'" :items="comment_list" :min-item-size="34">
+                <DynamicScroller class="comment-list" :direction="'vertical'" :items="comment_list" :min-item-size="34" :style="columnWidthStyles">
                     <template v-slot="{item, active}">
                     <DynamicScrollerItem :item="item" :active="active" :size-dependencies="[item.text]">
                         <div class="comment" :class="{'comment--my-post': item.my_post}">
+                            <span class="comment__no" v-if="settingsStore.settings.show_comment_number">{{item.id}}</span>
+                            <span class="comment__user-id" v-if="settingsStore.settings.show_comment_user_id">{{formatUserId(item.user_id)}}</span>
                             <span class="comment__text">{{item.text}}</span>
-                            <span class="comment__time">{{item.comment_source ? `[${item.comment_source}] ` : ''}}{{item.time}}</span>
+                            <span class="comment__type" v-if="settingsStore.settings.show_comment_type"
+                                :class="{'comment__type--premium': item.premium && item.comment_source === 'ニコ実'}">{{item.comment_source ?? ''}}</span>
+                            <span class="comment__time">{{!settingsStore.settings.show_comment_type && item.comment_source ? `[${item.comment_source}] ` : ''}}{{item.time}}</span>
                             <!-- なぜか @click だとスマホで発火しないので @touchend にしている -->
                             <div class="comment__icon" v-ripple="!Utils.isTouchDevice()"
                                 @mouseup="showCommentListDropdown($event, item)"
@@ -58,11 +93,15 @@
                 </DynamicScroller>
             </template>
             <template v-else>
-                <VirtuaList ref="virtua_scroller" class="comment-list" :data="comment_list" :item-size="34">
+                <VirtuaList ref="virtua_scroller" class="comment-list" :data="comment_list" :item-size="34" :style="columnWidthStyles">
                     <template v-slot="{item}">
                         <div class="comment" :class="{'comment--my-post': item.my_post}">
+                            <span class="comment__no" v-if="settingsStore.settings.show_comment_number">{{item.id}}</span>
+                            <span class="comment__user-id" v-if="settingsStore.settings.show_comment_user_id">{{formatUserId(item.user_id)}}</span>
                             <span class="comment__text">{{item.text}}</span>
-                            <span class="comment__time">{{item.comment_source ? `[${item.comment_source}] ` : ''}}{{item.time}}</span>
+                            <span class="comment__type" v-if="settingsStore.settings.show_comment_type"
+                                :class="{'comment__type--premium': item.premium && item.comment_source === 'ニコ実'}">{{item.comment_source ?? ''}}</span>
+                            <span class="comment__time">{{!settingsStore.settings.show_comment_type && item.comment_source ? `[${item.comment_source}] ` : ''}}{{item.time}}</span>
                             <!-- なぜか @click だとスマホで発火しないので @touchend にしている -->
                             <div class="comment__icon" v-ripple="!Utils.isTouchDevice()"
                                 @mouseup="showCommentListDropdown($event, item)"
@@ -122,7 +161,8 @@ import CommentMuteSettings from '@/components/Settings/CommentMuteSettings.vue';
 import { ICommentData } from '@/services/player/managers/LiveCommentManager';
 import useChannelsStore from '@/stores/ChannelsStore';
 import usePlayerStore from '@/stores/PlayerStore';
-import Utils, { CommentUtils } from '@/utils';
+import useSettingsStore from '@/stores/SettingsStore';
+import Utils, { ChannelUtils, CommentUtils } from '@/utils';
 
 export default defineComponent({
     name: 'Panel-CommentTab',
@@ -141,6 +181,10 @@ export default defineComponent({
 
             // ユーティリティをテンプレートで使えるように
             Utils: Object.freeze(Utils),
+            ChannelUtils: Object.freeze(ChannelUtils),
+
+            // 勢い・累計コメント数の表示状態
+            show_comment_status: true,
 
             // 手動スクロール状態かどうか
             is_manual_scroll: false,
@@ -178,10 +222,32 @@ export default defineComponent({
                     offset?: number;
                 }) => void;
             } | null,
+
+            // カラムリサイズ用の状態
+            column_resize_key: null as string | null,
+            column_resize_start_x: 0,
+            column_resize_start_width: 0,
+
         };
     },
     computed: {
-        ...mapStores(useChannelsStore, usePlayerStore),
+        ...mapStores(useChannelsStore, usePlayerStore, useSettingsStore),
+
+        // NCV カラムヘッダーを表示するかどうか
+        hasColumnHeaders(): boolean {
+            const s = this.settingsStore.settings;
+            return s.show_comment_number || s.show_comment_user_id || s.show_comment_type;
+        },
+
+        // カラム幅の CSS 変数
+        columnWidthStyles(): Record<string, string> {
+            const w = this.settingsStore.settings.comment_column_widths;
+            return {
+                '--col-no-width': `${w.no}px`,
+                '--col-user-id-width': `${w.user_id}px`,
+                '--col-type-width': `${w.type}px`,
+            };
+        },
     },
     watch: {
 
@@ -405,6 +471,45 @@ export default defineComponent({
         this.comment_list = [];
     },
     methods: {
+
+        // カラムリサイズ開始
+        startColumnResize(event: MouseEvent, key: string) {
+            event.preventDefault();
+            this.column_resize_key = key;
+            this.column_resize_start_x = event.clientX;
+            this.column_resize_start_width = this.settingsStore.settings.comment_column_widths[key];
+            document.addEventListener('mousemove', this.onColumnResize);
+            document.addEventListener('mouseup', this.stopColumnResize);
+        },
+
+        // カラムリサイズ中
+        onColumnResize(event: MouseEvent) {
+            if (this.column_resize_key === null) return;
+            const delta = event.clientX - this.column_resize_start_x;
+            const min_widths: Record<string, number> = { no: 25, user_id: 40, type: 30 };
+            const max_widths: Record<string, number> = { no: 80, user_id: 200, type: 100 };
+            const min_w = min_widths[this.column_resize_key] ?? 25;
+            const max_w = max_widths[this.column_resize_key] ?? 200;
+            const new_width = Math.min(max_w, Math.max(min_w, this.column_resize_start_width + delta));
+            this.settingsStore.settings.comment_column_widths[this.column_resize_key] = new_width;
+        },
+
+        // カラムリサイズ終了
+        stopColumnResize() {
+            this.column_resize_key = null;
+            document.removeEventListener('mousemove', this.onColumnResize);
+            document.removeEventListener('mouseup', this.stopColumnResize);
+        },
+
+        // ユーザー ID からプレフィックス (nicolive:, rekari:) を除去して表示用に整形する
+        formatUserId(user_id: string): string {
+            if (user_id.startsWith('nicolive:')) {
+                return user_id.slice(9);
+            } else if (user_id.startsWith('rekari:')) {
+                return user_id.slice(7);
+            }
+            return user_id;
+        },
 
         // ドロップダウンメニューを表示する
         showCommentListDropdown(event: Event, comment: ICommentData) {
@@ -643,6 +748,22 @@ export default defineComponent({
             }
         }
 
+        &__toggle {
+            flex-shrink: 0;
+            margin-right: 8px;
+            :deep(.v-switch__track) {
+                height: 18px;
+                min-width: 34px;
+            }
+            :deep(.v-switch__thumb) {
+                height: 14px;
+                width: 14px;
+            }
+            :deep(.v-selection-control) {
+                min-height: unset;
+            }
+        }
+
         &__button {
             display: flex;
             align-items: center;
@@ -654,6 +775,134 @@ export default defineComponent({
             line-height: 1.8;
             letter-spacing: 0;
         }
+    }
+
+    .comment-status {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+        margin-top: 10px;
+        font-size: 12.5px;
+        color: rgb(var(--v-theme-text-darken-1));
+        @include tablet-vertical {
+            padding-left: 24px;
+            padding-right: 24px;
+            margin-top: 12px;
+        }
+        @include smartphone-horizontal {
+            margin-top: 8px;
+            font-size: 11px;
+        }
+        @include smartphone-vertical {
+            margin-top: 8px;
+            font-size: 11.5px;
+        }
+
+        &__force, &__comments {
+            display: flex;
+            align-items: center;
+        }
+
+        &__force--festival {
+            color: #E7556E;
+        }
+        &__force--so-many {
+            color: #E76B55;
+        }
+        &__force--many {
+            color: #E7A355;
+        }
+    }
+
+    .comment-column-header {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        height: 24px;
+        padding-left: 16px;
+        padding-right: 4px;
+        margin-top: 12px;
+        border-bottom: 1px solid rgb(var(--v-theme-background-lighten-2));
+        font-size: 10px;
+        font-weight: bold;
+        color: rgb(var(--v-theme-text-darken-1));
+        user-select: none;
+        @include tablet-vertical {
+            padding-left: 24px;
+            padding-right: 10px;
+            margin-top: 16px;
+        }
+        @include smartphone-horizontal {
+            margin-top: 8px;
+        }
+        @include smartphone-vertical {
+            margin-top: 10px;
+        }
+
+        // カラムリサイズハンドル
+        &__resize {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 5;
+            &:hover, &:active {
+                background: rgb(var(--v-theme-primary));
+                opacity: 0.5;
+            }
+            @include tablet-vertical { display: none; }
+            @include smartphone-horizontal { display: none; }
+            @include smartphone-vertical { display: none; }
+        }
+
+        &__no {
+            position: relative;
+            flex-shrink: 0;
+            width: var(--col-no-width, 38px);
+            margin-right: 6px;
+            text-align: center;
+        }
+        &__user-id {
+            position: relative;
+            flex-shrink: 0;
+            width: var(--col-user-id-width, 80px);
+            margin-right: 6px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        &__text {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+        }
+        &__type {
+            position: relative;
+            flex-shrink: 0;
+            width: var(--col-type-width, 50px);
+            margin-left: 4px;
+            text-align: center;
+        }
+        &__time {
+            flex-shrink: 0;
+            padding-left: 4px;
+            text-align: center;
+            // データ行の時間テキスト幅 + メニューアイコン分の余白 (20px + 2px margin) に合わせる
+            padding-right: 22px;
+            // "HH:MM:SS" テキスト幅に合わせた最小幅（データ行の __time + __icon と揃える）
+            min-width: 80px;
+        }
+    }
+
+    // カラムヘッダー直後はマージンを縮小
+    .comment-column-header + .comment-list-wrapper {
+        margin-top: 0px;
     }
 
     .comment-list-wrapper {
@@ -738,17 +987,71 @@ export default defineComponent({
                     color: rgb(var(--v-theme-secondary-lighten-2));
                 }
 
+                &__no {
+                    flex-shrink: 0;
+                    width: var(--col-no-width, 38px);
+                    margin-right: 6px;
+                    color: rgb(var(--v-theme-text-darken-1));
+                    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+                    font-size: 10px;
+                    text-align: right;
+                }
+
+                &__user-id {
+                    flex-shrink: 0;
+                    width: var(--col-user-id-width, 80px);
+                    margin-right: 6px;
+                    color: rgb(var(--v-theme-text-darken-1));
+                    font-family: 'Open Sans', monospace;
+                    font-size: 10px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
                 &__text {
+                    flex: 1;
+                    min-width: 0;
                     font-size: 13px;
+                }
+
+                &__premium {
+                    flex-shrink: 0;
+                    width: 16px;
+                    color: #DAA520;
+                    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+                    font-size: 10px;
+                    font-weight: bold;
+                    text-align: center;
+                    line-height: 1.6;
+                }
+
+                &__type {
+                    flex-shrink: 0;
+                    width: var(--col-type-width, 50px);
+                    margin-left: 4px;
+                    color: rgb(var(--v-theme-text-darken-1));
+                    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+                    font-size: 10px;
+                    text-align: center;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+
+                    // プレミアム会員のニコ実コメントは金色
+                    &--premium {
+                        color: #DAA520;
+                        font-weight: bold;
+                    }
                 }
 
                 &__time {
                     flex-shrink: 0;
-                    margin-left: auto;
-                    padding-left: 8px;
+                    padding-left: 4px;
                     color: rgb(var(--v-theme-text-darken-1));
                     font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-                    font-size: 12px;
+                    font-size: 11px;
+                    text-align: center;
                 }
 
                 &__icon {

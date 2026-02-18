@@ -18,6 +18,7 @@ export interface ICommentData {
     playback_position: number;
     user_id: string;
     my_post: boolean;
+    premium: boolean;
     comment_source: 'ニコ実' | 'NX' | null;
 }
 
@@ -570,6 +571,7 @@ class LiveCommentManager implements PlayerManager {
                 playback_position: this.player.video.currentTime,
                 user_id: comment.user_id,
                 my_post: false,
+                premium: comment.premium === 1,
                 // ユーザー ID に nicolive: または rekari: の prefix がつく場合
                 comment_source: (comment.user_id.startsWith('nicolive:') || comment.user_id.startsWith('rekari:')) ? 'ニコ実' : 'NX',
             };
@@ -730,6 +732,7 @@ class LiveCommentManager implements PlayerManager {
                             playback_position: this.player.video.currentTime,  // 現在の再生位置
                             user_id: `${user_store.user?.niconico_user_id ?? 'Unknown'}`,  // ニコニコユーザー ID
                             my_post: true,  // 自分のコメントであることを示すフラグ
+                            premium: user_store.user?.niconico_user_premium === true,
                             comment_source: this.watch_session_type === 'ニコニコ実況' ? 'ニコ実' : 'NX',
                         }
                     });

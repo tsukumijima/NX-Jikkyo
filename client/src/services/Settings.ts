@@ -48,6 +48,11 @@ export interface IClientSettings {
     // capture_copy_to_clipboard: 同期無効
     // sync_settings: 同期無効
     prefer_posting_to_nicolive: boolean;
+    show_comment_number: boolean;
+    show_comment_user_id: boolean;
+    show_comment_premium: boolean;
+    show_comment_type: boolean;
+    comment_column_widths: { no: number; user_id: number; type: number };
     comment_speed_rate: number;
     comment_font_size: number;
     close_comment_form_after_sending: boolean;
@@ -68,6 +73,7 @@ export interface IClientSettings {
     twitter_active_tab: 'Search' | 'Timeline' | 'Capture';
     tweet_hashtag_position: 'Prepend' | 'Append' | 'PrependWithLineBreak' | 'AppendWithLineBreak';
     tweet_capture_watermark_position: 'None' | 'TopLeft' | 'TopRight' | 'BottomLeft' | 'BottomRight';
+    panel_width: number;
 }
 
 /**

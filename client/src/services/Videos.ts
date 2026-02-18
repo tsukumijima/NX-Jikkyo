@@ -129,6 +129,7 @@ export interface IJikkyoComment {
     color: string;
     author: string;
     text: string;
+    premium: boolean;
 }
 
 /** 過去ログコメントのリストを表すインターフェース */
@@ -187,7 +188,7 @@ class Videos {
             };
         }
 
-        const raw_jikkyo_comments = kakolog_api_response_json.packet as { chat: { content: string; date: string; date_usec: string; deleted: string; mail: string; user_id: string; } }[];
+        const raw_jikkyo_comments = kakolog_api_response_json.packet as { chat: { content: string; date: string; date_usec: string; deleted: string; mail: string; user_id: string; premium: number; } }[];
         if (raw_jikkyo_comments.length === 0) {
             return {
                 is_success: false,
@@ -216,6 +217,7 @@ class Videos {
                 color: color,
                 author: raw_jikkyo_comment.chat.user_id || '',
                 text: comment,
+                premium: raw_jikkyo_comment.chat.premium === 1,
             };
             // ミュート対象のコメントをここで除外
             if (CommentUtils.isMutedComment(comment_data.text, comment_data.author, comment_data.color, comment_data.type, comment_data.size)) {

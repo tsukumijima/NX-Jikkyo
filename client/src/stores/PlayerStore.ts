@@ -49,6 +49,15 @@ export type PlayerEvents = {
     PlaybackPositionChanged: {
         playback_position: number;  // 現在の再生位置 (秒単位)
     }
+    // UI コンポーネントからコメントの送信を要求する
+    SendComment: {
+        text: string;  // コメントテキスト
+        color: string;  // '#FFEAEA' 等の hex カラーコード
+        type: 'top' | 'right' | 'bottom';  // コメントの位置
+        size: 'big' | 'medium' | 'small';  // コメントのサイズ
+        onSuccess: () => void;  // 送信成功時のコールバック
+        onError: (message: string) => void;  // 送信失敗時のコールバック
+    }
 };
 
 

@@ -48,10 +48,19 @@ export interface ILocalClientSettings extends IClientSettings {
     capture_copy_to_clipboard: boolean;
     sync_settings: boolean;
     prefer_posting_to_nicolive: boolean;
+    show_comment_number: boolean;
+    show_comment_user_id: boolean;
+    show_comment_premium: boolean;
+    show_comment_type: boolean;
+    comment_column_widths: { no: number; user_id: number; type: number };
     comment_speed_rate: number;
     comment_font_size: number;
     close_comment_form_after_sending: boolean;
     comment_delay_seconds: number;
+    show_panel_comment_input: boolean;
+    panel_comment_color: string;
+    panel_comment_position: 'top' | 'right' | 'bottom';
+    panel_comment_size: 'big' | 'medium' | 'small';
     mute_nicolive_comments: boolean;
     mute_nxjikkyo_comments: boolean;
     mute_vulgar_comments: boolean;
@@ -68,6 +77,7 @@ export interface ILocalClientSettings extends IClientSettings {
     twitter_active_tab: 'Search' | 'Timeline' | 'Capture';
     tweet_hashtag_position: 'Prepend' | 'Append' | 'PrependWithLineBreak' | 'AppendWithLineBreak';
     tweet_capture_watermark_position: 'None' | 'TopLeft' | 'TopRight' | 'BottomLeft' | 'BottomRight';
+    panel_width: number;
 }
 
 /**
@@ -165,6 +175,16 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
 
     // 可能であればニコニコ実況にコメントする (Default: オン)
     prefer_posting_to_nicolive: true,
+    // コメントタブにコメ番を表示するか (Default: オフ)
+    show_comment_number: false,
+    // コメントタブにユーザーIDを表示するか (Default: オフ)
+    show_comment_user_id: false,
+    // コメントタブにプレミアム情報を表示するか (Default: オフ)
+    show_comment_premium: false,
+    // コメントタブにタイプ (ニコ実/NX) を表示するか (Default: オン)
+    show_comment_type: true,
+    // コメントカラムの幅 (Default: No=38, ユーザーID=80, タイプ=50)
+    comment_column_widths: { no: 38, user_id: 80, type: 50 },
     // コメントの速さ (Default: 1倍)
     comment_speed_rate: 1,
     // コメントのフォントサイズ (Default: 34px)
@@ -173,6 +193,14 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     close_comment_form_after_sending: false,
     // コメント表示の遅延秒数 (Default: 0秒)
     comment_delay_seconds: 0,
+    // パネルのコメントタブにコメント入力バーを表示する (Default: オン)
+    show_panel_comment_input: true,
+    // パネルのコメント入力バーのデフォルト色 (Default: 白)
+    panel_comment_color: '#FFEAEA',
+    // パネルのコメント入力バーのデフォルト位置 (Default: 流れる)
+    panel_comment_position: 'right' as 'top' | 'right' | 'bottom',
+    // パネルのコメント入力バーのデフォルトサイズ (Default: 中)
+    panel_comment_size: 'medium' as 'big' | 'medium' | 'small',
 
     // ***** 設定 → ニコニコ実況 (ミュート設定) *****
 
@@ -211,6 +239,11 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     tweet_hashtag_position: 'Append',
     // ツイートするキャプチャに番組名の透かしを描画する (Default: 透かしを描画しない)
     tweet_capture_watermark_position: 'None',
+
+    // ***** 設定 → パネル *****
+
+    // パネルの幅 (Default: 352px)
+    panel_width: 352,
 };
 
 // 同期対象の設定データのキーのみを列挙した配列
@@ -247,10 +280,19 @@ const SYNCABLE_SETTINGS_KEYS: (keyof IClientSettings)[] = [
     // capture_copy_to_clipboard: 同期無効
     // sync_settings: 同期無効
     'prefer_posting_to_nicolive',
+    'show_comment_number',
+    'show_comment_user_id',
+    'show_comment_premium',
+    'show_comment_type',
+    'comment_column_widths',
     'comment_speed_rate',
     'comment_font_size',
     'close_comment_form_after_sending',
     'comment_delay_seconds',
+    'show_panel_comment_input',
+    'panel_comment_color',
+    'panel_comment_position',
+    'panel_comment_size',
     'mute_nicolive_comments',
     'mute_nxjikkyo_comments',
     'mute_vulgar_comments',
@@ -267,6 +309,7 @@ const SYNCABLE_SETTINGS_KEYS: (keyof IClientSettings)[] = [
     'twitter_active_tab',
     'tweet_hashtag_position',
     'tweet_capture_watermark_position',
+    'panel_width',
 ];
 
 

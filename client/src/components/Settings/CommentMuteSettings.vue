@@ -2,13 +2,63 @@
     <v-dialog max-width="770" transition="slide-y-transition" v-model="comment_mute_settings_modal">
         <v-card class="comment-mute-settings">
             <v-card-title class="px-5 pt-6 pb-3 d-flex align-center font-weight-bold" style="height: 60px;">
-                <Icon icon="heroicons-solid:filter" height="26px" />
-                <span class="ml-3">コメントのミュート設定</span>
+                <Icon icon="fluent:settings-20-filled" height="26px" />
+                <span class="ml-3">コメント設定</span>
                 <v-spacer></v-spacer>
                 <div v-ripple class="d-flex align-center rounded-circle cursor-pointer px-2 py-2" @click="comment_mute_settings_modal = false">
                     <Icon icon="fluent:dismiss-12-filled" width="23px" height="23px" />
                 </div>
             </v-card-title>
+            <v-tabs v-model="active_tab" color="primary" class="comment-settings-tabs">
+                <v-tab value="display">表示</v-tab>
+                <v-tab value="mute">ミュート</v-tab>
+            </v-tabs>
+            <v-window v-model="active_tab">
+            <v-window-item value="display">
+                <div class="px-5 pb-6">
+                    <div class="settings__item settings__item--switch">
+                        <label class="settings__item-heading" for="modal_show_comment_number">コメントリストにコメ番を表示する</label>
+                        <label class="settings__item-label" for="modal_show_comment_number">
+                            この設定をオンにすると、コメントリストの各コメントの先頭にコメ番（コメント番号）が表示されます。
+                        </label>
+                        <v-switch class="settings__item-switch" color="primary" id="modal_show_comment_number" hide-details
+                            v-model="settingsStore.settings.show_comment_number">
+                        </v-switch>
+                    </div>
+                    <div class="settings__item settings__item--switch">
+                        <label class="settings__item-heading" for="modal_show_comment_user_id">コメントリストにユーザーIDを表示する</label>
+                        <label class="settings__item-label" for="modal_show_comment_user_id">
+                            この設定をオンにすると、コメントリストの各コメントにユーザーIDが表示されます。
+                        </label>
+                        <v-switch class="settings__item-switch" color="primary" id="modal_show_comment_user_id" hide-details
+                            v-model="settingsStore.settings.show_comment_user_id">
+                        </v-switch>
+                    </div>
+                    <div class="settings__item settings__item--switch">
+                        <label class="settings__item-heading" for="modal_show_comment_type">コメントリストにタイプ（ニコ実/NX）を表示する</label>
+                        <label class="settings__item-label" for="modal_show_comment_type">
+                            この設定をオンにすると、コメントリストの各コメントにコメントの投稿元（ニコ実 / NX）が表示されます。
+                        </label>
+                        <v-switch class="settings__item-switch" color="primary" id="modal_show_comment_type" hide-details
+                            v-model="settingsStore.settings.show_comment_type">
+                        </v-switch>
+                    </div>
+                    <div class="text-subtitle-1 d-flex align-center font-weight-bold mt-6">
+                        <Icon icon="fluent:send-20-filled" width="24px" />
+                        <span class="ml-2">コメント入力の設定</span>
+                    </div>
+                    <div class="settings__item settings__item--switch">
+                        <label class="settings__item-heading" for="modal_show_panel_comment_input">コメントタブにコメント入力バーを表示する</label>
+                        <label class="settings__item-label" for="modal_show_panel_comment_input">
+                            この設定をオンにすると、ライブ視聴時にコメントタブの下部にコメント入力バーが表示され、パネルからコメントを送信できます。
+                        </label>
+                        <v-switch class="settings__item-switch" color="primary" id="modal_show_panel_comment_input" hide-details
+                            v-model="settingsStore.settings.show_panel_comment_input">
+                        </v-switch>
+                    </div>
+                </div>
+            </v-window-item>
+            <v-window-item value="mute">
             <div class="px-5 pb-6">
                 <div class="text-subtitle-1 d-flex align-center font-weight-bold mt-4">
                     <Icon icon="fa-solid:sliders-h" width="24px" height="20px" />
@@ -167,6 +217,8 @@
                     </div>
                 </div>
             </div>
+            </v-window-item>
+            </v-window>
         </v-card>
     </v-dialog>
 </template>
@@ -193,6 +245,9 @@ export default defineComponent({
 
             // コメントのミュート設定のモーダルを表示するか
             comment_mute_settings_modal: false,
+
+            // アクティブなタブ
+            active_tab: 'display' as 'display' | 'mute',
 
             // ミュート済みのキーワードのマッチタイプ
             muted_comment_keyword_match_type: [
@@ -229,6 +284,12 @@ export default defineComponent({
         @include smartphone-vertical {
             padding-left: 12px !important;
             padding-right: 12px !important;
+        }
+    }
+    .comment-settings-tabs {
+        margin: 0 20px;
+        @include smartphone-vertical {
+            margin: 0 12px;
         }
     }
 }
