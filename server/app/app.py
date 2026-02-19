@@ -264,9 +264,9 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
             while True:
                 try:
                     async for ndgr_comment in ndgr_client.streamComments():
-                        ndgr_client.print(f'[{datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")}] Comment Received. [grey70](ID: {ndgr_comment.id})[/grey70]')
-                        ndgr_client.print(str(ndgr_comment))
-                        ndgr_client.print(Rule(characters='-', style=Style(color='#E33157')))
+                        await ndgr_client.print(f'[{datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")}] Comment Received. [grey70](ID: {ndgr_comment.id})[/grey70]')
+                        await ndgr_client.print(str(ndgr_comment))
+                        await ndgr_client.print(Rule(characters='-', style=Style(color='#E33157')))
 
                         # 現在のサーバー時刻 (UNIX タイムスタンプ)
                         current_time = time.time()
