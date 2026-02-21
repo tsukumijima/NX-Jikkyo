@@ -6,13 +6,13 @@
                 <span class="comment-header__title-text">コメント</span>
             </h2>
             <v-switch class="comment-header__toggle ml-auto" density="compact" hide-details
-                v-model="show_comment_status" color="primary" />
+                v-model="show_comment_status" color="primary" v-if="playback_mode === 'Live'" />
             <button v-ripple class="comment-header__button" @click="comment_mute_settings_modal = !comment_mute_settings_modal">
                 <Icon icon="fluent:settings-20-filled" height="11px" />
                 <span class="ml-1">コメント設定</span>
             </button>
         </section>
-        <section class="comment-status" v-show="show_comment_status">
+        <section class="comment-status" v-if="playback_mode === 'Live'" v-show="show_comment_status">
             <div class="comment-status__force"
                 :class="`comment-status__force--${ChannelUtils.getChannelForceType(channelsStore.channel.current.jikkyo_force)}`">
                 <Icon icon="fa-solid:fire-alt" height="13px" />
@@ -148,7 +148,7 @@
              :class="{'comment-scroll-button--display': is_manual_scroll}">
             <Icon icon="fluent:arrow-down-12-filled" height="29px" />
         </div>
-        <CommentMuteSettings :modelValue="comment_mute_settings_modal" @update:modelValue="comment_mute_settings_modal = $event" />
+        <CommentMuteSettings :modelValue="comment_mute_settings_modal" @update:modelValue="comment_mute_settings_modal = $event" initialTab="display" />
     </div>
 </template>
 <script lang="ts">
@@ -466,6 +466,10 @@ export default defineComponent({
         if (this.playback_mode === 'Video') {
             this.playerStore.event_emitter.off('PlaybackPositionChanged');
         }
+
+        // カラムリサイズ中のリスナーのクリーンアップ
+        document.removeEventListener('mousemove', this.onColumnResize);
+        document.removeEventListener('mouseup', this.stopColumnResize);
 
         // コメントリストをクリア
         this.comment_list = [];
@@ -1013,17 +1017,6 @@ export default defineComponent({
                     flex: 1;
                     min-width: 0;
                     font-size: 13px;
-                }
-
-                &__premium {
-                    flex-shrink: 0;
-                    width: 16px;
-                    color: #DAA520;
-                    font-family: 'Open Sans', 'YakuHanJPs', 'Twemoji', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-                    font-size: 10px;
-                    font-weight: bold;
-                    text-align: center;
-                    line-height: 1.6;
                 }
 
                 &__type {

@@ -166,7 +166,7 @@
                 </v-switch>
             </div>
         </div>
-        <CommentMuteSettings :modelValue="comment_mute_settings_modal" @update:modelValue="comment_mute_settings_modal = $event" />
+        <CommentMuteSettings :modelValue="comment_mute_settings_modal" @update:modelValue="comment_mute_settings_modal = $event" initialTab="mute" />
     </SettingsBase>
 </template>
 <script lang="ts">

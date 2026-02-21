@@ -168,6 +168,12 @@ export default defineComponent({
             return { '--panel-width': `${this.settingsStore.settings.panel_width}px` };
         },
     },
+    beforeUnmount() {
+        // リサイズ中にコンポーネントが破棄された場合のリスナーのクリーンアップ
+        document.removeEventListener('mousemove', this.onResize);
+        document.removeEventListener('mouseup', this.stopResize);
+        this.is_resizing = false;
+    },
     methods: {
         // パネルのコメント入力バーからコメントを送信する
         sendCommentFromPanel(): void {
@@ -175,24 +181,37 @@ export default defineComponent({
             if (text === '' || this.is_sending_comment) return;
 
             this.is_sending_comment = true;
-            this.playerStore.event_emitter.emit('SendComment', {
-                text: text,
-                color: this.settingsStore.settings.panel_comment_color,
-                type: this.settingsStore.settings.panel_comment_position,
-                size: this.settingsStore.settings.panel_comment_size,
-                onSuccess: () => {
-                    this.comment_text = '';
-                    this.is_sending_comment = false;
-                },
-                onError: (message: string) => {
-                    this.is_sending_comment = false;
-                    this.playerStore.event_emitter.emit('SendNotification', {
-                        message: message,
-                        duration: 4000,
-                        color: '#FF6F6A',
-                    });
-                },
-            });
+
+            // コールバックが呼ばれなかった場合のフォールバックタイマー (10秒)
+            const fallback_timer = window.setTimeout(() => {
+                this.is_sending_comment = false;
+            }, 10000);
+
+            try {
+                this.playerStore.event_emitter.emit('SendComment', {
+                    text: text,
+                    color: this.settingsStore.settings.panel_comment_color,
+                    type: this.settingsStore.settings.panel_comment_position,
+                    size: this.settingsStore.settings.panel_comment_size,
+                    onSuccess: () => {
+                        window.clearTimeout(fallback_timer);
+                        this.comment_text = '';
+                        this.is_sending_comment = false;
+                    },
+                    onError: (message: string) => {
+                        window.clearTimeout(fallback_timer);
+                        this.is_sending_comment = false;
+                        this.playerStore.event_emitter.emit('SendNotification', {
+                            message: message,
+                            duration: 4000,
+                            color: '#FF6F6A',
+                        });
+                    },
+                });
+            } catch {
+                window.clearTimeout(fallback_timer);
+                this.is_sending_comment = false;
+            }
         },
         startResize(event: MouseEvent) {
             event.preventDefault();
