@@ -17,6 +17,7 @@ export interface ICommentData {
     time: string;
     playback_position: number;
     user_id: string;
+    premium: string | number | null;
     my_post: boolean;
     comment_source: 'ニコ実' | 'NX' | null;
 }
@@ -558,7 +559,7 @@ class LiveCommentManager implements PlayerManager {
             const { color, position, size } = CommentUtils.parseCommentCommand(comment.mail);
 
             // ミュート対象のコメントかどうかを判定し、もしそうならここで弾く
-            if (CommentUtils.isMutedComment(comment.content, comment.user_id, color, position, size)) {
+            if (CommentUtils.isMutedComment(comment.content, comment.user_id, color, position, size, comment.premium ?? null)) {
                 return;
             }
 
@@ -569,6 +570,7 @@ class LiveCommentManager implements PlayerManager {
                 time: dayjs(comment.date * 1000).format('HH:mm:ss'),
                 playback_position: this.player.video.currentTime,
                 user_id: comment.user_id,
+                premium: comment.premium ?? null,
                 my_post: false,
                 // ユーザー ID に nicolive: または rekari: の prefix がつく場合
                 comment_source: (comment.user_id.startsWith('nicolive:') || comment.user_id.startsWith('rekari:')) ? 'ニコ実' : 'NX',
@@ -729,6 +731,7 @@ class LiveCommentManager implements PlayerManager {
                             time: dayjs().format('HH:mm:ss'),  // 現在時刻
                             playback_position: this.player.video.currentTime,  // 現在の再生位置
                             user_id: `${user_store.user?.niconico_user_id ?? 'Unknown'}`,  // ニコニコユーザー ID
+                            premium: null,  // 自分が投稿したコメントの premium フラグは取得できない
                             my_post: true,  // 自分のコメントであることを示すフラグ
                             comment_source: this.watch_session_type === 'ニコニコ実況' ? 'ニコ実' : 'NX',
                         }

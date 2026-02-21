@@ -353,6 +353,7 @@ class PlayerController {
                                     time: dayjs(recording_start_time).add(comment.time, 'seconds').format('MM/DD HH:mm:ss'),
                                     playback_position: comment.time,
                                     user_id: comment.author,
+                                    premium: null,
                                     my_post: false,
                                     // NX-Jikkyo で生成されるユーザー ID は SHA-1: 40 文字 (初期に投稿されたコメントのみ UUID v4: 36 文字) のため、
                                     // 35 文字以上であれば確実に NX-Jikkyo に投稿されたコメントであると判断できる
@@ -668,6 +669,17 @@ class PlayerController {
         player_store.event_emitter.on('SetControlDisplayTimer', (event) => {
             this.setControlDisplayTimer(event.event, event.is_player_region_event, event.timeout_seconds);
         });
+
+        // ビデオ視聴時のみ: UI コンポーネントから指定秒数へのシークを要求されたときのイベントハンドラーを登録する
+        // コメントリストからコメントをクリックした際などに利用される
+        if (this.playback_mode === 'Video') {
+            player_store.event_emitter.off('SeekRequest');  // SeekRequest イベントの全てのイベントハンドラーを削除
+            player_store.event_emitter.on('SeekRequest', (event) => {
+                if (this.destroyed === true || this.player === null) return;
+                this.player.seek(event.playback_position);
+                this.player.play();
+            });
+        }
 
         /*
         // プレイヤー再起動ボタンを DPlayer の UI に追加する (再生が止まった際などに利用する想定)

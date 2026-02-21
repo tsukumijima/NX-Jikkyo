@@ -250,6 +250,31 @@ const useChannelsStore = defineStore('channels', {
                 return index_a - index_b;
             }));
 
+            // 「チャンネル一覧を実況勢いが強い順に並べる」がオンかつ、実況勢いが1つでも取得できている場合のみ、
+            // ピン留めタブを含む全チャンネルリストを実況勢い順で並び替える
+            // すべての実況勢いが 0 または取得できない（null）場合は、従来の並び順をそのまま維持する
+            if (settings_store.settings.tv_channel_sort_by_jikkyo_force === true) {
+                const has_non_zero_jikkyo_force = Array.from(channels_list_with_pinned.values())
+                    .flat()
+                    .some((channel) => (channel.jikkyo_force ?? 0) > 0);
+                if (has_non_zero_jikkyo_force === true) {
+                    for (const [channel_type, channels] of channels_list_with_pinned) {
+                        channels_list_with_pinned.set(channel_type, [...channels].sort((a, b) => {
+                            const a_jikkyo_force = a.jikkyo_force ?? 0;
+                            const b_jikkyo_force = b.jikkyo_force ?? 0;
+                            if (a_jikkyo_force !== b_jikkyo_force) {
+                                return b_jikkyo_force - a_jikkyo_force;
+                            }
+                            const channel_number_compare_result = a.channel_number.localeCompare(b.channel_number, 'ja', {numeric: true});
+                            if (channel_number_compare_result !== 0) {
+                                return channel_number_compare_result;
+                            }
+                            return a.id.localeCompare(b.id, 'ja');
+                        }));
+                    }
+                }
+            }
+
             // 最後に、チャンネルが1つもないチャンネルタイプのタブを除外する (ピン留めタブを除く)
             for (const [channel_type, channels] of channels_list_with_pinned) {
                 if (channel_type === 'ピン留め') {

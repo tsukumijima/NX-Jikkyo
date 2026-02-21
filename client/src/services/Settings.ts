@@ -24,6 +24,8 @@ export interface IClientSettings {
     tv_panel_active_tab: 'Program' | 'Channel' | 'Comment' | 'Twitter';
     video_panel_active_tab: 'RecordedProgram' | 'Series' | 'Comment' | 'Twitter';
     show_player_background_image: boolean;
+    tv_channel_sort_by_jikkyo_force: boolean;
+    tv_channel_up_down_buttons_reverse: boolean;
     tv_channel_selection_requires_alt_key: boolean;
     // tv_streaming_quality: 同期無効
     // tv_streaming_quality_cellular: 同期無効
@@ -60,6 +62,7 @@ export interface IClientSettings {
     mute_fixed_comments: boolean;
     mute_colored_comments: boolean;
     mute_consecutive_same_characters_comments: boolean;
+    mute_comment_keywords_normalize_alphanumeric_width_case: boolean;
     muted_comment_keywords: IMutedCommentKeywords[];
     muted_niconico_user_ids: string[];
     fold_panel_after_sending_tweet: boolean;

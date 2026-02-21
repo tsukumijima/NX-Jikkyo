@@ -198,7 +198,7 @@ class Videos {
 
         const jikkyo_comments = raw_jikkyo_comments.map((raw_jikkyo_comment) => {
             const comment = raw_jikkyo_comment.chat.content;
-            if (typeof comment !== 'string' || comment === '' || raw_jikkyo_comment.chat.deleted === '1' || /\/[a-z]+ /.test(comment)) {
+            if (typeof comment !== 'string' || comment === '' || raw_jikkyo_comment.chat.deleted === '1') {
                 return null;
             }
 

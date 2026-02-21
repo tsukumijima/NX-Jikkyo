@@ -49,6 +49,10 @@ export type PlayerEvents = {
     PlaybackPositionChanged: {
         playback_position: number;  // 現在の再生位置 (秒単位)
     }
+    // ビデオ視聴: UI コンポーネントからプレイヤーに指定秒数へのシークを要求する
+    SeekRequest: {
+        playback_position: number;  // シーク先の再生位置 (秒)
+    }
 };
 
 
