@@ -87,11 +87,6 @@ const router = createRouter({
                 description: 'NX-Jikkyo の全般の設定を変更できます。',
             },
         },
-        // {
-        //     path: '/settings/account',
-        //     name: 'Settings Account',
-        //     component: () => import('@/views/Settings/Account.vue'),
-        // },
         {
             path: '/settings/jikkyo',
             name: 'Settings Jikkyo',
@@ -101,16 +96,6 @@ const router = createRouter({
                 description: 'NX-Jikkyo のコメント/実況の設定を変更できます。',
             },
         },
-        // {
-        //     path: '/login/',
-        //     name: 'Login',
-        //     component: () => import('@/views/Login.vue'),
-        // },
-        // {
-        //     path: '/register/',
-        //     name: 'Register',
-        //     component: () => import('@/views/Register.vue'),
-        // },
         {
             path: '/:pathMatch(.*)*',
             name: 'NotFound',

@@ -3,7 +3,6 @@ import { defineStore } from 'pinia';
 
 import Message from '@/message';
 import Users, { IUser, IUserUpdateRequest } from '@/services/Users';
-import useSettingsStore from '@/stores/SettingsStore';
 import Utils from '@/utils';
 
 
@@ -98,11 +97,6 @@ const useUserStore = defineStore('user', {
          * @param silent ログアウトしたことをメッセージで通知しない場合は true
          */
         logout(silent: boolean = false): void {
-
-            // 設定の同期を無効化
-            const settings_store = useSettingsStore();
-            settings_store.settings.sync_settings = false;
-
             // ブラウザからアクセストークンを削除
             // これをもってログアウトしたことになる（それ以降の Axios のリクエストにはアクセストークンが含まれなくなる）
             Utils.deleteAccessToken();

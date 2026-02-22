@@ -79,40 +79,14 @@ const { updateServiceWorker } = useRegisterSW({
     },
 });
 
-// ***** 設定データの同期 *****
-
-// 設定データをサーバーにアップロード中かどうか
-let is_uploading_settings = false;
+// ***** 設定データの保存 *****
 
 // 設定データの変更を監視する
 const settings_store = useSettingsStore();
 settings_store.$subscribe(async () => {
 
-    // 設定データをアップロード中の場合は何もしない
-    if (is_uploading_settings === true) {
-        return;
-    }
-
     // 設定データを LocalStorage に保存
     console.log('Client Settings Changed:', settings_store.settings);
     setLocalStorageSettings(settings_store.settings);
 
-    // このクライアントの設定をサーバーに同期する (ログイン時かつ同期が有効な場合のみ実行される)
-    await settings_store.syncClientSettingsToServer();
-
 }, {detached: true});
-
-// ログイン時かつ設定の同期が有効な場合、ページ遷移に関わらず、常に3秒おきにサーバーから設定を取得する
-// 初回のページレンダリングに間に合わないのは想定内（同期の完了を待つこともできるが、それだと表示速度が遅くなるのでしょうがない）
-window.setInterval(async () => {
-    if (Utils.getAccessToken() !== null && settings_store.settings.sync_settings === true) {
-
-        // サーバーに保存されている設定データをこのクライアントに同期する
-        is_uploading_settings = true;
-        await settings_store.syncClientSettingsFromServer();
-        is_uploading_settings = false;
-
-        // 設定データを LocalStorage に保存
-        setLocalStorageSettings(settings_store.settings);
-    }
-}, 3 * 1000);  // 3秒おき
