@@ -6,7 +6,8 @@
         "dev": "vite",
         "build": "vue-tsc --noEmit && vite build",
         "preview": "vite preview",
-        "lint": "eslint . --fix --ignore-path .gitignore"
+        "lint": "eslint . --fix --ignore-path .gitignore",
+        "typecheck": "vue-tsc --noEmit"
     },
     "dependencies": {
         "@github/mini-throttle": "^2.1.1",
