@@ -153,11 +153,29 @@ video_panel_active_tab: 'RecordedProgram' | 'Series' | 'Comment' | 'Twitter';
 - `use_pure_black_player_background`, `use_28hour_clock`, `show_original_broadcast_time_during_playback` — UI
 
 ### 同期無効コメントについて
-NX-Jikkyo の IClientSettings には KonomiTV から引き継いだ「同期無効」コメント（`// tv_streaming_quality: 同期無効` など）が残っているが、これは単なる削除漏れである。NX-Jikkyo にはサーバー同期機能自体が存在せず、実装予定もない（同期機能にはサーバー側のユーザー管理機能が必要であり、コストが高いため）。
+NX-Jikkyo の IClientSettings には KonomiTV から引き継いだ「同期無効」コメント（`// tv_streaming_quality: 同期無効` など）が残っているが、これは単なる削除漏れである。NX-Jikkyo にはサーバー同期機能自体が存在せず、実装予定もない（同期機能にはサーバー側のユーザー管理機能が必要であり、コストが高いため）。これらのコメントはすでに Settings.ts から削除済み。
+
+### ILocalClientSettings から削除済みのフィールド
+
+以下のフィールドは KonomiTV には存在するが、NX-Jikkyo のデータ放送機能削除に伴い `ILocalClientSettings` 型定義と `ILocalClientSettingsDefault` デフォルト値の両方から除去済み。バックポート時に再混入させないよう注意。
+
+- `tv_show_data_broadcasting: boolean` — テレビ視聴時にデータ放送機能を利用するかどうか
+- `enable_internet_access_from_data_broadcasting: boolean` — データ放送からのインターネットアクセスを有効にするかどうか
 
 ---
 
 ## 5. アーキテクチャの差異
+
+### チャンネル ID フォーマット
+
+NX-Jikkyo と KonomiTV ではチャンネル ID の形式が根本的に異なる。
+
+| プロジェクト | GR チャンネル ID | BS チャンネル ID |
+|---|---|---|
+| KonomiTV | `gr011` など（5文字、`gr` prefix + 3桁番号） | `bs211` など（5文字、`bs` prefix + 3桁番号） |
+| NX-Jikkyo | `jk1`〜`jk9`（3〜4文字、ニコニコ実況 GR 系） | `jk101`〜`jk999`（5文字、ニコニコ実況 BS 系） |
+
+`ChannelUtils.ts` の `getChannelType()` が `id.length <= 4` で GR/BS を判別しているのは、NX-Jikkyo の ID フォーマットに対して正しい実装（`Channels.ts` でも同じロジックを使用）。KonomiTV の `gr`/`bs` prefix 判別とは異なるが、バグではない。差分調査時に誤検知しやすいパターンなので注意。
 
 ### ルーティング
 - NX-Jikkyo: `/` → TV Home（直接）、`/watch/`、`/log/`、`/about/`、`/settings/`
@@ -344,3 +362,15 @@ NX-Jikkyo では `NX-Niconico-User` Cookie で連携情報を管理。
 ### パターン F: structuredClone によるデフォルト値の保護
 SettingsStore のデフォルト値にオブジェクトや配列が含まれる場合、`structuredClone()` を使用してディープコピーする必要がある。
 共有参照による意図しない状態変更を防ぐため。
+
+### パターン G: コメントアウトされたコードの整理
+
+NX-Jikkyo で不要になった処理がコメントアウトのまま残されている場合の整理方針。
+
+- **削除すべきケース**: 対応するフィールドや変数も削除されており、単なるコードの残骸になっている場合。`destroy()` 内の cleanup コードだけが残っている場合も削除対象。
+- **理由コメントへの変換が適切なケース**: 「なぜこの処理が NX-Jikkyo では不要か」を将来のバックポート担当者に伝える価値がある場合。
+
+`PlayerController.ts` に存在した代表的なコメントアウトパターン（現在は理由コメントに変換済み）:
+- RomSound（文字スーパー内蔵音）のロード: NX-Jikkyo にはデータ放送機能がないため不要
+- mpegts.js バッファ詰まり対策の強制シーク (`live_force_seek`): ライブ視聴で映像ストリーミングがないため不要
+- Keep-Alive API リクエスト (`video_keep_alive`): 過去ログ再生にサーバー側ビデオストリーム API がないため不要
