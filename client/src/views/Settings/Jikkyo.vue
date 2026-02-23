@@ -85,9 +85,44 @@
                 <Icon icon="heroicons-solid:filter" height="19px" />
                 <span class="ml-1">コメントのミュート設定を開く</span>
             </v-btn>
+            <v-divider class="mt-6"></v-divider>
             <div class="settings__quote mt-7">
-                コメントの透明度は、プレイヤー下にある設定アイコン ⚙️ から変更できます。<br>
+                「コメントを表示」「コメントを無制限に表示」「コメントの不透明度」の各設定は、<br>プレイヤー下にある設定アイコン ⚙️ からも随時変更できます。<br>
             </div>
+            <div class="settings__item settings__item--switch">
+                <label class="settings__item-heading" for="show_comment">コメントを表示</label>
+                <label class="settings__item-label" for="show_comment">
+                    プレイヤーにニコニコ実況 / NX-Jikkyo のコメントを流すかどうかを設定します。<br>
+                    コメントを非表示にしても、画面右側にあるパネルのコメントリストには表示されます。<br>
+                </label>
+                <v-switch class="settings__item-switch" color="primary" id="show_comment" hide-details
+                    v-model="show_comment">
+                </v-switch>
+            </div>
+            <div class="settings__item settings__item--switch">
+                <label class="settings__item-heading" for="show_comment_unlimited">コメントを無制限に表示</label>
+                <label class="settings__item-label" for="show_comment_unlimited">
+                    オンにすると、コメントの重なりを許容し、可能な限り多くのコメントを表示します。<br>
+                    コメントが多い番組でオンにすると、映像が見づらくなる可能性があります。<br>
+                </label>
+                <v-switch class="settings__item-switch" color="primary" id="show_comment_unlimited" hide-details
+                    v-model="show_comment_unlimited">
+                </v-switch>
+            </div>
+            <div class="settings__item">
+                <div class="settings__item-heading">コメントの不透明度</div>
+                <div class="settings__item-label">
+                    プレイヤーに流れるコメントの不透明度を設定します。<br>
+                    0% に設定するとコメントが完全に透明になり、100% に設定すると完全に不透明になります。<br>
+                </div>
+                <v-slider class="settings__item-form" color="primary" show-ticks="always" thumb-label hide-details
+                    :step="0.05" :min="0" :max="1" v-model="comment_opacity">
+                    <template #thumb-label="{ modelValue }">
+                        {{ Math.round(modelValue * 100) }}%
+                    </template>
+                </v-slider>
+            </div>
+            <v-divider class="mt-6"></v-divider>
             <div class="settings__item">
                 <div class="settings__item-heading">コメントの速さ</div>
                 <div class="settings__item-label">
@@ -160,14 +195,55 @@ export default defineComponent({
 
             // ローディング中かどうか
             is_loading: true,
+
+            // コメントを表示するか (LocalStorage: dplayer-danmaku-show)
+            show_comment: true,
+
+            // コメントを無制限に表示するか (LocalStorage: dplayer-danmaku-unlimited)
+            show_comment_unlimited: false,
+
+            // コメントの不透明度 (LocalStorage: dplayer-danmaku-opacity)
+            comment_opacity: 0.5,
         };
+    },
+    watch: {
+        show_comment(new_value: boolean) {
+            // コメント表示設定を LocalStorage に保存する
+            localStorage.setItem('dplayer-danmaku-show', new_value ? '1' : '0');
+        },
+        show_comment_unlimited(new_value: boolean) {
+            // コメント無制限表示設定を LocalStorage に保存する
+            localStorage.setItem('dplayer-danmaku-unlimited', new_value ? '1' : '0');
+        },
+        comment_opacity(new_value: number) {
+            // コメント不透明度設定を LocalStorage に保存する
+            localStorage.setItem('dplayer-danmaku-opacity', new_value.toString());
+        },
     },
     computed: {
         ...mapStores(useSettingsStore, useUserStore),
     },
     async created() {
 
-        // アカウント情報を更新
+        // LocalStorage からコメント表示設定を読み込む
+        const show_comment_raw = localStorage.getItem('dplayer-danmaku-show');
+        if (show_comment_raw !== null) {
+            this.show_comment = show_comment_raw === '1';
+        }
+
+        // LocalStorage からコメント無制限表示設定を読み込む
+        const show_comment_unlimited_raw = localStorage.getItem('dplayer-danmaku-unlimited');
+        if (show_comment_unlimited_raw !== null) {
+            this.show_comment_unlimited = show_comment_unlimited_raw === '1';
+        }
+
+        // LocalStorage からコメント透明度設定を読み込む
+        const comment_opacity_raw = localStorage.getItem('dplayer-danmaku-opacity');
+        if (comment_opacity_raw !== null) {
+            this.comment_opacity = parseFloat(comment_opacity_raw);
+        }
+
+        // ニコニコアカウント連携状態を取得
         await this.userStore.fetchUser();
 
         // ローディング状態を解除
@@ -195,12 +271,6 @@ export default defineComponent({
         },
 
         async loginNiconicoAccount() {
-
-            // ログインしていない場合はエラーにする
-            if (this.userStore.is_logged_in === false) {
-                Message.warning('連携をはじめるには、KonomiTV アカウントにログインしてください。');
-                return;
-            }
 
             // ニコニコアカウントと連携するための認証 URL を取得
             const authorization_url = await Niconico.fetchAuthorizationURL();

@@ -25,43 +25,6 @@ export default class Utils {
 
 
     /**
-     * アクセストークンを LocalStorage から取得する
-     * @returns JWT アクセストークン（ログインしていない場合は null が返る）
-     */
-    static getAccessToken(): string | null {
-
-        // LocalStorage の取得結果をそのまま返す
-        // LocalStorage.getItem() はキーが存在しなければ（=ログインしていなければ）null を返す
-        return localStorage.getItem('NX-Jikkyo-AccessToken');
-    }
-
-
-    /**
-     * アクセストークンを LocalStorage に保存する
-     * @param access_token 発行された JWT アクセストークン
-     */
-    static saveAccessToken(access_token: string): void {
-
-        // そのまま LocalStorage に保存
-        localStorage.setItem('NX-Jikkyo-AccessToken', access_token);
-    }
-
-
-    /**
-     * アクセストークンを LocalStorage から削除する
-     * アクセストークンを削除することで、ログアウト相当になる
-     */
-    static deleteAccessToken(): void {
-
-        // LocalStorage に NX-Jikkyo-AccessToken キーが存在しない
-        if (localStorage.getItem('NX-Jikkyo-AccessToken') === null) return;
-
-        // NX-Jikkyo-AccessToken キーを削除
-        localStorage.removeItem('NX-Jikkyo-AccessToken');
-    }
-
-
-    /**
      * ブラウザが実行されている OS に応じて、"Alt" または "Option" を返す
      * キーボードショートカットのコンビネーションキーの説明を OS によって分けるために使う
      * @returns ブラウザが実行されている OS が macOS なら Option を、それ以外なら Alt を返す

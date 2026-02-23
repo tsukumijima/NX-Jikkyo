@@ -207,6 +207,7 @@ const usePlayerStore = defineStore('player', {
             this.shortcut_key_modal = false;
             this.live_stream_status = null;
             this.live_comment_init_failed_message = null;
+            this.video_comment_init_failed_message = null;
         }
     }
 });

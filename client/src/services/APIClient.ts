@@ -7,7 +7,6 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, AxiosResponseHeaders, RawAxiosResponseHeaders } from 'axios';
 
 import Message from '@/message';
-import useUserStore from '@/stores/UserStore';
 import Utils from '@/utils';
 
 
@@ -69,14 +68,6 @@ class APIClient {
 
         // 外部サイトへの HTTP/HTTPS リクエストでは実行しない
         if (request.url?.startsWith('http') === false) {
-
-            // アクセストークンが取得できたら (=ログインされていれば)
-            // 取得したアクセストークンを Authorization ヘッダーに Bearer トークンとしてセット
-            // これを忘れると当然ながらログインしていない扱いになる
-            const access_token = Utils.getAccessToken();
-            if (access_token !== null) {
-                request.headers['Authorization'] = `Bearer ${access_token}`;
-            }
 
             // withCredentials を true に設定し、Cookie を含めてリクエストを送信する
             request.withCredentials = true;
@@ -218,72 +209,44 @@ class APIClient {
      * @param template エラーメッセージのテンプレート（「アカウント情報を取得できませんでした。」など)
      */
     static showGenericError(error_response: IErrorResponse, template: string): void {
-        const user_store = useUserStore();
-        switch (error_response.data.detail) {
-            case 'Not authenticated': {
-                user_store.logout(true);
-                Message.error(`${template}\nログインし直してください。`);
-                return;
+
+        // バリデーションエラーが発生した場合
+        // error_response.data.detail が配列の場合は、バリデーションエラーが発生したとみなす
+        // FastAPI が返すバリデーションエラーのレスポンスを整形して、エラーメッセージを表示する
+        if (Array.isArray(error_response.data.detail)) {
+            let message = '';
+            for (const error of error_response.data.detail) {
+                // いい感じに loc を整形して、コードっぽくする
+                const loc = error.loc.map(item => typeof item === 'number' ? `[${item}]` : item).join('.')
+                    .replaceAll('.[', '[').replaceAll('body.', '').replaceAll('query.', '');
+                message += `⚠️ ${loc}: ${error.msg.replace('Value error, ', '')}\n`;
             }
-            case 'Access token data is invalid': {
-                user_store.logout(true);
-                Message.error(`${template}\nログインセッションが不正です。もう一度ログインし直してください。`);
-                return;
+            Message.error(`${template}\n${message}`);
+
+        // HTTP リクエスト自体が失敗し、HTTP ステータスコードが取得できなかった場合
+        } else if (Number.isNaN(error_response.status)) {
+            if (error_response.error.code === AxiosError.ECONNABORTED) {
+                // ネットワーク接続エラーの場合
+                Message.error(`${template}\nサーバーへの接続が切断されました。(${error_response.error.message})`);
+            } else if (error_response.error.code === AxiosError.ETIMEDOUT) {
+                // タイムアウトの場合
+                Message.error(`${template}\nサーバーへの接続がタイムアウトしました。(${error_response.error.message})`);
+            } else if (error_response.error.code === AxiosError.ERR_NETWORK) {
+                // 予期しないネットワークエラーの場合
+                Message.error(`${template}\n予期しないネットワークエラーが発生しました。(${error_response.error.message})`);
+            } else {
+                // それ以外のエラーの場合
+                Message.error(`${template}(${error_response.error.message})`);
             }
-            case 'Access token is invalid': {
-                user_store.logout(true);
-                Message.error(`${template}\nログインセッションの有効期限が切れています。もう一度ログインし直してください。`);
-                return;
-            }
-            case 'User associated with access token does not exist': {
-                user_store.logout(true);
-                Message.error(`${template}\nログインセッションに紐づくユーザーが存在しないか、削除されています。`);
-                return;
-            }
-            case 'Don\'t have permission to access this resource': {
-                Message.error(`${template}\nこのリソースにアクセスする権限がありません。`);
-                return;
-            }
-            default: {
-                if (Array.isArray(error_response.data.detail)) {
-                    // バリデーションエラーが発生した場合
-                    // error_response.data.detail が配列の場合は、バリデーションエラーが発生したとみなす
-                    // FastAPI が返すバリデーションエラーのレスポンスを整形して、エラーメッセージを表示する
-                    let message = '';
-                    for (const error of error_response.data.detail) {
-                        // いい感じに loc を整形して、コードっぽくする
-                        const loc = error.loc.map(item => typeof item === 'number' ? `[${item}]` : item).join('.')
-                            .replaceAll('.[', '[').replaceAll('body.', '').replaceAll('query.', '');
-                        message += `⚠️ ${loc}: ${error.msg.replace('Value error, ', '')}\n`;
-                    }
-                    Message.error(`${template}\n${message}`);
-                    return;
-                } else if (Number.isNaN(error_response.status)) {
-                    // HTTP リクエスト自体が失敗し、HTTP ステータスコードが取得できなかった場合
-                    if (error_response.error.code === AxiosError.ECONNABORTED) {
-                        // ネットワーク接続エラーの場合
-                        Message.error(`${template}\nサーバーへの接続が切断されました。(${error_response.error.message})`);
-                    } else if (error_response.error.code === AxiosError.ETIMEDOUT) {
-                        // タイムアウトの場合
-                        Message.error(`${template}\nサーバーへの接続がタイムアウトしました。(${error_response.error.message})`);
-                    } else if (error_response.error.code === AxiosError.ERR_NETWORK) {
-                        // 予期しないネットワークエラーの場合
-                        Message.error(`${template}\n予期しないネットワークエラーが発生しました。(${error_response.error.message})`);
-                    } else {
-                        // それ以外のエラーの場合
-                        Message.error(`${template}(${error_response.error.message})`);
-                    }
-                } else {
-                    // HTTP リクエスト自体は成功したが、API からエラーレスポンスが返ってきた場合
-                    if (error_response.status === 502) {
-                        Message.error(`${template}\n現在サーバーを起動/再起動しています。もうしばらくお待ちください。(HTTP Error 502)`);
-                    } else if (error_response.data.detail !== undefined) {
-                        Message.error(`${template}(HTTP Error ${error_response.status} / ${error_response.data.detail})`);
-                    } else {
-                        Message.error(`${template}(HTTP Error ${error_response.status} / ${error_response.error.message})`);
-                    }
-                }
-                return;
+
+        // HTTP リクエスト自体は成功したが、API からエラーレスポンスが返ってきた場合
+        } else {
+            if (error_response.status === 502) {
+                Message.error(`${template}\n現在サーバーを起動/再起動しています。もうしばらくお待ちください。(HTTP Error 502)`);
+            } else if (error_response.data.detail !== undefined) {
+                Message.error(`${template}(HTTP Error ${error_response.status} / ${error_response.data.detail})`);
+            } else {
+                Message.error(`${template}(HTTP Error ${error_response.status} / ${error_response.error.message})`);
             }
         }
     }

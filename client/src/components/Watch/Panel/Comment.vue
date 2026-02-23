@@ -51,6 +51,7 @@
                             <span class="comment__time">{{item.comment_source ? `[${item.comment_source}] ` : ''}}{{item.time}}</span>
                             <!-- なぜか @click だとスマホで発火しないので @touchend にしている -->
                             <div class="comment__icon" v-ripple="!Utils.isTouchDevice()"
+                                @click.stop
                                 @mouseup="showCommentListDropdown($event, item)"
                                 @touchend="showCommentListDropdown($event, item)">
                                 <!-- Icon コンポーネントを使うと個数が多いときに高負荷になるため、意図的に SVG を直書きしている -->
@@ -72,6 +73,7 @@
                             <span class="comment__time">{{item.comment_source ? `[${item.comment_source}] ` : ''}}{{item.time}}</span>
                             <!-- なぜか @click だとスマホで発火しないので @touchend にしている -->
                             <div class="comment__icon" v-ripple="!Utils.isTouchDevice()"
+                                @click.stop
                                 @mouseup="showCommentListDropdown($event, item)"
                                 @touchend="showCommentListDropdown($event, item)">
                                 <!-- Icon コンポーネントを使うと個数が多いときに高負荷になるため、意図的に SVG を直書きしている -->
@@ -574,6 +576,7 @@ export default defineComponent({
          */
         seekToComment(comment: ICommentData): void {
             if (this.playback_mode !== 'Video') return;
+            if (comment.playback_position === undefined) return;
             this.playerStore.event_emitter.emit('SeekRequest', {
                 playback_position: comment.playback_position,
             });
@@ -758,9 +761,12 @@ export default defineComponent({
                 align-items: center;
                 min-height: 28px;
                 padding-top: 6px;
-                word-break: break-all;
+                word-break: break-word;
                 &--seekable {
                     cursor: pointer;
+                    &:hover {
+                        color: rgb(var(--v-theme-primary));
+                    }
                 }
                 &--my-post {
                     color: rgb(var(--v-theme-secondary-lighten-2));

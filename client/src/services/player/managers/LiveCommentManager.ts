@@ -89,7 +89,7 @@ class LiveCommentManager implements PlayerManager {
         // 破棄済みかどうかのフラグを下ろす
         this.destroyed = false;
 
-        // ユーザー情報を事前にキャッシュさせておく
+        // ニコニコアカウント連携状態を事前にキャッシュさせておく
         await user_store.fetchUser();
 
         // 視聴セッションを初期化
@@ -166,11 +166,6 @@ class LiveCommentManager implements PlayerManager {
             // 頻度が多い上エラーではなく予期された挙動であり、毎回表示するのは鬱陶しいため
             } else if (websocket_info.is_nxjikkyo_exclusive === true) {
                 console.warn('[LiveCommentManager][WatchSession] Failed to get Nicolive watch session URL. (This channel is exclusive to NX-Jikkyo.)');
-
-            // KonomiTV アカウントにログインしていないために視聴セッション WebSocket URL を取得できなかった: コンソールにのみ警告を表示
-            // ニコニコ実況を使わない人にとって、わざわざ設定をオフにしないとこのメッセージが消せないのはストレスなので、警告メッセージとしては表示しない
-            } else if (user_store.user === null) {
-                console.warn('[LiveCommentManager][WatchSession] Failed to get Nicolive watch session URL. (Not logged in to KonomiTV)');
 
             // ニコニコアカウントと連携していないために視聴セッション WebSocket URL を取得できなかった: コンソールにのみ警告を表示
             // ニコニコ実況を使わない人にとって、わざわざ設定をオフにしないとこのメッセージが消せないのはストレスなので、警告メッセージとしては表示しない
@@ -641,10 +636,7 @@ class LiveCommentManager implements PlayerManager {
         // 「可能であればニコニコ実況にコメントする」がオンかつニコニコアカウントと連携できていないときは、
         // フォールバックで代わりに NX-Jikkyo にコメントが投稿される旨を通知する
         if (settings_store.settings.prefer_posting_to_nicolive === true) {
-            if (user_store.user === null) {
-                this.player.notice('ニコニコ実況にコメントするには、KonomiTV アカウントにログインしてください。代わりに NX-Jikkyo にコメントします。',
-                    undefined, undefined, '#FFA86A');
-            } else if (user_store.user.niconico_user_id === null) {
+            if (user_store.user?.niconico_user_id === null) {
                 this.player.notice('ニコニコ実況にコメントするには、ニコニコアカウントと連携してください。代わりに NX-Jikkyo にコメントします。',
                     undefined, undefined, '#FFA86A');
             }
