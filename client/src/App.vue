@@ -30,7 +30,7 @@ provideKakologState();
     width: 7px;
     height: 7px;
 }
-::-webkit-scrollbar-track {
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner {
     background: rgb(var(--v-theme-background));
 }
 ::-webkit-scrollbar-thumb {

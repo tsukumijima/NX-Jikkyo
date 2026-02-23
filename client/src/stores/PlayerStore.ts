@@ -31,11 +31,6 @@ export type PlayerEvents = {
         is_player_region_event?: boolean;  // プレイヤー画面の中で発火したイベントなら true に設定する
         timeout_seconds?: number;  // 何も操作がない場合にコントロール UI を非表示にするまでの秒数
     }
-    // CaptureManager からキャプチャの撮影が完了したことを通知する
-    CaptureCompleted: {
-        capture: Blob;  // キャプチャの Blob
-        filename: string;  // キャプチャのファイル名 (UI からの手動ダウンロード時に使う)
-    };
     // LiveCommentManager からコメントを受信したことを通知する
     CommentReceived: {
         is_initial_comments: boolean;  // 初期コメントかどうか

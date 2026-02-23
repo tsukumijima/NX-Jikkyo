@@ -42,22 +42,33 @@ export default defineComponent({
             // 現在時刻
             time: dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss'),
 
-            // 現在時刻更新用のインターバルの ID
-            time_interval_id: 0,
+            // setTimeout の ID (beforeUnmount でクリアするために保持)
+            update_time_timer_id: 0 as ReturnType<typeof setTimeout> | number,
         };
     },
     computed: {
         ...mapStores(useChannelsStore, usePlayerStore),
     },
+    methods: {
+        updateTimeCore() {
+            const time = dayjs();
+            this.time = time.format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss');
+            const ms = time.millisecond();
+            return ms > 800 ? 500 : 1000 - ms;
+        },
+        updateTime() {
+            this.update_time_timer_id = setTimeout(() => {
+                this.updateTime();
+            }, this.updateTimeCore());
+        },
+    },
     created() {
-        // 現在時刻を 0.1 秒おきに更新
-        this.time_interval_id = window.setInterval(() => {
-            this.time = dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss');
-        }, 0.1 * 1000);
+        this.update_time_timer_id = setTimeout(() => {
+            this.updateTime();
+        }, 1000);
     },
     beforeUnmount() {
-        // インターバルをクリア
-        window.clearInterval(this.time_interval_id);
+        clearTimeout(this.update_time_timer_id);
     },
 });
 
@@ -102,9 +113,6 @@ export default defineComponent({
     &.watch-header--video {
         .watch-header__program-time {
             font-size: 13px;
-        }
-        .watch-header__now {
-            display: none;
         }
     }
 

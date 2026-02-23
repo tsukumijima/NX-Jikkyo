@@ -346,7 +346,7 @@ export class ProgramUtils {
             // ref: https://github.com/xtne6f/EDCB/blob/work-plus-s/EpgDataCap3/EpgDataCap3/ARIB8CharDecode.cpp#L1319
             const mark = '新|終|再|交|映|手|声|多|副|字|文|CC|OP|二|S|B|SS|無|無料|' +
                 'C|S1|S2|S3|MV|双|デ|D|N|W|P|H|HV|SD|天|解|料|前|後初|生|販|吹|PPV|' +
-                '演|移|他|収|・|英|韓|中|字/日|字/日英|3D|2K|4K|8K|5.1|7.1|22.2|60P|120P|d|HC|HDR|SHV|UHD|VOD|配|初';
+                '演|移|他|収|・|英|韓|中|字/日|字/日英|3D|2ndScr|2K|4K|8K|5.1|7.1|22.2|60P|120P|d|HC|HDR|Hi-Res|Lossless|SHV|UHD|VOD|配|初';
 
             // 正規表現を作成
             const pattern1 = new RegExp('\\((二|字|再)\\)', 'g');  // 通常の括弧で囲まれている記号
@@ -579,6 +579,25 @@ export class ProgramUtils {
             '\u{1F225}': '[吹]',
             '\u{1F14E}': '[PPV]',
             '\u{1F200}': '[ほか]',
+            '\u{1F19B}': '[3D]',
+            '\u{1F19C}': '[2ndScr]',
+            '\u{1F19D}': '[2K]',
+            '\u{1F19E}': '[4K]',
+            '\u{1F19F}': '[8K]',
+            '\u{1F1A0}': '[5.1]',
+            '\u{1F1A1}': '[7.1]',
+            '\u{1F1A2}': '[22.2]',
+            '\u{1F1A3}': '[60P]',
+            '\u{1F1A4}': '[120P]',
+            '\u{1F1A5}': '[d]',
+            '\u{1F1A6}': '[HC]',
+            '\u{1F1A7}': '[HDR]',
+            '\u{1F1A8}': '[Hi-Res]',
+            '\u{1F1A9}': '[Lossless]',
+            '\u{1F1AA}': '[SHV]',
+            '\u{1F1AB}': '[UHD]',
+            '\u{1F1AC}': '[VOD]',
+            '\u{1F23B}': '[配]',
         };
 
         // Unicode の囲み文字を大かっこで囲った文字に置換する

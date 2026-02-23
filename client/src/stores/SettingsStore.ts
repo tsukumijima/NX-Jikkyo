@@ -21,6 +21,7 @@ export interface ILocalClientSettings extends IClientSettings {
     tv_panel_active_tab: 'Program' | 'Channel' | 'Comment';
     video_panel_active_tab: 'RecordedProgram' | 'Comment';
     show_player_background_image: boolean;
+    use_pure_black_player_background: boolean;
     tv_channel_sort_by_jikkyo_force: boolean;
     tv_channel_up_down_buttons_reverse: boolean;
     tv_channel_selection_requires_alt_key: boolean;
@@ -42,9 +43,6 @@ export interface ILocalClientSettings extends IClientSettings {
     video_show_superimpose: boolean;
     tv_show_data_broadcasting: boolean;
     enable_internet_access_from_data_broadcasting: boolean;
-    capture_save_mode: 'Browser' | 'UploadServer' | 'Both';
-    capture_caption_mode: 'VideoOnly' | 'CompositingCaption' | 'Both';
-    capture_copy_to_clipboard: boolean;
     prefer_posting_to_nicolive: boolean;
     comment_speed_rate: number;
     comment_font_size: number;
@@ -85,6 +83,8 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     video_panel_active_tab: 'Comment',
     // コメントプレイヤーに背景画像を表示する (Default: オン)
     show_player_background_image: true,
+    // プレイヤー表示領域の背景色を完全な黒にする (Default: オフ)
+    use_pure_black_player_background: false,
     // チャンネル一覧を実況勢いが強い順に並び替える (Default: オフ)
     tv_channel_sort_by_jikkyo_force: false,
     // チャンネル切り替えボタンとショートカットキーの上下方向をテレビリモコン準拠にする (Default: オフ)
@@ -138,15 +138,6 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
 
     // データ放送からのインターネットアクセスを有効にする (Default: 無効) (同期無効)
     enable_internet_access_from_data_broadcasting: false,
-
-    // ***** 設定 → キャプチャ *****
-
-    // キャプチャの保存先 (Default: NX-Jikkyo サーバーにアップロード)
-    capture_save_mode: 'UploadServer',
-    // 字幕が表示されているときのキャプチャの保存モード (Default: 映像のみのキャプチャと、字幕を合成したキャプチャを両方保存する)
-    capture_caption_mode: 'Both',
-    // キャプチャをクリップボードにコピーする (Default: 無効) (同期無効)
-    capture_copy_to_clipboard: false,
 
     // ***** 設定 → ニコニコ実況 *****
 

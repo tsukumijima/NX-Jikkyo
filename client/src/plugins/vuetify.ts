@@ -124,11 +124,6 @@ const vuetify = createVuetify({
                     'text-darken-3': '#786968',
                     'gray': '#66514c',
                     'black': '#110a09',
-                    'twitter': '#4f82e6',
-                    'twitter-lighten-1': '#799fec',
-                    'twitter-lighten-2': '#41a5f1',
-                    'record-normal': '#31c3e3',
-                    'record-auto': '#2385e1',
                 },
                 // CSS 変数の定義
                 variables: {

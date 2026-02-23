@@ -83,16 +83,6 @@ class KeyboardShortcutManager implements PlayerManager {
         // 視聴画面のルート要素を取得
         const route_container_element = document.querySelector<HTMLDivElement>('.route-container')!;
 
-        // キャプチャボタンの HTML 要素を取得
-        // KeyboardShortcutManager より先に CaptureManager が初期化されていることが前提
-        const capture_button_element = this.player.container.querySelector<HTMLDivElement>('.dplayer-capture-icon')!;
-        const comment_capture_button_element = this.player.container.querySelector<HTMLDivElement>('.dplayer-comment-capture-icon')!;
-
-        // ツイート送信フォーム / ツイート送信ボタンの HTML 要素を取得
-        // Twitter パネルコンポーネントが視聴画面に追加されていることが前提
-        const tweet_form_element = document.querySelector<HTMLDivElement>('.tweet-form__textarea')!;
-        const tweet_button_element = document.querySelector<HTMLButtonElement>('.tweet-button')!;
-
         // データ放送リモコンの各ボタンの HTML 要素を取得
         // データ放送リモコンコンポーネントが視聴画面に追加されていることが前提
         // ビデオ視聴時はデータ放送リモコンコンポーネントが表示されないためすべて null になる

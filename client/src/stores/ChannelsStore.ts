@@ -342,12 +342,13 @@ const useChannelsStore = defineStore('channels', {
          */
         async update(force: boolean = false): Promise<void> {
 
-            const update = async () => {
+            const update = async (): Promise<boolean> => {
 
                 // 最新のすべてのチャンネルの情報を取得
                 const channels_list = await Channels.fetchAll();
                 if (channels_list === null) {
-                    return;
+                    console.warn('[ChannelsStore] Failed to fetch channels list. Skip updating cache.');
+                    return false;
                 }
 
                 // 再帰的に Object.freeze() を適用し、Vue 側で再帰的にリアクティブ化されないようにする
@@ -363,6 +364,8 @@ const useChannelsStore = defineStore('channels', {
                     this.is_channels_list_initial_updated = true;
                 }
                 this.last_updated_at = Utils.time();
+
+                return true;
             };
 
             // すでに取得されている場合は更新しない
@@ -370,14 +373,22 @@ const useChannelsStore = defineStore('channels', {
 
                 // ただし、最終更新日時が1分以上前の場合は非同期で更新する
                 if (Utils.time() - this.last_updated_at > 60) {
-                    update();
+                    update().catch((error) => {
+                        console.error('[ChannelsStore] Background update failed:', error);
+                    });
                 }
 
                 return;
             }
 
             // チャンネルリストの更新を行う
-            await update();
+            const is_update_succeeded = await update();
+            if (is_update_succeeded === false) {
+                // ネットワークエラーなどでチャンネル情報更新に失敗した場合、以降の処理を実行すると
+                // 意図せずピン留め中チャンネルの情報が削除されてしまうため、実行しない
+                console.warn('[ChannelsStore] Failed to update channels list. Skip removing pinned channel IDs.');
+                return;
+            }
         }
     }
 });

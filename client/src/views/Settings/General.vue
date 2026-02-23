@@ -30,6 +30,16 @@
                     v-model="settingsStore.settings.show_player_background_image">
                 </v-switch>
             </div>
+            <div class="settings__item settings__item--switch">
+                <label class="settings__item-heading" for="use_pure_black_player_background">プレイヤー表示領域の背景色を完全な黒にする</label>
+                <label class="settings__item-label" for="use_pure_black_player_background">
+                    映像の上下 or 左右に表示される黒帯の色を、完全な黒に変更できます。デフォルトはオフです。<br>
+                    特に有機 EL ディスプレイを搭載したデバイスで、背景画像の周囲に灰色がかった光が漏れて気になるときは、この設定をオンにすると改善されるかもしれません。<br>
+                </label>
+                <v-switch class="settings__item-switch" color="primary" id="use_pure_black_player_background" hide-details
+                    v-model="settingsStore.settings.use_pure_black_player_background">
+                </v-switch>
+            </div>
             <v-divider class="mt-6"></v-divider>
             <div class="settings__item settings__item--switch">
                 <label class="settings__item-heading" for="tv_channel_sort_by_jikkyo_force">チャンネル一覧を実況勢いが強い順に並び替える</label>
@@ -179,15 +189,12 @@ export default defineComponent({
                 {title: '番組情報タブ', value: 'Program'},
                 {title: 'チャンネルタブ', value: 'Channel'},
                 {title: 'コメントタブ', value: 'Comment'},
-                // {title: 'Twitter タブ', value: 'Twitter'},
             ],
 
             // ビデオをみるときにデフォルトで表示されるパネルのタブの選択肢
             video_panel_active_tab: [
                 {title: '番組情報タブ', value: 'RecordedProgram'},
-                // {title: 'シリーズタブ', value: 'Series'},
                 {title: 'コメントタブ', value: 'Comment'},
-                // {title: 'Twitter タブ', value: 'Twitter'},
             ],
 
             // 選択された設定データ (NX-Jikkyo-Settings.json) が入る

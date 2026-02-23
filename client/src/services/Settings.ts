@@ -18,6 +18,7 @@ export interface IClientSettings {
     tv_panel_active_tab: 'Program' | 'Channel' | 'Comment';
     video_panel_active_tab: 'RecordedProgram' | 'Comment';
     show_player_background_image: boolean;
+    use_pure_black_player_background: boolean;
     tv_channel_sort_by_jikkyo_force: boolean;
     tv_channel_up_down_buttons_reverse: boolean;
     tv_channel_selection_requires_alt_key: boolean;
@@ -39,9 +40,6 @@ export interface IClientSettings {
     video_show_superimpose: boolean;
     // tv_show_data_broadcasting: 同期無効
     // enable_internet_access_from_data_broadcasting: 同期無効
-    capture_save_mode: 'Browser' | 'UploadServer' | 'Both';
-    capture_caption_mode: 'VideoOnly' | 'CompositingCaption' | 'Both';
-    // capture_copy_to_clipboard: 同期無効
     prefer_posting_to_nicolive: boolean;
     comment_speed_rate: number;
     comment_font_size: number;

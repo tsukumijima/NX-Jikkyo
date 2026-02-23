@@ -68,8 +68,7 @@ class DocumentPiPManager implements PlayerManager {
 
         // DPlayer 上で Picture-in-Picture が開始された際のイベントを登録
         // HTMLVideoElement.requestPictureInPicture() に上書きしてイベントハンドラーを登録している
-        this.request_picture_in_picture = this.player.video.requestPictureInPicture;  // 元のメソッドを退避
-        this.player.video.requestPictureInPicture = async () => {
+        const new_request_picture_in_picture = async () => {
 
             // すでに Document Picture-in-Picture が開始されている場合は終了
             // この時 Document Picture-in-Picture ウインドウでは pagehide イベントが発火する
@@ -127,21 +126,12 @@ class DocumentPiPManager implements PlayerManager {
                 }
             });
 
-            // データ放送用のフォントを読み込む
-            // web-bml 側でロードしたフォントはメインウインドウにしか存在しないため、別途ロードする必要がある
-            // const round_gothic_font = new FontFace(bmlBrowserFontNames.roundGothic, LiveDataBroadcastingManager.ROUND_GOTHIC.source);
-            // round_gothic_font.load();
-            // pip_window.document.fonts.add(round_gothic_font);
-            // const square_gothic_font = new FontFace(bmlBrowserFontNames.squareGothic, LiveDataBroadcastingManager.SQUARE_GOTHIC.source);
-            // square_gothic_font.load();
-            // pip_window.document.fonts.add(square_gothic_font);
-
             // body 要素を .watch-container に見立ててクラスを追加
             pip_window.document.body.classList.add('watch-container');
             pip_window.document.body.classList.add('watch-container--fullscreen');
 
             // player_store.is_control_display が変更された時に .watch-container--control-display クラスを追加・削除する
-            watch(() => player_store.is_control_display, (value) => {
+            const stop_control_display_watcher = watch(() => player_store.is_control_display, (value) => {
                 if (value) {
                     pip_window.document.body.classList.add('watch-container--control-display');
                 } else {
@@ -193,8 +183,11 @@ class DocumentPiPManager implements PlayerManager {
             // keyboard_shortcut_manager.init();  // 完了を待たない
 
             // Document Picture-in-Picture ウインドウが閉じられた際のイベントを登録
-            pip_window.addEventListener('pagehide', () => {
+            // すでに登録されている場合は上書きされる
+            pip_window.onpagehide = () => {
                 player_store.is_document_pip = false;
+                // is_control_display の watcher を停止
+                stop_control_display_watcher();
                 // キーボードショートカットを削除
                 // keyboard_shortcut_manager.destroy();  // 完了を待たない
                 // メインウインドウ側の「ピクチャー イン ピクチャーを再生しています」テキストを削除
@@ -203,10 +196,26 @@ class DocumentPiPManager implements PlayerManager {
                 this.watch_content_element.append(this.watch_header_element);
                 this.watch_content_element.append(this.watch_player_element);
                 console.log('[DocumentPiPManager] Picture-in-Picture window exited.');
-            });
+            };
 
             return {} as PictureInPictureWindow;  // 無理やり PictureInPictureWindow 型にキャスト
         };
+
+        // オリジナルのブラウザネイティブ実装の HTMLVideoElement.requestPictureInPicture() メソッドを退避
+        this.request_picture_in_picture = this.player.video.requestPictureInPicture;
+        // 独自のフックで上書きする
+        this.player.video.requestPictureInPicture = new_request_picture_in_picture;
+
+        // 画質切り替え後に新しい映像要素が生成されるため、画質切り替え後に再度フックする
+        this.player.on('quality_end', () => {
+            if (!this.player || !this.player.video) {
+                return;
+            }
+            // 画質切り替え後の this.player.video は切り替え前の this.player.video とは
+            // 異なる HTMLVideoElement のインスタンスとなるため、再度オリジナルの関数を退避した上で、独自のフックを適用する
+            this.request_picture_in_picture = this.player.video.requestPictureInPicture;
+            this.player.video.requestPictureInPicture = new_request_picture_in_picture;
+        });
 
         console.log('[DocumentPiPManager] Initialized.');
     }
