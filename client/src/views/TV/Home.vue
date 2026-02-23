@@ -6,11 +6,11 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
-                        🎍 あけましておめでとうございます！大晦日の紅白は <a class="link" href="https://x.com/TVRemotePlus/status/2006317247338557807" target="_blank">たびたびコメントが詰まってしまい</a> すみませんでした…。<br>
-                        去年は乗り切れていましたが、<a class="link" href="https://x.com/TVRemotePlus/status/2007007786878787810" target="_blank">今年は視聴者が紅白に集中していたこと</a> もあって高負荷になってしまったようです。<br>
-                        <div class="mt-1"></div>
-                        今回の紅白でのコメント詰まりを踏まえ、<a class="link" href="https://github.com/tsukumijima/NX-Jikkyo/commit/7c3aadccaeeab3aae34721049c5c05fb81f8063a" target="_blank">コメント配信の仕組みを抜本的に改善しました！</a><br>
-                        今後はコメントが遅れたり止まったりすることはかなり減るはずです。もし不具合があればご報告ください🙏
+                        📢 NX-Jikkyo の Web アプリに、KonomiTV 0.13.0 以降での改良や機能追加を概ねすべて反映しました！🎉<br>
+                        今回追加した「チャンネル一覧を実況勢いが強い順に並び替える」設定をオンにしてみると、今一番盛り上がっているチャンネルを一目で把握できて便利です！ぜひお試しください！<br>
+                        また、過去ログ再生時、コメントをクリックすると対応する再生位置にシークするようにしたりなど、細かな使い勝手の改善も行っています。<br>
+                        NX-Jikkyo v1.14.0 以降、2025年中にご報告いただいたご要望のうち、実装可能なものは概ね機能追加・修正済みです！<br>
+                        万全は期しているつもりですが、もし新たな不具合や問題などあればご報告いただけると助かります🙏
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
@@ -23,7 +23,6 @@
                     </div>
                     <div class="mt-1">
                         📢 <a class="link" href="https://forms.gle/C4jnW2jGX4H5AApSA" target="_blank">利用者アンケート・フィードバック</a> 📢 を実施中です！ぜひ率直なご意見をお聞かせください🙏🙏<br>
-                        <a class="link" href="https://x.com/TVRemotePlus/status/1998599759251255576" target="_blank">多忙でなかなか更新できていません</a> が、時間のある時に一括で修正予定ですのでもうしばらくお待ちください🙇
                     </div>
                 </div>
                 <div class="channels-tab">
