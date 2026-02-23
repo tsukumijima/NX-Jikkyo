@@ -8,11 +8,13 @@ export interface IMutedCommentKeywords {
 }
 
 /**
- * サーバーに保存されるクライアント設定を表すインターフェース
- * サーバー側の app.config.ClientSettings で定義されているものと同じ
+ * KonomiTV のサーバーに保存されるクライアント設定を表すインターフェース（KonomiTV との互換性維持のため残存）
+ * NX-Jikkyo にはサーバー同期機能がなく、すべての設定は LocalStorage のみに保存される (ILocalClientSettings 参照)
+ * KonomiTV ではこのインターフェイスの全フィールドがサーバーと同期される
+ * KonomiTV の ILocalClientSettings は IClientSettings を extends しており、NX-Jikkyo もその構成を維持している
+ * このインターフェイスに含まれないフィールド (画質・データ放送など) は ILocalClientSettings に直接定義する
  */
 export interface IClientSettings {
-    // showed_panel_last_time: 同期無効
     pinned_channel_ids: string[];
     panel_display_state: 'RestorePreviousState' | 'AlwaysDisplay' | 'AlwaysFold';
     tv_panel_active_tab: 'Program' | 'Channel' | 'Comment';
@@ -22,24 +24,12 @@ export interface IClientSettings {
     tv_channel_sort_by_jikkyo_force: boolean;
     tv_channel_up_down_buttons_reverse: boolean;
     tv_channel_selection_requires_alt_key: boolean;
-    // tv_streaming_quality: 同期無効
-    // tv_streaming_quality_cellular: 同期無効
-    // tv_data_saver_mode: 同期無効
-    // tv_data_saver_mode_cellular: 同期無効
-    // tv_low_latency_mode: 同期無効
-    // tv_low_latency_mode_cellular: 同期無効
-    // video_streaming_quality: 同期無効
-    // video_streaming_quality_cellular: 同期無効
-    // video_data_saver_mode: 同期無効
-    // video_data_saver_mode_cellular: 同期無効
     caption_font: string;
     always_border_caption_text: boolean;
     specify_caption_opacity: boolean;
     caption_opacity: number;
     tv_show_superimpose: boolean;
     video_show_superimpose: boolean;
-    // tv_show_data_broadcasting: 同期無効
-    // enable_internet_access_from_data_broadcasting: 同期無効
     prefer_posting_to_nicolive: boolean;
     comment_speed_rate: number;
     comment_font_size: number;

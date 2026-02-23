@@ -69,6 +69,7 @@ a, a:link, a:visited, a:hover, a:active {
 html {
     overflow-y: auto !important;
     touch-action: manipulation;
+    overscroll-behavior-x: none;
 
     // scrollbar-gutter: stable を指定すると、overflow: hidden 指定時にもスクロールバー分の領域が確保される
     // もっと早くに知りたかった…
@@ -284,6 +285,14 @@ body .route-container {
     color: rgb(var(--v-theme-text));
     background: rgb(var(--v-theme-primary));
     font-size: 0.94em;
+
+    // Safari でのみ display: inline に変更
+    // Safari では -webkit-line-clamp と inline-flex/inline-block の組み合わせで
+    // 省略が不要なテキストでも ... が表示されるレンダリングバグが発生するため
+    @supports (hanging-punctuation: first) and (font: -apple-system-body) and (-webkit-appearance: none) {
+        display: inline;
+        padding-bottom: 0.045em;
+    }
 }
 
 // スマホ縦画面 (幅が 600px 以下の端末) のみ表示する <br> タグ

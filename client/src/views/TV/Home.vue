@@ -51,7 +51,8 @@
                                 v-for="channel in channels" :key="channel.id" :to="`/watch/${channel.display_channel_id}`">
                                 <!-- 以下では Icon コンポーネントを使うとチャンネルが多いときに高負荷になるため、意図的に SVG を直書きしている -->
                                 <div class="channel__broadcaster">
-                                    <img class="channel__broadcaster-icon" :src="`${Utils.api_base_url}/channels/${channel.id}/logo`">
+                                    <img class="channel__broadcaster-icon" loading="lazy" decoding="async"
+                                        :src="`${Utils.api_base_url}/channels/${channel.id}/logo`">
                                     <div class="channel__broadcaster-content">
                                         <span class="channel__broadcaster-name">Ch: {{channel.channel_number}} {{channel.name}}</span>
                                         <div class="channel__broadcaster-status">
@@ -744,7 +745,6 @@ export default defineComponent({
                         user-select: none;
                         @include smartphone-horizontal {
                             position: relative;
-                            top: -1px;
                             top: -5px;
                             right: -5px;
                         }

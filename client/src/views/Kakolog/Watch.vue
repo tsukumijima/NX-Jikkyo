@@ -36,6 +36,28 @@ export default defineComponent({
         // 再生セッションを初期化
         this.init();
     },
+    // 過去ログ切り替え時に実行
+    // コンポーネント（インスタンス）は再利用される
+    // ref: https://v3.router.vuejs.org/ja/guide/advanced/navigation-guards.html#%E3%83%AB%E3%83%BC%E3%83%88%E5%8D%98%E4%BD%8D%E3%82%AB%E3%82%99%E3%83%BC%E3%83%88%E3%82%99
+    beforeRouteUpdate(to, from, next) {
+
+        // 前の再生セッションを破棄して終了し、完了を待ってから再度初期化する
+        const destroy_promise = this.destroy();
+        destroy_promise.then(() => this.init());
+
+        // 次のルートに置き換え
+        next();
+    },
+    // 終了前に実行
+    beforeUnmount() {
+
+        // destroy() を実行
+        // 別のページへ遷移するため、DPlayer のインスタンスを確実に破棄する
+        // さもなければ、ブラウザがリロードされるまでバックグラウンドで永遠に再生され続けてしまう
+        this.destroy();
+
+        // 上記以外の視聴画面の終了処理は Watch コンポーネントの方で自動的に行われる
+    },
     methods: {
 
         // 再生セッションを初期化する

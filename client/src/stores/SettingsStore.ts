@@ -41,8 +41,6 @@ export interface ILocalClientSettings extends IClientSettings {
     caption_opacity: number;
     tv_show_superimpose: boolean;
     video_show_superimpose: boolean;
-    tv_show_data_broadcasting: boolean;
-    enable_internet_access_from_data_broadcasting: boolean;
     prefer_posting_to_nicolive: boolean;
     comment_speed_rate: number;
     comment_font_size: number;
@@ -130,14 +128,6 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     tv_show_superimpose: true,
     // ビデオをみるときに文字スーパーを表示する (Default: 表示しない)
     video_show_superimpose: false,
-
-    // ***** 設定 → データ放送 *****
-
-    // テレビをみるときにデータ放送機能を利用する (Default: 表示する) (同期無効)
-    tv_show_data_broadcasting: true,
-
-    // データ放送からのインターネットアクセスを有効にする (Default: 無効) (同期無効)
-    enable_internet_access_from_data_broadcasting: false,
 
     // ***** 設定 → ニコニコ実況 *****
 

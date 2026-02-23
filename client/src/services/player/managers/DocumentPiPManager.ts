@@ -2,6 +2,7 @@
 import DPlayer from 'dplayer';
 import { watch } from 'vue';
 
+import KeyboardShortcutManager from '@/services/player/managers/KeyboardShortcutManager';
 import PlayerManager from '@/services/player/PlayerManager';
 import usePlayerStore from '@/stores/PlayerStore';
 
@@ -174,13 +175,13 @@ class DocumentPiPManager implements PlayerManager {
             watch_content.addEventListener('touchmove', event_listener);
             watch_content.addEventListener('click', event_listener);
 
-            // // キーボードショートカットを登録
-            // // 通常 KeyboardShortcutManager は PlayerController で管理されるが、この Document Picture-in-Picture ウインドウには
-            // // キーボードショートカットイベントが登録されておらず、さらにウインドウが閉じられればウインドウ内に登録したイベントも全削除されるため、
-            // // 別途このウインドウにおいてキーボードショートカットを管理する KeyboardShortcutManager を生成・初期化している
-            // // 第3引数に Document Picture-in-Picture ウインドウの Document オブジェクトを渡しているのがポイント
-            // const keyboard_shortcut_manager = new KeyboardShortcutManager(this.player, this.playback_mode, pip_window.document);
-            // keyboard_shortcut_manager.init();  // 完了を待たない
+            // キーボードショートカットを登録
+            // 通常 KeyboardShortcutManager は PlayerController で管理されるが、この Document Picture-in-Picture ウインドウには
+            // キーボードショートカットイベントが登録されておらず、さらにウインドウが閉じられればウインドウ内に登録したイベントも全削除されるため、
+            // 別途このウインドウにおいてキーボードショートカットを管理する KeyboardShortcutManager を生成・初期化している
+            // 第3引数に Document Picture-in-Picture ウインドウの Document オブジェクトを渡しているのがポイント
+            const keyboard_shortcut_manager = new KeyboardShortcutManager(this.player, this.playback_mode, pip_window.document);
+            keyboard_shortcut_manager.init();  // 完了を待たない
 
             // Document Picture-in-Picture ウインドウが閉じられた際のイベントを登録
             // すでに登録されている場合は上書きされる
@@ -189,7 +190,7 @@ class DocumentPiPManager implements PlayerManager {
                 // is_control_display の watcher を停止
                 stop_control_display_watcher();
                 // キーボードショートカットを削除
-                // keyboard_shortcut_manager.destroy();  // 完了を待たない
+                keyboard_shortcut_manager.destroy();  // 完了を待たない
                 // メインウインドウ側の「ピクチャー イン ピクチャーを再生しています」テキストを削除
                 playing_in_pip_container.remove();
                 // DOM 要素を視聴画面内に戻す

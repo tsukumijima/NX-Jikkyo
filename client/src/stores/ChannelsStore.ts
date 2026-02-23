@@ -389,6 +389,17 @@ const useChannelsStore = defineStore('channels', {
                 console.warn('[ChannelsStore] Failed to update channels list. Skip removing pinned channel IDs.');
                 return;
             }
+
+            // この時点で pinned_channels に存在していないピン留め中チャンネルの ID を pinned_channel_ids から削除する
+            // 受信環境の変化などでピン留め中チャンネルのチャンネル情報が取得できなくなった場合に備える
+            const settings_store = useSettingsStore();
+            settings_store.settings.pinned_channel_ids = settings_store.settings.pinned_channel_ids.filter((channel_id) => {
+                const result = this.channels_list_with_pinned.get('ピン留め')?.some((channel) => channel.id === channel_id);
+                if (result === false) {
+                    console.warn('[ChannelsStore] Deleted pinned channel ID:', channel_id);
+                }
+                return result;
+            });
         }
     }
 });

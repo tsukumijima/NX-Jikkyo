@@ -232,31 +232,6 @@ export default defineComponent({
             }
         }
 
-        .watch-panel__content-remocon-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: absolute;
-            right: 16px;
-            bottom: 16px;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgb(var(--v-theme-background-lighten-1));
-            outline: none;
-            transition: opacity 0.2s, visibility 0.2s;
-            opacity: 0;
-            visibility: hidden;
-            z-index: 20;
-
-            @media (hover: none) {
-                transition: none;
-            }
-            &--active {
-                opacity: 1;
-                visibility: visible;
-            }
-        }
     }
 
     .watch-panel__navigation {

@@ -1,7 +1,7 @@
 
 import { IProgram } from '@/services/Programs';
 import { IRecordedProgram } from '@/services/Videos';
-import { dayjs } from '@/utils';
+import Utils, { dayjs } from '@/utils';
 
 
 /**
@@ -338,8 +338,7 @@ export class ProgramUtils {
         if (program !== null && program[key] !== null) {
 
             // 番組情報に含まれる HTML の特殊文字で表示がバグらないように、事前に HTML エスケープしておく
-            // const text = Utils.escapeHTML(program[key]);
-            const text = program[key];
+            const text = Utils.escapeHTML(program[key]);
 
             // 本来 ARIB 外字である記号の一覧
             // ref: https://ja.wikipedia.org/wiki/%E7%95%AA%E7%B5%84%E8%A1%A8

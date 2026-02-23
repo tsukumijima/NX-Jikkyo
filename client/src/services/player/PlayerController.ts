@@ -58,12 +58,6 @@ class PlayerController {
     // 設計上コンストラクタ以降で変更すべきでないため readonly にしている
     private readonly live_playback_buffer_seconds: number;
 
-    // ライブ視聴: mpegts.js のバッファ詰まり対策で定期的に強制シークするインターバルをキャンセルする関数
-    private live_force_seek_interval_timer_cancel: (() => void) | null = null;
-
-    // ビデオ視聴: ビデオストリームのアクティブ状態を維持するために Keep-Alive API にリクエストを送るインターバルのキャンセルする関数
-    private video_keep_alive_interval_timer_cancel: (() => void) | null = null;
-
     // setupPlayerContainerResizeHandler() で利用する ResizeObserver
     // 保持しておかないと disconnect() で ResizeObserver を止められない
     private player_container_resize_observer: ResizeObserver | null = null;
@@ -125,21 +119,8 @@ class PlayerController {
             this.live_playback_buffer_seconds += 0.3;
         }
 
-        // 01 ~ 14 まですべての RomSound を読み込む
-        // (async () => {
-        //     for (let index = 1; index <= 14; index++) {
-        //         // ArrayBuffer をデコードして AudioBuffer にし、すぐ呼び出せるように貯めておく
-        //         // ref: https://ics.media/entry/200427/
-        //         const romsound_url = `/assets/romsounds/${index.toString().padStart(2, '0')}.wav`;
-        //         const romsound_response = await APIClient.get<ArrayBuffer>(romsound_url, {
-        //             baseURL: '',  // BaseURL を明示的にクライアントのルートに設定
-        //             responseType: 'arraybuffer',
-        //         });
-        //         if (romsound_response.type === 'success') {
-        //             this.romsounds_buffers.push(await this.romsounds_context.decodeAudioData(romsound_response.data));
-        //         }
-        //     }
-        // })();
+        // NX-Jikkyo にはデータ放送機能がないため、文字スーパーの内蔵音 (RomSound) のロードは行わない
+        // KonomiTV では (async () => { ... })() で 01 ~ 14 の .wav を AudioBuffer として romsounds_buffers に保存している
     }
 
 
@@ -894,31 +875,13 @@ class PlayerController {
         const channels_store = useChannelsStore();
         const player_store = usePlayerStore();
 
-        // ライブ視聴: 再生停止状態かつ現在の再生位置からバッファが 30 秒以上離れていないかを 60 秒おきに監視し、そうなっていたら強制的にシークする
-        // mpegts.js の仕様上、MSE 側に未再生のバッファが貯まり過ぎると新規に SourceBuffer が追加できなくなるため、強制的に接続が切断されてしまう
-        // 再生停止状態でも定期的にシークすることで、バッファが貯まりすぎないように調節する
-        // if (this.playback_mode === 'Live') {
-        //     this.live_force_seek_interval_timer_cancel = Utils.setIntervalInWorker(() => {
-        //         if (this.player === null) return;
-        //         if ((this.player.video.paused && this.player.video.buffered.length >= 1) &&
-        //             (this.player.video.buffered.end(0) - this.player.video.currentTime > 30)) {
-        //             this.player.sync();
-        //         }
-        //     }, 60 * 1000);
-        // }
+        // NX-Jikkyo のライブ視聴では HLS/mpegts.js ストリーミングを使わないため（映像なし）、
+        // KonomiTV にある mpegts.js バッファ詰まり対策の強制シーク処理は不要
+        // (KonomiTV では playback_mode === 'Live' 時に 60 秒おきに live_force_seek_interval_timer_cancel で実行)
 
-        // ビデオ視聴: ビデオストリームのアクティブ状態を維持するために 5 秒おきに Keep-Alive API にリクエストを送る
-        // HLS プレイリストやセグメントのリクエストが行われたタイミングでも Keep-Alive が行われるが、
-        // それだけではタイミング次第では十分ではないため、定期的に Keep-Alive を行う
-        // Keep-Alive が行われなくなったタイミングで、サーバー側で自動的にビデオストリームの終了処理 (エンコードタスクの停止) が行われる
-        // if (this.playback_mode === 'Video') {
-        //     this.video_keep_alive_interval_timer_cancel = Utils.setIntervalInWorker(async () => {
-        //         // 画質切り替えでベース URL が変わることも想定し、あえて毎回 API URL を取得している
-        //         if (this.player === null) return;
-        //         const api_quality = PlayerUtils.extractVideoAPIQualityFromDPlayer(this.player);
-        //         await APIClient.put(`${Utils.api_base_url}/streams/video/${player_store.recorded_program.id}/${api_quality}/keep-alive`);
-        //     }, 5 * 1000);
-        // }
+        // NX-Jikkyo の過去ログ再生はサーバー側にビデオストリーム API が存在しないため、
+        // KonomiTV にある Keep-Alive API へのリクエスト処理は不要
+        // (KonomiTV では playback_mode === 'Video' 時に 5 秒おきに video_keep_alive_interval_timer_cancel で実行)
 
         // 再生/停止されたときのイベント
         // デバイスの通知バーからの制御など、ブラウザの画面以外から動画の再生/停止が行われる事もあるため必要
@@ -1538,14 +1501,6 @@ class PlayerController {
         }
 
         // タイマーを破棄
-        if (this.live_force_seek_interval_timer_cancel !== null) {
-            this.live_force_seek_interval_timer_cancel();
-            this.live_force_seek_interval_timer_cancel = null;
-        }
-        if (this.video_keep_alive_interval_timer_cancel !== null) {
-            this.video_keep_alive_interval_timer_cancel();
-            this.video_keep_alive_interval_timer_cancel = null;
-        }
         window.clearTimeout(this.player_control_ui_hide_timer_id);
 
         // プレイヤー全体のコンテナ要素の監視を停止
