@@ -20,6 +20,7 @@
                 <Icon icon="iconamoon:sorting-left-bold" height="19px" />
                 <span class="ml-1">ピン留め中チャンネルの並び替え設定を開く</span>
             </v-btn>
+            <v-divider class="mt-6"></v-divider>
             <div class="settings__item settings__item--switch">
                 <label class="settings__item-heading" for="show_player_background_image">コメントプレイヤーに背景画像を表示する</label>
                 <label class="settings__item-label" for="show_player_background_image">

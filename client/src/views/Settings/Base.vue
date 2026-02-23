@@ -125,6 +125,12 @@ export default defineComponent({
             background-color: rgb(var(--v-theme-background)) !important;
         }
 
+        .v-divider {
+            opacity: 1 !important;
+            border-top-width: 2px !important;
+            border-color: rgb(var(--v-theme-background-lighten-2)) !important;
+        }
+
         .settings__heading {
             display: flex;
             align-items: center;
