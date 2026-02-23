@@ -815,24 +815,22 @@ export default defineComponent({
                     }
 
                     &-title {
-                        display: -webkit-box;
+                        display: block;
                         font-size: 16px;
                         font-weight: 700;
                         font-feature-settings: "palt" 1;  // 文字詰め
                         letter-spacing: 0.07em;  // 字間を少し空ける
                         overflow: hidden;
-                        -webkit-line-clamp: 1;  // 1行までに制限
-                        -webkit-box-orient: vertical;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
                         @include tablet-vertical {
                             font-size: 14px;
                         }
                         @include smartphone-horizontal {
                             font-size: 14px;
-                            -webkit-line-clamp: 1;  // 1行までに制限
                         }
                         @include smartphone-vertical {
                             font-size: 14px;
-                            -webkit-line-clamp: 1;  // 1行までに制限
                         }
                     }
 

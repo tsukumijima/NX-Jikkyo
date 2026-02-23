@@ -81,7 +81,7 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     tv_panel_active_tab: 'Comment',
     // ビデオをみるときにデフォルトで表示されるパネルのタブ (Default: コメントタブ)
     video_panel_active_tab: 'Comment',
-    // コメントプレイヤーに背景画像を表示する (Default: オン)
+    // コメントプレイヤーに背景写真を表示する (Default: オン)
     show_player_background_image: true,
     // プレイヤー表示領域の背景色を完全な黒にする (Default: オフ)
     use_pure_black_player_background: false,
