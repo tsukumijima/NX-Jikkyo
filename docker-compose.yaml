@@ -7,7 +7,10 @@ services:
     build:
       context: .
     restart: unless-stopped
-    # ポートは Caddy 経由でのみアクセスするため、ホストに直接公開しない
+    # 各ポートは原則 Caddy 経由でのみアクセスする
+    # ただし開発環境で Uvicorn に直接アクセスできないと面倒なので、5610 番ポートのみ公開する
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
     volumes:
       - type: bind
         source: './.env'
