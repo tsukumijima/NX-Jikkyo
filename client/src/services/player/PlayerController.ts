@@ -36,6 +36,10 @@ class PlayerController {
     // 4 秒程度の遅延を許容する
     private static readonly LIVE_PLAYBACK_BUFFER_SECONDS = 4.0;
 
+    // 過去ログ再生用にメモリ上で生成したモック IRecordedProgram に割り当てる特別 ID
+    // Kakolog/Watch.vue で recorded_program.id にこの値が設定される
+    private static readonly KAKOLOG_MOCK_RECORDED_PROGRAM_ID = -100;
+
     // DPlayer のインスタンス
     private player: DPlayer | null = null;
 
@@ -160,7 +164,7 @@ class PlayerController {
 
         // 無音の音声ファイルを生成
         let audio_url = '';
-        if (player_store.recorded_program.id == -100) {
+        if (player_store.recorded_program.id === PlayerController.KAKOLOG_MOCK_RECORDED_PROGRAM_ID) {
             // データ量を削減するためにできるだけサンプルレートを抑えるのが重要
             // 3000Hz が Web Audio API の限界
             audio_url = this.createSilentAudioBuffer(player_store.recorded_program.duration, 3000, 1);
@@ -512,8 +516,12 @@ class PlayerController {
                         }
 
                         // index で指定された音声データを読み込み
+                        // NX-Jikkyo にはデータ放送機能がないため romsounds_buffers は常に空であり、
+                        // バッファが存在しない場合は何もしない
+                        const romsound_buffer = this.romsounds_buffers[index];
+                        if (!(romsound_buffer instanceof AudioBuffer)) return;
                         const buffer_source_node = this.romsounds_context.createBufferSource();
-                        buffer_source_node.buffer = this.romsounds_buffers[index];
+                        buffer_source_node.buffer = romsound_buffer;
 
                         // GainNode につなげる
                         const gain_node = this.romsounds_context.createGain();
@@ -772,7 +780,6 @@ class PlayerController {
 
         const wav_buffer = new ArrayBuffer(wav_header.length + duration * sample_rate * num_channels * 2);
         const wav_view = new DataView(wav_buffer);
-        wav_view.setUint8(0, wav_header[0]);
         for (let i = 0; i < wav_header.length; i++) {
             wav_view.setUint8(i, wav_header[i]);
         }
