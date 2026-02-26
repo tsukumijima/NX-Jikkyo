@@ -25,8 +25,10 @@ services:
         source: './server/logs/'
         target: '/code/server/logs/'
     depends_on:
-      - nx-jikkyo-mysql
-      - nx-jikkyo-redis
+      nx-jikkyo-mysql:
+        condition: service_healthy
+      nx-jikkyo-redis:
+        condition: service_healthy
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -44,6 +46,15 @@ services:
     image: mysql:8.0
     container_name: nx-jikkyo-mysql
     restart: unless-stopped
+    # MySQL が接続受付可能になるまで healthcheck で待機する
+    ## depends_on: condition: service_healthy と組み合わせることで、
+    ## NX-Jikkyo コンテナが MySQL 準備完了後に起動するようにする
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h localhost --silent']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
     environment:
       TZ: Asia/Tokyo
       MYSQL_ROOT_HOST: '172.%'
@@ -63,6 +74,13 @@ services:
     image: redis:6.2
     container_name: nx-jikkyo-redis
     restart: unless-stopped
+    # Redis が接続受付可能になるまで healthcheck で待機する
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     environment:
       TZ: Asia/Tokyo
     volumes:
