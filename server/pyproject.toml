@@ -20,7 +20,7 @@ async-lru = "^2.0.4"
 cryptography = "^43.0.3"
 fastapi = "~0.115.3"
 httpx = {version = ">=0.27.2,<1.0.0", extras = ["http2"]}
-ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "edd3f6dc046612f38e52a2e6b27fafd3b9c62f07" }
+ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "aaa5f5eae593616711035cea4e53b72498a08d20" }
 pydantic = "^2.9.2"
 pydantic-settings = "~2.5.2"
 python-jose = "^3.3.0"

@@ -172,13 +172,13 @@ lxml = ["lxml"]
 
 [[package]]
 name = "certifi"
-version = "2026.1.4"
+version = "2026.2.25"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "certifi-2026.1.4-py3-none-any.whl", hash = "sha256:9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c"},
-    {file = "certifi-2026.1.4.tar.gz", hash = "sha256:ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120"},
+    {file = "certifi-2026.2.25-py3-none-any.whl", hash = "sha256:027692e4402ad994f1c42e52a4997a9763c646b73e4096e4d5d6db8af1d6f0fa"},
+    {file = "certifi-2026.2.25.tar.gz", hash = "sha256:e887ab5cee78ea814d3472169153c2d12cd43b14bd03329a39a9c6e2e80bfba7"},
 ]
 
 [[package]]
@@ -835,7 +835,7 @@ files = [
 
 [[package]]
 name = "ndgr-client"
-version = "1.1.1"
+version = "1.1.2"
 description = "NDGRClient: Nicolive NDGR Message Server Client Library"
 optional = false
 python-versions = ">=3.11,<4.0"
@@ -857,8 +857,8 @@ websockets = ">=12.0"
 [package.source]
 type = "git"
 url = "https://github.com/tsukumijima/NDGRClient"
-reference = "edd3f6dc046612f38e52a2e6b27fafd3b9c62f07"
-resolved_reference = "edd3f6dc046612f38e52a2e6b27fafd3b9c62f07"
+reference = "aaa5f5eae593616711035cea4e53b72498a08d20"
+resolved_reference = "aaa5f5eae593616711035cea4e53b72498a08d20"
 
 [[package]]
 name = "nodeenv"
@@ -1541,13 +1541,13 @@ psycopg = ["psycopg[binary,pool] (>=3.0.12,<4.0.0)"]
 
 [[package]]
 name = "typer"
-version = "0.24.0"
+version = "0.24.1"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "typer-0.24.0-py3-none-any.whl", hash = "sha256:5fc435a9c8356f6160ed6e85a6301fdd6e3d8b2851da502050d1f92c5e9eddc8"},
-    {file = "typer-0.24.0.tar.gz", hash = "sha256:f9373dc4eff901350694f519f783c29b6d7a110fc0dcc11b1d7e353b85ca6504"},
+    {file = "typer-0.24.1-py3-none-any.whl", hash = "sha256:112c1f0ce578bfb4cab9ffdabc68f031416ebcc216536611ba21f04e9aa84c9e"},
+    {file = "typer-0.24.1.tar.gz", hash = "sha256:e39b4732d65fbdcde189ae76cf7cd48aeae72919dea1fdfc16593be016256b45"},
 ]
 
 [package.dependencies]
@@ -1972,4 +1972,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.13,<3.14"
-content-hash = "846475ae815071f1dad59345c58426eb79d038c0e3f8989cbd93109859190e2a"
+content-hash = "d1bbbb235ee5da1edc481487d1e286b37f32b3ab2979b2f443a56e3c4fe68d95"
