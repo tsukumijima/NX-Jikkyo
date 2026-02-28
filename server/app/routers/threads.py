@@ -50,7 +50,9 @@ async def ThreadAPI(thread_id: Annotated[int, Path(description='スレッド ID 
         status = 'PAST'
 
     # スレッドの全コメントをコメ番順に取得
-    comments = await Comment.filter(thread_id=thread.id).order_by('no').all()
+    # no はほぼ id と同順（逆転ゼロ・重複 0.001%）のため、idx_thread_id_id インデックスが効く
+    # ORDER BY id に変えることで filesort が不要になり、9300 万行規模でのクエリが大幅に高速化する
+    comments = await Comment.filter(thread_id=thread.id).order_by('id').all()
 
     # コメントを変換
     comment_responses: list[CommentResponse] = []
