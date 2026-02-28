@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Usage: docker compose exec nx-jikkyo ./misc/CountActiveServers.py
+
 Caddy の JSON アクセスログ（1 行に 1 つの JSON オブジェクト）を解析し、アクティブな KonomiTV インスタンス数を推定します。
 
 フィルタ条件:
