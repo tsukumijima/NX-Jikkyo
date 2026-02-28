@@ -97,6 +97,14 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Tokyo
+      # Go ランタイムのメモリ制御:
+      ## デフォルトでは一度確保したヒープを OS に返さないため、ピーク時のメモリをずっと保持し続ける
+      ## GOGC=off で「ヒープが 2 倍になったら GC」という定期トリガーを無効化し、
+      ## GOMEMLIMIT でメモリがこの値に近づいた時だけ GC を実行するよう制御する
+      ## VmHWM (過去最大 RSS) = 912 MiB を踏まえ、800 MiB をソフトリミットに設定
+      ## 低すぎると GC が頻繁に動いて CPU が逆に増えるため、VmHWM より余裕を持たせた値にしている
+      GOGC: "off"
+      GOMEMLIMIT: "838860800"  # 800 MiB
     ports:
       # 外部向け HTTP/HTTPS ポート
       - "${CADDY_HTTP_PORT:-80}:80"
