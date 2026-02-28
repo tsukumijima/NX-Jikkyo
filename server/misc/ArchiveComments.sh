@@ -24,23 +24,24 @@ set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")/../.."
 
 # アーカイブ対象の境界日付（この日付より前のコメントをアーカイブする）
-ARCHIVE_BEFORE_DATE='2025-07-01'
+ARCHIVE_BEFORE_DATE="${ARCHIVE_BEFORE_DATE:-2025-07-01}"
 
 # バッチサイズ（1回の INSERT/DELETE で処理する行数）
 # 大きすぎると InnoDB のアンドゥログが肥大化するため 10,000 件が目安
-BATCH_SIZE=10000
+BATCH_SIZE="${BATCH_SIZE:-10000}"
 
 # バッチ間のスリープ時間（秒）
 # 本番環境への I/O 負荷を抑えるために間隔を設ける
-SLEEP_INTERVAL=0.3
+SLEEP_INTERVAL="${SLEEP_INTERVAL:-0.3}"
 
 # .env ファイルから MySQL のルートパスワードを取得
 MYSQL_ROOT_PASSWORD=$(grep -oP '(?<=MYSQL_PASSWORD=).+' .env)
 MYSQL_DATABASE=$(grep -oP '(?<=MYSQL_DATABASE=).+' .env)
+MYSQL_DATABASE="${MYSQL_DATABASE_OVERRIDE:-${MYSQL_DATABASE}}"
 
 # MySQL コマンドのエイリアス
 MYSQL() {
-    docker exec nx-jikkyo-mysql mysql -u root -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DATABASE}" "$@"
+    docker exec -i -e MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" nx-jikkyo-mysql mysql -u root "${MYSQL_DATABASE}" "$@"
 }
 
 # 進捗表示用のヘルパー関数
@@ -48,6 +49,22 @@ print_step() { echo ""; echo "======================================"; echo "  $
 print_info() { echo "[INFO]  $*"; }
 print_warn() { echo "[WARN]  $*"; }
 print_done() { echo "[DONE]  $*"; }
+
+# MySQL クエリ結果が非空かつ整数であることを検証し、値を返す
+require_integer_result() {
+    local value="$1"
+    local context="$2"
+
+    if [ -z "${value}" ]; then
+        print_warn "${context}: empty result detected."
+        exit 1
+    fi
+    if ! [[ "${value}" =~ ^-?[0-9]+$ ]]; then
+        print_warn "${context}: non-integer result detected: ${value}"
+        exit 1
+    fi
+    echo "${value}"
+}
 
 echo ""
 echo "NX-Jikkyo comments archive migration script"
@@ -58,13 +75,16 @@ echo ""
 print_step "Step 0: Pre-flight check"
 
 comments_total=$(MYSQL -sN -e "SELECT COUNT(*) FROM comments;")
+comments_total=$(require_integer_result "${comments_total}" 'Pre-flight comments total')
 archive_exists=$(MYSQL -sN -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${MYSQL_DATABASE}' AND table_name='archived_comments';")
+archive_exists=$(require_integer_result "${archive_exists}" 'Pre-flight archive table exists')
 archive_count=0
 if [ "${archive_exists}" -gt "0" ]; then
     archive_count=$(MYSQL -sN -e "SELECT COUNT(*) FROM archived_comments;")
+    archive_count=$(require_integer_result "${archive_count}" 'Pre-flight archived_comments count')
 fi
 target_count=$(MYSQL -sN -e "SELECT COUNT(*) FROM comments WHERE date < '${ARCHIVE_BEFORE_DATE}';")
-remaining_in_comments=$(MYSQL -sN -e "SELECT COUNT(*) FROM comments WHERE date < '${ARCHIVE_BEFORE_DATE}';")
+target_count=$(require_integer_result "${target_count}" 'Pre-flight archive target count')
 
 print_info "comments total:         ${comments_total} rows"
 print_info "archive target (< ${ARCHIVE_BEFORE_DATE}): ${target_count} rows"
@@ -98,6 +118,7 @@ fi
 print_step "Step 2: Copy comments to archived_comments (batch INSERT)"
 
 already_copied=$(MYSQL -sN -e "SELECT COUNT(*) FROM archived_comments;")
+already_copied=$(require_integer_result "${already_copied}" 'Step 2 already copied')
 print_info "Already copied: ${already_copied} / ${target_count} rows"
 
 batch_num=0
@@ -116,12 +137,14 @@ INSERT INTO archived_comments
 SELECT ROW_COUNT();
 EOF
 )
-    inserted=$(echo "${result}" | tail -n1)
+    inserted=$(echo "${result}" | tr -d '\r' | awk 'NF { last=$0 } END { print last }')
+    inserted=$(require_integer_result "${inserted}" 'Step 2 ROW_COUNT')
     batch_num=$((batch_num + 1))
     if [ "${inserted}" -eq "0" ]; then
         break
     fi
     copied_so_far=$(MYSQL -sN -e "SELECT COUNT(*) FROM archived_comments;")
+    copied_so_far=$(require_integer_result "${copied_so_far}" 'Step 2 copied so far')
     print_info "  Batch ${batch_num}: inserted ${inserted} rows (total copied: ${copied_so_far} / ${target_count})"
     sleep "${SLEEP_INTERVAL}"
 done
@@ -133,6 +156,7 @@ print_done "Copy complete."
 print_step "Step 3: Delete archived rows from comments (batch DELETE)"
 
 remaining=$(MYSQL -sN -e "SELECT COUNT(*) FROM comments WHERE date < '${ARCHIVE_BEFORE_DATE}';")
+remaining=$(require_integer_result "${remaining}" 'Step 3 remaining rows')
 print_info "Rows remaining to delete: ${remaining}"
 
 if [ "${remaining}" -eq "0" ]; then
@@ -145,7 +169,8 @@ DELETE FROM comments WHERE date < '${ARCHIVE_BEFORE_DATE}' ORDER BY id LIMIT ${B
 SELECT ROW_COUNT();
 EOF
 )
-        deleted=$(echo "${result}" | tail -n1)
+        deleted=$(echo "${result}" | tr -d '\r' | awk 'NF { last=$0 } END { print last }')
+        deleted=$(require_integer_result "${deleted}" 'Step 3 ROW_COUNT')
         batch_num=$((batch_num + 1))
         if [ "${deleted}" -eq "0" ]; then
             break
@@ -168,6 +193,8 @@ print_done "Optimize complete."
 print_step "Summary"
 final_comments=$(MYSQL -sN -e "SELECT COUNT(*) FROM comments;")
 final_archive=$(MYSQL -sN -e "SELECT COUNT(*) FROM archived_comments;")
+final_comments=$(require_integer_result "${final_comments}" 'Summary comments total')
+final_archive=$(require_integer_result "${final_archive}" 'Summary archived_comments total')
 print_info "comments total (after):  ${final_comments} rows"
 print_info "archived_comments total: ${final_archive} rows"
 echo ""
