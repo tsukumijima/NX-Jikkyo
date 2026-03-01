@@ -27,15 +27,15 @@ cd "$(dirname "$(readlink -f "$0")")/../.."
 ARCHIVE_BEFORE_DATE="${ARCHIVE_BEFORE_DATE:-2025-07-01}"
 
 # バッチサイズ（1回の INSERT/DELETE で処理する行数）
-# 大きすぎると InnoDB のアンドゥログが肥大化するため 10,000 件が目安
-BATCH_SIZE="${BATCH_SIZE:-10000}"
+# 本番運用時の安定性とスループットのバランスとして 20,000 件をデフォルトにする
+BATCH_SIZE="${BATCH_SIZE:-20000}"
 # COPY/DELETE で個別にバッチサイズを調整したい場合は、それぞれ上書きできるようにする
 COPY_BATCH_SIZE="${COPY_BATCH_SIZE:-${BATCH_SIZE}}"
 DELETE_BATCH_SIZE="${DELETE_BATCH_SIZE:-${BATCH_SIZE}}"
 
 # バッチ間のスリープ時間（秒）
-# 本番環境への I/O 負荷を抑えるために間隔を設ける
-SLEEP_INTERVAL="${SLEEP_INTERVAL:-0.3}"
+# 同時稼働中の書き込み/読み込みへの影響を緩和するため、短い待機を入れる
+SLEEP_INTERVAL="${SLEEP_INTERVAL:-0.1}"
 
 # .env ファイルから MySQL のルートパスワードを取得
 MYSQL_ROOT_PASSWORD=$(grep -oP '(?<=MYSQL_PASSWORD=).+' .env)
