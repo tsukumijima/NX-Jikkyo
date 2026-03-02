@@ -7,10 +7,15 @@
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 NX-Jikkyo の Web アプリに、KonomiTV 0.13.0 以降での改良や機能追加を概ねすべて反映しました！🎉<br>
-                        今回追加した「チャンネル一覧を実況勢いが強い順に並び替える」設定をオンにしてみると、今一番盛り上がっているチャンネルを一目で把握できて便利です！ぜひお試しください！<br>
-                        また、過去ログ再生時、コメントをクリックすると対応する再生位置にシークするようにしたりなど、細かな使い勝手の改善も行っています。<br>
-                        NX-Jikkyo v1.14.0 以降、2025年中にご報告いただいたご要望のうち、実装可能なものは概ね機能追加・修正済みです！<br>
-                        万全は期しているつもりですが、もし新たな不具合や問題などあればご報告いただけると助かります🙏
+                        今回追加した「チャンネル一覧を実況勢いが強い順に並び替える」設定をオンにしてみると、今一番盛り上がっているチャンネルを一目で把握できて便利です！ぜひお試しください！
+                        <span style="font-weight: normal;">過去ログ再生時、コメントをクリックすると対応する再生位置にシークするようにしたりなど、細かな使い勝手の改善も行っています。</span><br>
+                        コメント詰まりに関しても様々な対策を施し、かなり詰まりづらくなっているはずです！<br>
+                        もしコメント詰まりや新たな不具合などあればご報告いただけると助かります🙏
+                    </blockquote>
+                    <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
+                        📢 本家ニコニコ実況での <a class="link" href="https://ch.nicovideo.jp/ch2650071" target="_blank">WBC 実況特設チャンネル</a> 追加に対応する特設チャンネル (<router-link class="link" to="/watch/jk991">jk991</router-link>) を開設しました！<br>
+                        03/05 以降はニコニコ側のコメントも表示されるはずです。もし動作していないようでしたらご連絡ください。
+
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
