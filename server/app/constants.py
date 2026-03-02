@@ -229,10 +229,11 @@ MASTER_CHANNEL_INFOS: dict[str, dict[str, str]] = {
     'jk222': {'name': 'BS12'},
     'jk236': {'name': 'BSアニマックス'},
     'jk252': {'name': 'WOWOW PLUS'},
-    'jk260': {'name': 'BS松竹東急'},
+    'jk260': {'name': 'J:COM BS'},  # BS松竹東急から2025年7月に名称変更
     'jk263': {'name': 'BSJapanext'},  # 後方互換性のために維持。WebSocket 接続時は jk200 にリダイレクト
     'jk265': {'name': 'BSよしもと'},
     'jk333': {'name': 'AT-X'},
+    'jk991': {'name': 'WBC実況用特設ch'},  # 2026年 WBC 実況用特設チャンネル (jk-wbc) を、便宜上 jk991 として割り当てているもの
 }
 
 # NX-Jikkyo が提供している実況チャンネル ID の集合

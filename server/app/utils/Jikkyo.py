@@ -19,6 +19,8 @@ class Jikkyo:
     # 旧来の実況チャンネル ID とニコニコチャンネル ID のマッピング
     ## 現在アクティブ (実況可能) なニコニコ実況チャンネルがここに記載されている
     ## id が None のチャンネルは NX-Jikkyo にのみ存在する実況チャンネル
+    ## NDGRClient にも似たような定数が存在するが、NDGRClient は過去分をダウンロードできないといけないのに対し
+    ## NX-Jikkyo では現在アクティブなチャンネルのみを正確に捉える必要があるため、あえて独自に定義している
     JIKKYO_CHANNEL_ID_MAP: ClassVar[dict[str, str | None]] = {
         'jk1': 'ch2646436',
         'jk2': 'ch2646437',
@@ -31,7 +33,7 @@ class Jikkyo:
         'jk10': None,
         'jk11': None,
         'jk12': None,
-        'jk13': None,
+        'jk13': None,  # サンテレビの公式実況チャンネルは2026年1月で運用が停止されたため None 扱いとする
         'jk14': None,
         'jk101': 'ch2647992',
         'jk103': None,
@@ -51,6 +53,7 @@ class Jikkyo:
         'jk263': None,
         'jk265': None,
         'jk333': None,
+        'jk991': 'ch2650071',  # 2026年 WBC 実況用特設チャンネル (jk-wbc) を、便宜上 jk991 として割り当てる
     }
 
 
