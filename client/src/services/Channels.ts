@@ -214,7 +214,8 @@ class Channels {
                     }
                 })(),
                 channel_number: channel.id.length <= 4 ? ('00' + channel.id.replaceAll('jk', '')).slice(-2) + '1' : channel.id.replaceAll('jk', ''),
-                type: channel.id.length <= 4 ? 'GR' : 'BS',
+                // jk99x チャンネルは特設チャンネルで、特別に GR チャンネルとして扱う
+                type: (channel.id.length <= 4 || channel.id.startsWith('jk99')) ? 'GR' : 'BS',
                 name: channel.name,
                 jikkyo_force: current_thread ? current_thread.jikkyo_force : null,
                 is_display: true,
@@ -286,7 +287,8 @@ class Channels {
                 } : null,
             };
 
-            if (channel.id.length <= 4) {
+            // jk99x チャンネルは特設チャンネルで、特別に GR チャンネルとして扱う
+            if (channel.id.length <= 4 || channel.id.startsWith('jk99')) {
                 live_channels_list.GR.push(live_channel);
             } else {
                 live_channels_list.BS.push(live_channel);
