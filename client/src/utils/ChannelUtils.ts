@@ -29,7 +29,9 @@ export class ChannelUtils {
         //     // 何かしらエラーが発生したということは display_channel_id が不正
         //     return null;
         // }
-        return display_channel_id.length <= 4 ? 'GR' : 'BS';
+
+        // jk99x チャンネルは特設チャンネルで、特別に GR チャンネルとして扱う
+        return display_channel_id.length <= 4 || display_channel_id.startsWith('jk99') ? 'GR' : 'BS';
     }
 
 
