@@ -3,7 +3,7 @@ import { getCookie } from 'typescript-cookie';
 
 import APIClient from '@/services/APIClient';
 import { IProgram, IProgramDefault } from '@/services/Programs';
-import Utils from '@/utils';
+import Utils, { ChannelUtils } from '@/utils';
 
 
 /** チャンネルタイプの型 */
@@ -162,6 +162,7 @@ class Channels {
 
         // チャンネルごとに ILiveChannel 互換のオブジェクトを生成する
         filtered_channels.forEach((channel) => {
+            const channel_type = ChannelUtils.getChannelType(channel.id) ?? 'BS';
 
             // 現在放送中のスレッドを取得
             const current_thread = channel.threads.find(thread =>
@@ -214,8 +215,7 @@ class Channels {
                     }
                 })(),
                 channel_number: channel.id.length <= 4 ? ('00' + channel.id.replaceAll('jk', '')).slice(-2) + '1' : channel.id.replaceAll('jk', ''),
-                // jk99x チャンネルは特設チャンネルで、特別に GR チャンネルとして扱う
-                type: (channel.id.length <= 4 || channel.id.startsWith('jk99')) ? 'GR' : 'BS',
+                type: channel_type,
                 name: channel.name,
                 jikkyo_force: current_thread ? current_thread.jikkyo_force : null,
                 is_display: true,
@@ -287,8 +287,7 @@ class Channels {
                 } : null,
             };
 
-            // jk99x チャンネルは特設チャンネルで、特別に GR チャンネルとして扱う
-            if (channel.id.length <= 4 || channel.id.startsWith('jk99')) {
+            if (channel_type === 'GR') {
                 live_channels_list.GR.push(live_channel);
             } else {
                 live_channels_list.BS.push(live_channel);

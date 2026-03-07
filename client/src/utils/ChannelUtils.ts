@@ -1,5 +1,5 @@
 
-import { ChannelType } from '@/services/Channels';
+import type { ChannelType } from '@/services/Channels';
 
 
 /**

@@ -14,7 +14,7 @@ import { IRecordedProgramDefault } from '@/services/Videos';
 import useChannelsStore from '@/stores/ChannelsStore';
 import usePlayerStore from '@/stores/PlayerStore';
 import useSettingsStore from '@/stores/SettingsStore';
-import Utils, { dayjs } from '@/utils';
+import Utils, { ChannelUtils, dayjs } from '@/utils';
 
 // PlayerController のインスタンス
 // data() 内に記述すると再帰的にリアクティブ化され重くなる上リアクティブにする必要自体がないので、グローバル変数にしている
@@ -98,12 +98,9 @@ export default defineComponent({
             const channels_store = useChannelsStore();
             await channels_store.update();
             let channel: IChannel | null = null;
-            if (display_channel_id.length <= 4) {
-                // 地上波
-                channel = channels_store.channels_list['GR'].find(channel => channel.id === display_channel_id) ?? null;
-            } else {
-                // BS
-                channel = channels_store.channels_list['BS'].find(channel => channel.id === display_channel_id) ?? null;
+            const channel_type = ChannelUtils.getChannelType(display_channel_id);
+            if (channel_type !== null) {
+                channel = channels_store.channels_list[channel_type].find(channel => channel.id === display_channel_id) ?? null;
             }
             if (channel === null) {
                 this.$router.push({path: '/not-found/'});
