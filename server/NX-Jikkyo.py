@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
+import atexit
 import asyncio
 import os
 import subprocess
 import sys
+import threading
 import time
 import warnings
 
+import aiomysql
 import typer
 import uvicorn
 from aerich import Command
@@ -20,6 +23,7 @@ from app.constants import (
     DATABASE_CONFIG,
     LOGGING_CONFIG,
     NX_JIKKYO_ACCESS_LOG_PATH,
+    REDIS_CLIENT,
     VERSION,
 )
 from app.utils.log_rotation import SplitServerLogByDate
@@ -41,9 +45,13 @@ def main(
     reload: bool = typer.Option(False, '--reload', help='Start Uvicorn in auto-reload mode.'),
     version: bool = typer.Option(None, '--version', callback=version, is_eager=True, help='Show version information.'),
 ):
-
     # 指定されたポートを設定
     CONFIG.SPECIFIED_SERVER_PORT = port
+    # メインサーバープロセスが起動したサブサーバープロセスを port ごとに管理する
+    ## 落ちたサブサーバープロセスだけをピンポイントで再生成できるように dict で保持する
+    sub_server_processes: dict[int, subprocess.Popen[str]] = {}
+    # シャットダウン時に監視スレッドを止めるためのイベント
+    stop_sub_server_supervisor = threading.Event()
 
     # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ
     if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
@@ -51,7 +59,8 @@ def main(
         # 自分が実行されたコマンドラインと同一だが --port オプションでポートがインクリメントされているサブプロセスを起動する
         ## 例えば SERVER_PORT が 5610 なら 5611, 5612 ... と起動する
         for count in range(CONFIG.SUB_SERVER_PROCESS_COUNT):
-            subprocess.Popen([sys.executable, __file__, '--port', str(port + count + 1)])
+            sub_server_port = port + count + 1
+            sub_server_processes[sub_server_port] = subprocess.Popen([sys.executable, __file__, '--port', str(sub_server_port)])
 
         # 前回のアクセスログを削除する
         ## サーバーログは起動時分割で過去日付をアーカイブ化するため、ここでは削除しない
@@ -60,11 +69,6 @@ def main(
                 NX_JIKKYO_ACCESS_LOG_PATH.unlink()
         except PermissionError:
             pass
-
-    # サブサーバープロセスの場合、メインプロセスでやってるマイグレーションが終わってないなどの
-    # 諸問題を避けるために5秒待ってから起動する
-    else:
-        time.sleep(5)
 
     # サーバーログに過去日付のエントリが含まれている場合、日付別アーカイブに分割する
     ## DailyRotatingFileHandler がファイルを開く前に分割を完了させるために、ロガーの初期化前に実行する必要がある
@@ -86,20 +90,92 @@ def main(
         f'ppid: {os.getppid()}, port: {CONFIG.SPECIFIED_SERVER_PORT}'
     )
 
+    async def WaitForDependencies(logger, *, role: str, retry_interval_seconds: float = 5.0) -> None:
+        """
+        MySQL / Redis の起動完了を待機する
+        """
+
+        async def IsMySQLReady() -> bool:
+            # MySQL がアプリケーション用資格情報で接続可能か確認する
+            ## healthcheck の mysqladmin ping だけでは「TCP ポートが開いた」以上の保証にならないため、
+            ## 実際にアプリケーション本体と同じ資格情報で接続できることを準備条件にする
+            connection = None
+            try:
+                connection = await aiomysql.connect(
+                    host='nx-jikkyo-mysql',
+                    port=3306,
+                    user=CONFIG.MYSQL_USER,
+                    password=CONFIG.MYSQL_PASSWORD,
+                    db=CONFIG.MYSQL_DATABASE,
+                    connect_timeout=3,
+                    autocommit=True,
+                    charset='utf8mb4',
+                )
+                return True
+            except Exception:
+                return False
+            finally:
+                if connection is not None:
+                    connection.close()
+
+        async def IsRedisReady() -> bool:
+            try:
+                # Redis は PING が通れば少なくともコマンド受付状態までは到達しているとみなせる
+                await REDIS_CLIENT.ping()
+                return True
+            except Exception:
+                return False
+
+        attempt = 1
+        while True:
+            # どちらか片方だけ先に起動しても意味がないため、両方をまとめて確認する
+            is_mysql_ready, is_redis_ready = await asyncio.gather(
+                IsMySQLReady(),
+                IsRedisReady(),
+            )
+            if is_mysql_ready is True and is_redis_ready is True:
+                if attempt == 1:
+                    logger.info(f'Dependency readiness check passed immediately. role: {role}')
+                else:
+                    logger.info(f'All dependencies are ready. role: {role}, attempts: {attempt}')
+                return
+
+            # 何が未準備なのかを毎回ログに残しておくと、障害時に MySQL 側なのか Redis 側なのかを
+            # docker compose logs だけで即座に切り分けやすい
+            not_ready_dependencies: list[str] = []
+            if is_mysql_ready is False:
+                not_ready_dependencies.append('MySQL')
+            if is_redis_ready is False:
+                not_ready_dependencies.append('Redis')
+
+            logger.info(
+                f'Waiting for dependencies to be ready. role: {role}, '
+                f'not_ready: {", ".join(not_ready_dependencies)}, attempt: {attempt}',
+            )
+            attempt += 1
+            await asyncio.sleep(retry_interval_seconds)
+
+    # 全サーバープロセス共通で、MySQL / Redis の起動が完了するのを待つ
+    asyncio.run(WaitForDependencies(logging, role=process_role))
+
     # Aerich でデータベースをアップグレードする
     ## 特にデータベースのアップグレードが必要ない場合は何も起こらない
     async def UpgradeDatabase():
         command = Command(tortoise_config=DATABASE_CONFIG, app='models', location='./app/migrations/')
-        try:
-            await command.init()
-        except DBConnectionError:
-            # ここで DBConnectionError が発生する場合、
-            ## まだ MySQL 側でユーザー・データベース・テーブルが自動作成されていない可能性があるので、30秒待機する
-            ## 初回は DB 用のバイナリファイルの作成とかもあるからか意外とかなり時間がかかる
-            logging.info('Waiting 30 seconds for MySQL to be ready...')
-            time.sleep(30)
-            # 再度初期化を試みる
-            await command.init()
+        migration_attempt = 1
+        while True:
+            try:
+                # 待機後でも、まれに DB 初期化とマイグレーション実行のタイミングがずれる可能性が否定できないため、
+                # command.init() 自体にも短い間隔でリトライを入れておく
+                await command.init()
+                break
+            except DBConnectionError:
+                logging.info(
+                    f'Waiting 5 seconds for database migration initialization... '
+                    f'attempt: {migration_attempt}',
+                )
+                migration_attempt += 1
+                await asyncio.sleep(5)
         migrated = await command.upgrade(run_in_transaction=True)
         await Tortoise.close_connections()
         if not migrated:
@@ -108,9 +184,44 @@ def main(
             for version_file in migrated:
                 logging.info(f'Successfully migrated to {version_file}.')
 
+    def SuperviseSubServerProcesses(logger) -> None:
+        # PID 1 が生きている限り Docker の restart policy は発火しないため、
+        ## サブサーバープロセスの異常終了だけはアプリケーション内で面倒を見る
+        while stop_sub_server_supervisor.is_set() is False:
+            for sub_server_port, process in list(sub_server_processes.items()):
+                return_code = process.poll()
+                if return_code is None:
+                    continue
+
+                # poll() 済みの子プロセスを wait() で回収し、ゾンビ化を防ぐ
+                process.wait()
+                logger.warning(
+                    f'Sub server process exited unexpectedly. Restarting... '
+                    f'port: {sub_server_port}, return_code: {return_code}',
+                )
+                sub_server_processes[sub_server_port] = subprocess.Popen(
+                    [sys.executable, __file__, '--port', str(sub_server_port)]
+                )
+            stop_sub_server_supervisor.wait(5)
+
     # 指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
     if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
+        # 必要な場合にマイグレーション処理を実行
         asyncio.run(UpgradeDatabase())
+        # サブサーバープロセスの監視は Uvicorn 本体とは独立したデーモンスレッドで回し続ける
+        ## 監視対象は 5611-5614 のサブだけで、5610 のメイン自身はこのスレッドでは扱わない
+        threading.Thread(
+            target=SuperviseSubServerProcesses,
+            args=(logging,),
+            name='sub-server-supervisor',
+            daemon=True,
+        ).start()
+        # メインプロセス終了時に監視スレッドも確実に止める
+        atexit.register(lambda: stop_sub_server_supervisor.set())
+    else:
+        # マイグレーション処理の完了を待機して競合を避ける
+        ## マイグレーション処理はメインサーバープロセスのみが実行するため、サブサーバープロセスでは少しだけ待ってからスタートアップに進む
+        time.sleep(5)
 
     # Uvicorn の設定
     server_config = uvicorn.Config(
