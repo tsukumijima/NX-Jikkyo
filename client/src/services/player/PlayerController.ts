@@ -602,7 +602,6 @@ class PlayerController {
             this.player.notice(event.message, event.duration, event.opacity, event.color);
         });
 
-        /*
         // PlayerManager からプレイヤーの再起動が必要になったことを通知されたときのイベントハンドラーを登録する
         // このイベントは常にアプリケーション上で1つだけ登録されていなければならない
         // さもなければ使い終わった破棄済みの PlayerController が再起動イベントにより復活し、現在利用中の PlayerController と競合してしまう
@@ -650,7 +649,6 @@ class PlayerController {
             }
             is_player_restarting = false;
         });
-        */
 
         // PlayerController.setControlDisplayTimer() の呼び出しを要求されたときのイベントハンドラーを登録する
         // このイベントは常にアプリケーション上で1つだけ登録されていなければならない
@@ -670,7 +668,6 @@ class PlayerController {
             });
         }
 
-        /*
         // プレイヤー再起動ボタンを DPlayer の UI に追加する (再生が止まった際などに利用する想定)
         // insertAdjacentHTML で .dplayer-icons-right の一番左側に配置する
         this.player.container.querySelector('.dplayer-icons.dplayer-icons-right')!.insertAdjacentHTML('afterbegin', `
@@ -687,7 +684,6 @@ class PlayerController {
             await this.init();
             this.player?.notice('プレイヤーを再起動しました。', undefined, undefined, undefined);
         });
-        */
 
         // Screen Wake Lock API を利用して画面の自動スリープを抑制する
         // 待つ必要はないので非同期で実行

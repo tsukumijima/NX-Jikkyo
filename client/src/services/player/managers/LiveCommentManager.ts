@@ -61,6 +61,12 @@ class LiveCommentManager implements PlayerManager {
     // 再接続中かどうか
     private reconnecting = false;
 
+    // 再接続の再試行タイマーの ID
+    private reconnect_timeout_id: number | null = null;
+
+    // ページが hidden になった時刻のタイムスタンプ
+    private page_hidden_at_timestamp: number | null = null;
+
     // 破棄済みかどうか
     private destroyed = false;
 
@@ -92,6 +98,22 @@ class LiveCommentManager implements PlayerManager {
         // ニコニコアカウント連携状態を事前にキャッシュさせておく
         await user_store.fetchUser();
 
+        // Android などでバックグラウンド復帰時に WebSocket が silently dead になることがあるため、
+        // ページライフサイクルのイベントを監視して接続状態を再確認する
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'hidden') {
+                this.page_hidden_at_timestamp = Date.now();
+                return;
+            }
+            await this.handlePageResume('visibilitychange');
+        }, { signal: this.abort_controller.signal });
+        window.addEventListener('pageshow', async (event: PageTransitionEvent) => {
+            await this.handlePageResume('pageshow', event.persisted);
+        }, { signal: this.abort_controller.signal });
+        window.addEventListener('online', async () => {
+            await this.handlePageResume('online');
+        }, { signal: this.abort_controller.signal });
+
         // 視聴セッションを初期化
         const watch_session_info = await this.initWatchSession();
         if (watch_session_info.is_success === false) {
@@ -107,6 +129,7 @@ class LiveCommentManager implements PlayerManager {
                     this.player.notice(watch_session_info.detail, undefined, undefined, '#FF6F6A');
                 }
             }
+            this.scheduleReconnect(watch_session_info.detail);
             return;
         }
 
@@ -115,6 +138,61 @@ class LiveCommentManager implements PlayerManager {
         this.initCommentSession(watch_session_info);
 
         console.log('[LiveCommentManager] Initialized.');
+    }
+
+
+    /**
+     * ページ復帰後に WebSocket の接続状態を再確認し、必要なら再接続する
+     * @param event_source どのイベントで復帰を検知したか
+     * @param is_page_persisted pageshow 時に BFCache / frozen page から復帰したかどうか
+     */
+    private async handlePageResume(
+        event_source: 'visibilitychange' | 'pageshow' | 'online',
+        is_page_persisted: boolean = false,
+    ): Promise<void> {
+        if (this.destroyed === true) {
+            return;
+        }
+
+        const is_watch_session_open = this.watch_session?.readyState === WebSocket.OPEN;
+        const is_comment_session_open = this.comment_session?.readyState === WebSocket.OPEN;
+        const hidden_duration = this.page_hidden_at_timestamp !== null ? Date.now() - this.page_hidden_at_timestamp : 0;
+        const should_reconnect_after_resume = (
+            event_source === 'online' ||
+            is_page_persisted === true ||
+            hidden_duration >= 15 * 1000 ||
+            is_watch_session_open === false ||
+            is_comment_session_open === false
+        );
+
+        if (should_reconnect_after_resume === false || this.reconnecting === true) {
+            return;
+        }
+
+        this.page_hidden_at_timestamp = null;
+        console.warn(`[LiveCommentManager] Resume detected. event_source: ${event_source}, persisted: ${is_page_persisted}`);
+        await this.reconnect();
+    }
+
+
+    /**
+     * 再接続を一定時間後に再試行する
+     * @param error_detail 初期化失敗時のエラーメッセージ
+     */
+    private scheduleReconnect(error_detail?: string): void {
+        if (this.destroyed === true || this.reconnect_timeout_id !== null) {
+            return;
+        }
+
+        // ニコニコ実況非対応チャンネルでは再試行しても改善しない
+        if (error_detail === 'このチャンネルはニコニコ実況に対応していません。') {
+            return;
+        }
+
+        this.reconnect_timeout_id = window.setTimeout(async () => {
+            this.reconnect_timeout_id = null;
+            await this.reconnect();
+        }, 3 * 1000);
     }
 
 
@@ -805,6 +883,7 @@ class LiveCommentManager implements PlayerManager {
             // 視聴セッションへの接続情報自体を取得できなかったので再接続を諦める
             // 視聴セッションへの接続情報は取得できたが、また WebSocket が予期せず閉じられてしまった場合は
             // 上記 this.initWatchSession() 内で再度この this.reconnect() が再帰的に呼ばれる
+            this.scheduleReconnect(watch_session_info.detail);
             this.reconnecting = false;
             return;
         }
@@ -851,7 +930,12 @@ class LiveCommentManager implements PlayerManager {
             window.clearInterval(this.keep_seat_interval_id);
             this.keep_seat_interval_id = null;
         }
+        if (this.reconnect_timeout_id !== null) {
+            window.clearTimeout(this.reconnect_timeout_id);
+            this.reconnect_timeout_id = null;
+        }
         this.vpos_base_timestamp = 0;
+        this.page_hidden_at_timestamp = null;
 
         // 初期化に失敗した際のエラーメッセージを削除
         player_store.live_comment_init_failed_message = null;
