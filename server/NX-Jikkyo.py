@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import atexit
 import asyncio
+import atexit
 import os
 import subprocess
 import sys
@@ -12,8 +12,8 @@ import warnings
 import aiomysql
 import typer
 import uvicorn
-from redis.asyncio.client import Redis
 from aerich import Command
+from redis.asyncio.client import Redis
 from tortoise import Tortoise
 from tortoise.exceptions import DBConnectionError
 from uvicorn.supervisors.watchfilesreload import WatchFilesReload
@@ -49,7 +49,7 @@ def main(
     CONFIG.SPECIFIED_SERVER_PORT = port
     # メインサーバープロセスが起動したサブサーバープロセスを port ごとに管理する
     ## 落ちたサブサーバープロセスだけをピンポイントで再生成できるように dict で保持する
-    sub_server_processes: dict[int, subprocess.Popen[str]] = {}
+    sub_server_processes: dict[int, subprocess.Popen[bytes]] = {}
     # シャットダウン時に監視スレッドを止めるためのイベント
     stop_sub_server_supervisor = threading.Event()
 
@@ -90,7 +90,10 @@ def main(
         f'ppid: {os.getppid()}, port: {CONFIG.SPECIFIED_SERVER_PORT}'
     )
 
-    async def WaitForDependencyServices(logger, *, role: str, retry_interval_seconds: float = 5.0) -> None:
+    async def WaitForDependencyServices(
+        role: str,
+        retry_interval_seconds: float = 5.0,
+    ) -> None:
         """
         MySQL / Redis が利用可能になるまで待機する
         """
@@ -142,9 +145,9 @@ def main(
             )
             if is_mysql_ready is True and is_redis_ready is True:
                 if attempt == 1:
-                    logger.info(f'Dependency service check passed immediately. role: {role}')
+                    logging.info(f'Dependency service check passed immediately. role: {role}')
                 else:
-                    logger.info(f'All dependency services are available. role: {role}, attempts: {attempt}')
+                    logging.info(f'All dependency services are available. role: {role}, attempts: {attempt}')
                 return
 
             # 何が未準備なのかを毎回ログに残しておくと、障害時に MySQL 側なのか Redis 側なのかを
@@ -155,7 +158,7 @@ def main(
             if is_redis_ready is False:
                 not_ready_dependencies.append('Redis')
 
-            logger.info(
+            logging.info(
                 f'Waiting for dependency services to become available. role: {role}, '
                 f'not_available: {", ".join(not_ready_dependencies)}, attempt: {attempt}',
             )
@@ -163,7 +166,7 @@ def main(
             await asyncio.sleep(retry_interval_seconds)
 
     # 全サーバープロセス共通で、MySQL / Redis が利用可能になるのを待つ
-    asyncio.run(WaitForDependencyServices(logging, role=process_role))
+    asyncio.run(WaitForDependencyServices(role=process_role))
 
     # Aerich でデータベースをアップグレードする
     ## 特にデータベースのアップグレードが必要ない場合は何も起こらない
@@ -191,7 +194,7 @@ def main(
             for version_file in migrated:
                 logging.info(f'Successfully migrated to {version_file}.')
 
-    def SuperviseSubServerProcesses(logger) -> None:
+    def SuperviseSubServerProcesses() -> None:
         # PID 1 が生きている限り Docker の restart policy は発火しないため、
         ## サブサーバープロセスの異常終了だけはアプリケーション内で面倒を見る
         while stop_sub_server_supervisor.is_set() is False:
@@ -202,7 +205,7 @@ def main(
 
                 # poll() 済みの子プロセスを wait() で回収し、ゾンビ化を防ぐ
                 process.wait()
-                logger.warning(
+                logging.warning(
                     f'Sub server process exited unexpectedly. Restarting... '
                     f'port: {sub_server_port}, return_code: {return_code}',
                 )
@@ -219,7 +222,6 @@ def main(
         ## 監視対象は 5611-5614 のサブだけで、5610 のメイン自身はこのスレッドでは扱わない
         threading.Thread(
             target=SuperviseSubServerProcesses,
-            args=(logging,),
             name='sub-server-supervisor',
             daemon=True,
         ).start()
