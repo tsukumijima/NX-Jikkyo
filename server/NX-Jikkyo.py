@@ -12,6 +12,7 @@ import warnings
 import aiomysql
 import typer
 import uvicorn
+from redis.asyncio.client import Redis
 from aerich import Command
 from tortoise import Tortoise
 from tortoise.exceptions import DBConnectionError
@@ -23,7 +24,6 @@ from app.constants import (
     DATABASE_CONFIG,
     LOGGING_CONFIG,
     NX_JIKKYO_ACCESS_LOG_PATH,
-    REDIS_CLIENT,
     VERSION,
 )
 from app.utils.log_rotation import SplitServerLogByDate
@@ -90,15 +90,15 @@ def main(
         f'ppid: {os.getppid()}, port: {CONFIG.SPECIFIED_SERVER_PORT}'
     )
 
-    async def WaitForDependencies(logger, *, role: str, retry_interval_seconds: float = 5.0) -> None:
+    async def WaitForDependencyServices(logger, *, role: str, retry_interval_seconds: float = 5.0) -> None:
         """
-        MySQL / Redis の起動完了を待機する
+        MySQL / Redis が利用可能になるまで待機する
         """
 
         async def IsMySQLReady() -> bool:
             # MySQL がアプリケーション用資格情報で接続可能か確認する
             ## healthcheck の mysqladmin ping だけでは「TCP ポートが開いた」以上の保証にならないため、
-            ## 実際にアプリケーション本体と同じ資格情報で接続できることを準備条件にする
+            ## 実際にアプリケーション本体と同じ資格情報で接続できることを利用可能条件にする
             connection = None
             try:
                 connection = await aiomysql.connect(
@@ -119,12 +119,19 @@ def main(
                     connection.close()
 
         async def IsRedisReady() -> bool:
+            # エントリーポイントでの確認時のみ、共有の REDIS_CLIENT を使わない
+            ## asyncio.run() で作られた一時イベントループに接続オブジェクトがぶら下がると、
+            ## 後段の Uvicorn のイベントループから再利用した際に
+            ## "Future attached to a different loop" が起きてしまう
+            redis_client = Redis.from_url('redis://nx-jikkyo-redis', encoding='utf-8', decode_responses=True)
             try:
                 # Redis は PING が通れば少なくともコマンド受付状態までは到達しているとみなせる
-                await REDIS_CLIENT.ping()
+                await redis_client.ping()
                 return True
             except Exception:
                 return False
+            finally:
+                await redis_client.close()
 
         attempt = 1
         while True:
@@ -135,9 +142,9 @@ def main(
             )
             if is_mysql_ready is True and is_redis_ready is True:
                 if attempt == 1:
-                    logger.info(f'Dependency readiness check passed immediately. role: {role}')
+                    logger.info(f'Dependency service check passed immediately. role: {role}')
                 else:
-                    logger.info(f'All dependencies are ready. role: {role}, attempts: {attempt}')
+                    logger.info(f'All dependency services are available. role: {role}, attempts: {attempt}')
                 return
 
             # 何が未準備なのかを毎回ログに残しておくと、障害時に MySQL 側なのか Redis 側なのかを
@@ -149,14 +156,14 @@ def main(
                 not_ready_dependencies.append('Redis')
 
             logger.info(
-                f'Waiting for dependencies to be ready. role: {role}, '
-                f'not_ready: {", ".join(not_ready_dependencies)}, attempt: {attempt}',
+                f'Waiting for dependency services to become available. role: {role}, '
+                f'not_available: {", ".join(not_ready_dependencies)}, attempt: {attempt}',
             )
             attempt += 1
             await asyncio.sleep(retry_interval_seconds)
 
-    # 全サーバープロセス共通で、MySQL / Redis の起動が完了するのを待つ
-    asyncio.run(WaitForDependencies(logging, role=process_role))
+    # 全サーバープロセス共通で、MySQL / Redis が利用可能になるのを待つ
+    asyncio.run(WaitForDependencyServices(logging, role=process_role))
 
     # Aerich でデータベースをアップグレードする
     ## 特にデータベースのアップグレードが必要ない場合は何も起こらない
@@ -165,7 +172,7 @@ def main(
         migration_attempt = 1
         while True:
             try:
-                # 待機後でも、まれに DB 初期化とマイグレーション実行のタイミングがずれる可能性が否定できないため、
+                # 依存サービスが利用可能になった後でも、まれに DB 初期化とマイグレーション実行のタイミングがずれる可能性が否定できないため、
                 # command.init() 自体にも短い間隔でリトライを入れておく
                 await command.init()
                 break
