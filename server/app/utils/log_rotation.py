@@ -1,3 +1,4 @@
+import io
 import re
 import sys
 import tempfile
@@ -71,6 +72,29 @@ class DailyRotatingFileHandler(TimedRotatingFileHandler):
         # 後続の cleanup で使用する保持日数を保持しておく
         self.retention_days = retention_days
 
+    def _open(self) -> io.TextIOWrapper:
+        """
+        ログファイルを開き、開発環境ではファイルの権限を緩和する。
+
+        Docker 上のサーバープロセスは root で実行されるため、ログファイルがデフォルト権限 (0o600) で
+        作成されると、一般ユーザー権限ではログの閲覧ができない。
+        開発環境ではファイルオープン時（初回・ローテーション後の両方）に権限を緩和して、
+        ローカル開発時のログ確認を容易にする。
+
+        Returns:
+            io.TextIOWrapper: 開かれたログファイルストリーム
+        """
+
+        stream = super()._open()
+        # 開発環境ではログファイルを誰でも読み書きできるようにする
+        ## アーカイブファイルの権限緩和 (doRollover 内の chmod(0o777)) と一貫した対応
+        if CONFIG.ENVIRONMENT == 'Develop':
+            try:
+                Path(self.baseFilename).chmod(0o666)
+            except OSError:
+                pass
+        return stream
+
     @staticmethod
     def _namer(default_name: str) -> str:
         """
@@ -141,12 +165,16 @@ class DailyRotatingFileHandler(TimedRotatingFileHandler):
         # 開発環境ではローカル操作性を優先し、アーカイブ側の権限を緩める
         ## Docker 上のサーバープロセスは root で実行されるため、一般ユーザー権限ではログの閲覧・削除ができない問題への対策
         if CONFIG.ENVIRONMENT == 'Develop':
-            for permission_target_path in (LOGS_ARCHIVES_DIR, archive_path):
-                try:
-                    permission_target_path.chmod(0o777)
-                # 権限変更に失敗してもローテーション成功自体は維持する
-                except OSError:
-                    continue
+            try:
+                # ディレクトリにはトラバーサルに必要な x ビットを含む 0o777 を付与する
+                LOGS_ARCHIVES_DIR.chmod(0o777)
+            except OSError:
+                pass
+            try:
+                # ファイルには x ビット不要のため 0o666 を付与する
+                archive_path.chmod(0o666)
+            except OSError:
+                pass
 
         # ローテーション完了後に期限切れアーカイブを整理する
         CleanupOldArchiveLogs(self.retention_days)
@@ -323,6 +351,7 @@ def SplitServerLogByDate() -> None:
                 current_date: str | None = None
 
                 # -------- ログ行の振り分けループ --------
+
                 for source_line in source_file:
                     match = LOG_DATE_PATTERN.match(source_line)
 
@@ -370,9 +399,15 @@ def SplitServerLogByDate() -> None:
             # 開発環境では手作業でログ確認しやすいよう、生成したアーカイブに緩い権限を付与する
             ## Docker 上のサーバープロセスは root で実行されるため、一般ユーザー権限ではログの閲覧・削除ができない問題への対策
             if CONFIG.ENVIRONMENT == 'Develop':
-                for permission_target_path in [LOGS_ARCHIVES_DIR, *archived_paths]:
+                # ディレクトリにはトラバーサルに必要な x ビットを含む 0o777 を付与する
+                try:
+                    LOGS_ARCHIVES_DIR.chmod(0o777)
+                except OSError:
+                    pass
+                # アーカイブファイルには x ビット不要のため 0o666 を付与する
+                for archived_path in archived_paths:
                     try:
-                        permission_target_path.chmod(0o777)
+                        archived_path.chmod(0o666)
                     # 権限変更に失敗しても分割そのものは成功扱いとする
                     except OSError:
                         continue
