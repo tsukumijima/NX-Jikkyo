@@ -236,9 +236,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
     async def StartStreamNicoliveComments():
 
         # ニコニコ実況で実装されている実況チャンネル (jk の prefix なし)
-        # TODO: jk991 は2026年 WBC 実況用特設チャンネル (jk-wbc) を、便宜上 jk991 として割り当てているもの
-        # WBC が終了したらここから 991 を削除する必要がある（削除しなくてもいいが無限にリトライが発生してあんまりよくない）
-        NICOLIVE_JIKKYO_CHANNELS = [1, 2, 4, 5, 6, 7, 8, 9, 101, 211, 991]
+        NICOLIVE_JIKKYO_CHANNELS = [1, 2, 4, 5, 6, 7, 8, 9, 101, 211]
 
         # 現在アクティブなスレッドの情報を保存する辞書
         active_threads: dict[int, Thread] = {}
