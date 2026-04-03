@@ -6,16 +6,11 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
-                        📢 NX-Jikkyo の Web アプリに、KonomiTV 0.13.0 以降での改良や機能追加を概ねすべて反映しました！🎉<br>
-                        今回追加した「チャンネル一覧を実況勢いが強い順に並び替える」設定をオンにしてみると、今一番盛り上がっているチャンネルを一目で把握できて便利です！ぜひお試しください！
-                        <span style="font-weight: normal;">過去ログ再生時、コメントをクリックすると対応する再生位置にシークするようにしたりなど、細かな使い勝手の改善も行っています。</span><br>
-                        コメント詰まりに関しても様々な対策を施し、かなり詰まりづらくなっているはずです！<br>
-                        もしコメント詰まりや新たな不具合などあればご報告いただけると助かります🙏
-                    </blockquote>
-                    <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
-                        📢 本家ニコニコ実況での <a class="link" href="https://ch.nicovideo.jp/ch2650071" target="_blank">WBC 実況特設チャンネル</a> 追加に対応する特設チャンネル (<router-link class="link" to="/watch/jk991">jk991</router-link>) を開設しました！<br>
-                        03/05 以降はニコニコ側のコメントも表示されるはずです。もし動作していないようでしたらご連絡ください。
-
+                        📢 <a class="link" href="https://vps.conoha.jp/news/?btn_id=news--news_news&ap=2015054447" target="_blank">NX-Jikkyo で利用している ConoHa VPS で断続的にサーバー障害が発生していた</a> 影響で、<a class="link" href="https://x.com/TVRemotePlus/status/2038486908289024398" target="_blank">3月末は NX-Jikkyo の動作が不安定になっていました。</a>ご不便をおかけしましたことを深くお詫びいたします。<br>
+                        2月上旬に多発していたコメント詰まりの根本原因も、<a class="link" href="https://x.com/TVRemotePlus/status/2038281430720282730" target="_blank">2026年以降 ConoHa のストレージ I/O が不安定になり、結果として断続的にデータベースへのアクセスが詰まったためだと推測しております。</a><br>
+                        近日中に XServer VPS あたりへの移行を予定しておりますが、昨今本業が多忙な上、20GB を超える DB を移行する関係でサーバー移行には数時間〜半日以上の停止メンテナンスを要することから、現時点で移行時期は未定です。<br>
+                        <span style="font-weight: normal;">また最近、サーバー障害の影響で一時的にネットワークが切れると、ニコニコ実況からのコメント取り込みが停止する問題が発生していました。当面の対策として、どのようなエラーが起きても自動的に再接続し、可能な限り粘り強くコメントの取り込みを続けられるように改良しています。</span><br>
+                        サーバー移行までは <a class="link" href="https://x.com/TVRemotePlus/status/2037042668036120881" target="_blank">ConoHa / GMO のせい</a> で今後も不安定な状態が続く可能性がありますが、何卒ご了承ください。<br>
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
