@@ -123,7 +123,7 @@ export default defineComponent({
                 '過去ログ再生について': (
                     '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
                     '2009年11月から現在までのほぼすべての過去ログコメントを再生できます。\n\n' +
-                    `現在は、Ch:${channel.channel_number} ${channel.name} の ${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを、時系列に再生しています。`
+                    Utils.apply28HourClock(`現在は、Ch:${channel.channel_number} ${channel.name} の ${display_date.format('YYYY年MM月DD日 (dd)')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} の過去ログコメントを、時系列に再生しています。`)
                 ),
                 'NX-Jikkyo について': (
                     'NX-Jikkyo は、放送中のテレビ番組や起きているイベントに対して、みんなでコメントをし盛り上がりを共有する、リアルタイムコミュニケーションサービスです。\n' +
@@ -136,7 +136,7 @@ export default defineComponent({
             this.playerStore.recorded_program = recorded_program;
 
             // 現在表示中の過去ログのタイトルと概要を更新
-            const title = `過去ログ再生 - Ch:${channel.channel_number} ${channel.name} ${display_date.format('YYYY年MM月DD日')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} | NX-Jikkyo : ニコニコ実況避難所`;
+            const title = Utils.apply28HourClock(`過去ログ再生 - Ch:${channel.channel_number} ${channel.name} ${display_date.format('YYYY年MM月DD日')} ${display_date.format('HH:mm')} 〜 ${kakolog_end_dayjs.format('HH:mm')} | NX-Jikkyo : ニコニコ実況避難所`);
             const description = '過去ログ再生機能では、ニコニコ実況 過去ログ API (https://jikkyo.tsukumijima.net) に保存されている、' +
                 '2009年11月から現在までのほぼすべての過去ログコメントを再生できます。';
             document.title = title;

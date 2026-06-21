@@ -487,7 +487,7 @@ export class ProgramUtils {
         // 分単位の番組長 (割り切れない場合は小数第2位で四捨五入)
         const duration = Math.round(recorded_program.recorded_video.duration / 60 * 100) / 100;
 
-        return `${start_time.format('YYYY/MM/DD (dd) HH:mm:ss')} ～ ${end_time.format('HH:mm:ss')} (${duration}分)`;
+        return Utils.apply28HourClock(`${start_time.format('YYYY/MM/DD (dd) HH:mm:ss')} ～ ${end_time.format('HH:mm:ss')} (${duration}分)`);
     }
 
 

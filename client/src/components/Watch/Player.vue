@@ -71,7 +71,7 @@ export default defineComponent({
             Utils: Object.freeze(Utils),
 
             // 現在時刻
-            time: dayjs().format('YYYY/MM/DD\nHH:mm:ss'),
+            time: Utils.apply28HourClock(dayjs().format('YYYY/MM/DD HH:mm:ss')).replace(' ', '\n'),
 
             // 現在時刻更新用のインターバルの ID
             time_interval_id: 0,
@@ -90,12 +90,15 @@ export default defineComponent({
                     this.time = '〈コメント再生停止中〉';
                     return;
                 }
-                this.time = dayjs().format('YYYY/MM/DD\nHH:mm:ss');
+                // apply28HourClock は内部で空白区切りの日付・時刻を扱うため、適用後に最初の空白を改行に戻す
+                this.time = Utils.apply28HourClock(dayjs().format('YYYY/MM/DD HH:mm:ss')).replace(' ', '\n');
             // ビデオ視聴
             } else if (this.playerStore.recorded_program) {
                 const player = (window as any).player as DPlayer | undefined;
                 if (player && player.video) {
-                    this.time = dayjs(this.playerStore.recorded_program.start_time).add(player.video.currentTime, 'second').format('YYYY/MM/DD\nHH:mm:ss');
+                    this.time = Utils.apply28HourClock(
+                        dayjs(this.playerStore.recorded_program.start_time).add(player.video.currentTime, 'second').format('YYYY/MM/DD HH:mm:ss'),
+                    ).replace(' ', '\n');
                 }
             }
         }, 0.1 * 1000);
