@@ -233,7 +233,8 @@ MASTER_CHANNEL_INFOS: dict[str, dict[str, str]] = {
     'jk263': {'name': 'BSJapanext'},  # 後方互換性のために維持。WebSocket 接続時は jk200 にリダイレクト
     'jk265': {'name': 'BSよしもと'},
     'jk333': {'name': 'AT-X'},
-    'jk991': {'name': 'WBC実況用特設ch'},  # 2026年 WBC 実況用特設チャンネル (jk-wbc) を、便宜上 jk991 として割り当てているもの
+    'jk991': {'name': 'WBC実況用特設ch'},  # 2026年WBC実況用特設チャンネル (jk-wbc) を、便宜上 jk991 として割り当てているもの
+    'jk992': {'name': 'W杯実況用特設ch'},  # 2026年W杯実況用特設チャンネル (jk-worldcup) を、便宜上 jk992 として割り当てているもの
 }
 
 # NX-Jikkyo が提供している実況チャンネル ID の集合
