@@ -3,9 +3,9 @@ import DPlayer from 'dplayer';
 
 
 /**
- * ライブストリーミング API で設定できる動画の画質
+ * ライブ/録画番組ストリーミング API でベース画質として設定できる動画の画質
  */
-type LiveAPIVideoQuality = (
+type APIBaseVideoQuality = (
     '1080p-60fps' |
     '1080p-60fps-hevc' |
     '1080p' |
@@ -25,25 +25,23 @@ type LiveAPIVideoQuality = (
 );
 
 /**
+ * ライブストリーミング API で設定できる動画の画質
+ */
+type LiveAPIVideoQuality = (
+    APIBaseVideoQuality |
+    `${APIBaseVideoQuality}-10bit` |
+    `${APIBaseVideoQuality}-24fps` |
+    `${APIBaseVideoQuality}-10bit-24fps`
+);
+
+/**
  * 録画番組ストリーミング API で設定できる動画の画質
  */
 type VideoAPIVideoQuality = (
-    '1080p-60fps' |
-    '1080p-60fps-hevc' |
-    '1080p' |
-    '1080p-hevc' |
-    '810p' |
-    '810p-hevc' |
-    '720p' |
-    '720p-hevc' |
-    '540p' |
-    '540p-hevc' |
-    '480p' |
-    '480p-hevc' |
-    '360p' |
-    '360p-hevc' |
-    '240p' |
-    '240p-hevc'
+    APIBaseVideoQuality |
+    `${APIBaseVideoQuality}-10bit` |
+    `${APIBaseVideoQuality}-24fps` |
+    `${APIBaseVideoQuality}-10bit-24fps`
 );
 
 
