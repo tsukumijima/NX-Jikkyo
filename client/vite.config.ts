@@ -41,7 +41,7 @@ export default defineConfig({
             scss: {
                 // 共通の mixin を読み込む
                 // ref: https://qiita.com/nanohanabuttobasu/items/f73ed978cc10d8bcaa59
-                additionalData: '@import "./src/styles/mixin.scss";',
+                additionalData: '@import "@/styles/mixin.scss";',
             },
         },
     },
@@ -50,11 +50,13 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5710,
         strictPort: true,
+        allowedHosts: true,
     },
     preview: {
         host: '0.0.0.0',
         port: 5710,
         strictPort: true,
+        allowedHosts: true,
     },
     // プラグインの設定
     plugins: [
@@ -118,8 +120,8 @@ export default defineConfig({
             workbox: {
                 // 古いキャッシュを自動削除する
                 cleanupOutdatedCaches: true,
-                // /api/ 以下のリクエストでは index.html を返さない
-                navigateFallbackDenylist: [/^\/api/],
+                // /api/, /cdn-cgi/(cloudflare) 以下のリクエストでは index.html を返さない
+                navigateFallbackDenylist: [/^\/api/, /^\/cdn-cgi/],
                 // キャッシュするファイルの最大サイズ
                 maximumFileSizeToCacheInBytes: 1024 * 1024 * 15,  // 15MB
             }
