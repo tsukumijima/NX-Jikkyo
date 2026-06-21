@@ -8,9 +8,12 @@
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 <a class="link" href="https://vps.conoha.jp/news/?btn_id=news--news_news&ap=2015054447" target="_blank">NX-Jikkyo で利用している ConoHa VPS で断続的にサーバー障害が発生していた</a> 影響で、<a class="link" href="https://x.com/TVRemotePlus/status/2038486908289024398" target="_blank">3月末は NX-Jikkyo の動作が不安定になっていました。</a>ご不便をおかけしましたことを深くお詫びいたします。<br>
                         2月上旬に多発していたコメント詰まりの根本原因も、<a class="link" href="https://x.com/TVRemotePlus/status/2038281430720282730" target="_blank">2026年以降 ConoHa のストレージ I/O が不安定になり、結果として断続的にデータベースへのアクセスが詰まったためだと推測しております。</a><br>
-                        近日中に XServer VPS あたりへの移行を予定しておりますが、昨今本業が多忙な上、20GB を超える DB を移行する関係でサーバー移行には数時間〜半日以上の停止メンテナンスを要することから、現時点で移行時期は未定です。<br>
-                        <span style="font-weight: normal;">また最近、サーバー障害の影響で一時的にネットワークが切れると、ニコニコ実況からのコメント取り込みが停止する問題が発生していました。当面の対策として、どのようなエラーが起きても自動的に再接続し、可能な限り粘り強くコメントの取り込みを続けられるように改良しています。</span><br>
+                        今後 XServer VPS あたりへの移行を予定しておりますが、昨今本業が多忙な上、20GB を超える DB を移行する関係でサーバー移行には数時間〜半日以上の停止メンテナンスを要することから、現時点で移行時期は未定です。<br>
                         サーバー移行までは <a class="link" href="https://x.com/TVRemotePlus/status/2037042668036120881" target="_blank">ConoHa / GMO のせい</a> で今後も不安定な状態が続く可能性がありますが、何卒ご了承ください。<br>
+                    </blockquote>
+                    <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
+                        📢 ニコニコ実況側に追加された <a class="link" href="https://ch.nicovideo.jp/jk-worldcup" target="_blank">2026年W杯実況用特設チャンネル</a> に対応しました！<br>
+                        W杯のうち、DAZN 独占中継となる試合向けに設置されている公式実況枠のようです。ぜひご活用ください！
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
