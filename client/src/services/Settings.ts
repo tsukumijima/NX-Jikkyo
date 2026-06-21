@@ -24,6 +24,7 @@ export interface IClientSettings {
     tv_channel_sort_by_jikkyo_force: boolean;
     tv_channel_up_down_buttons_reverse: boolean;
     tv_channel_selection_requires_alt_key: boolean;
+    use_28hour_clock: boolean;
     caption_font: string;
     always_border_caption_text: boolean;
     specify_caption_opacity: boolean;

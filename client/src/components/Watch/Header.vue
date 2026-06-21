@@ -40,7 +40,7 @@ export default defineComponent({
             ProgramUtils: Object.freeze(ProgramUtils),
 
             // 現在時刻
-            time: dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss'),
+            time: Utils.apply28HourClock(dayjs().format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss')),
 
             // setTimeout の ID (beforeUnmount でクリアするために保持)
             update_time_timer_id: 0 as ReturnType<typeof setTimeout> | number,
@@ -52,7 +52,7 @@ export default defineComponent({
     methods: {
         updateTimeCore() {
             const time = dayjs();
-            this.time = time.format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss');
+            this.time = Utils.apply28HourClock(time.format(Utils.isSmartphoneHorizontal() ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss'));
             const ms = time.millisecond();
             return ms > 800 ? 500 : 1000 - ms;
         },

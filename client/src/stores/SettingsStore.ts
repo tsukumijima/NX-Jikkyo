@@ -25,6 +25,7 @@ export interface ILocalClientSettings extends IClientSettings {
     tv_channel_sort_by_jikkyo_force: boolean;
     tv_channel_up_down_buttons_reverse: boolean;
     tv_channel_selection_requires_alt_key: boolean;
+    use_28hour_clock: boolean;
     tv_streaming_quality: LiveStreamingQuality;
     tv_streaming_quality_cellular: LiveStreamingQuality;
     tv_data_saver_mode: boolean;
@@ -89,6 +90,8 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     tv_channel_up_down_buttons_reverse: false,
     // チャンネル選局のキーボードショートカットを Alt or Option + 数字キー/テンキーに変更する (Default: オフ)
     tv_channel_selection_requires_alt_key: false,
+    // 時刻を 28 時間表記で表示する (Default: オフ)
+    use_28hour_clock: false,
 
     // ***** 設定 → 画質 *****
 

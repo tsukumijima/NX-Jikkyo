@@ -183,8 +183,8 @@ class PlayerController {
             live: this.playback_mode === 'Live' ? true : false,
             // ライブモードで同期する際の最小バッファサイズ
             liveSyncMinBufferSize: this.live_playback_buffer_seconds - 0.1,
-            // ループ再生 (ライブ視聴では無効)
-            loop: this.playback_mode === 'Live' ? false : false,
+            // ループ再生 (NX-Jikkyo はコメント同期用にモック音声を流すだけのため、過去ログ再生でも常に無効)
+            loop: false,
             // 自動再生
             autoplay: true,
             // AirPlay 機能 (うまく動かないため無効化)
@@ -197,6 +197,8 @@ class PlayerController {
             crossOrigin: 'anonymous',
             // 音量の初期値
             volume: 1.0,
+            // 再生速度の設定 (x1.1 を追加)
+            playbackSpeed: [0.25, 0.5, 0.75, 1, 1.1, 1.25, 1.5, 1.75, 2],
 
             // 動画の設定
             video: (() => {
@@ -335,7 +337,7 @@ class PlayerController {
                                 comments: jikkyo_comments.comments.map((comment) => ({
                                     id: count++,
                                     text: comment.text,
-                                    time: dayjs(recording_start_time).add(comment.time, 'seconds').format('MM/DD HH:mm:ss'),
+                                    time: Utils.apply28HourClock(dayjs(recording_start_time).add(comment.time, 'seconds').format('MM/DD HH:mm:ss')),
                                     playback_position: comment.time,
                                     user_id: comment.author,
                                     premium: null,
