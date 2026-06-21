@@ -83,8 +83,8 @@ export const ILocalClientSettingsDefault: ILocalClientSettings = {
     show_player_background_image: true,
     // プレイヤー表示領域の背景色を完全な黒にする (Default: オフ)
     use_pure_black_player_background: false,
-    // チャンネル一覧を実況勢いが強い順に並び替える (Default: オフ)
-    tv_channel_sort_by_jikkyo_force: false,
+    // チャンネル一覧を実況勢いが強い順に並び替える (Default: オン)
+    tv_channel_sort_by_jikkyo_force: true,
     // チャンネル切り替えボタンとショートカットキーの上下方向をテレビリモコン準拠にする (Default: オフ)
     tv_channel_up_down_buttons_reverse: false,
     // チャンネル選局のキーボードショートカットを Alt or Option + 数字キー/テンキーに変更する (Default: オフ)
