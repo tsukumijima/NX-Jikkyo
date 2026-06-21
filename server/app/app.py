@@ -96,6 +96,21 @@ app.add_middleware(
 class NXUserIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]):
         response = await call_next(request)
+
+        # 軽量ヘルスチェックと Cookie を保持しない KonomiTV の定期ポーリングでは Cookie 発行を省略する
+        ## KonomiTV は Cookie を返さないため、/api/v1/channels の20秒ポーリングごとに UUID 生成と Set-Cookie が発生する
+        ## ブラウザ向けの NX-User-ID は WebSocket のユーザー識別に使うため、通常のブラウザアクセスでは従来どおり発行する
+        request_path = request.url.path
+        user_agent = request.headers.get('User-Agent', '')
+        if (
+            request_path == '/api/v1/health'
+            or (
+                request_path in {'/api/v1/channels', '/api/v1/channels/xml'}
+                and user_agent.startswith('KonomiTV/')
+            )
+        ):
+            return response
+
         if not request.cookies.get('NX-User-ID'):
             response.set_cookie(
                 key = 'NX-User-ID',

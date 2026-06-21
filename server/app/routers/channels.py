@@ -1,5 +1,7 @@
 
+import asyncio
 import base64
+import gzip
 import time
 import xml.etree.ElementTree as ET
 from typing import Annotated, Literal, cast
@@ -40,6 +42,52 @@ router = APIRouter(
     tags = ['Channels'],
     prefix = '/api/v1',
 )
+
+CHANNEL_RESPONSES_JSON_GZIP_CACHE_LOCK = asyncio.Lock()
+CHANNEL_RESPONSES_JSON_GZIP_SOURCE: str | None = None
+CHANNEL_RESPONSES_JSON_GZIP_BYTES: bytes | None = None
+
+
+async def GetGzipCompressedChannelResponsesJSON(channel_responses_json: str) -> bytes:
+    """
+    チャンネル情報 JSON を gzip 圧縮して返す
+
+    Args:
+        channel_responses_json (str): Redis から取得したチャンネル情報 JSON
+
+    Returns:
+        bytes: gzip 圧縮済みのチャンネル情報 JSON
+    """
+
+    global CHANNEL_RESPONSES_JSON_GZIP_SOURCE
+    global CHANNEL_RESPONSES_JSON_GZIP_BYTES
+
+    # 10秒キャッシュ由来の同じ JSON は圧縮結果も同じなので、各ワーカー内で再利用する
+    ## KonomiTV のポーリング数が多い時間帯に、リクエストごとに gzip 圧縮を走らせないための局所キャッシュ
+    if (
+        CHANNEL_RESPONSES_JSON_GZIP_SOURCE == channel_responses_json
+        and CHANNEL_RESPONSES_JSON_GZIP_BYTES is not None
+    ):
+        return CHANNEL_RESPONSES_JSON_GZIP_BYTES
+
+    async with CHANNEL_RESPONSES_JSON_GZIP_CACHE_LOCK:
+        # ロック待ち中に別リクエストが圧縮済みキャッシュを更新していれば、それをそのまま返す
+        if (
+            CHANNEL_RESPONSES_JSON_GZIP_SOURCE == channel_responses_json
+            and CHANNEL_RESPONSES_JSON_GZIP_BYTES is not None
+        ):
+            return CHANNEL_RESPONSES_JSON_GZIP_BYTES
+
+        # 圧縮率より CPU 削減を優先し、最高速寄りの level 1 で圧縮する
+        ## 元データは10秒ごとに変化し、ピーク時は同じ内容を大量配信するため、軽い圧縮でも帯域削減効果が大きい
+        channel_responses_json_gzip = gzip.compress(
+            channel_responses_json.encode('utf-8'),
+            compresslevel = 1,
+            mtime = 0,
+        )
+        CHANNEL_RESPONSES_JSON_GZIP_SOURCE = channel_responses_json
+        CHANNEL_RESPONSES_JSON_GZIP_BYTES = channel_responses_json_gzip
+        return channel_responses_json_gzip
 
 
 async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
@@ -186,27 +234,81 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
 
 
 @alru_cache(maxsize=1, ttl=10)
+async def GetRedisCachedChannelResponsesJSON() -> str:
+    """
+    スケジューラーによって定期的に Redis にキャッシュされた、最新のチャンネル情報 JSON を取得する
+    /api/v1/channels の負荷軽減のため、実行結果は10秒間メモリ上にキャッシュされる (インメモリ -> Redis の多段キャッシュ構成)
+
+    Returns:
+        str: チャンネル情報 JSON
+    """
+
+    # Redis からキャッシュを取得
+    ## キャッシュは app.py で定義のスケジューラーで10秒おきに定期更新されているので、基本常に新鮮なキャッシュが存在するはず
+    cached_channels = await REDIS_CLIENT.get(REDIS_KEY_CHANNEL_INFOS_CACHE)
+    if cached_channels is not None:
+        # Redis キャッシュ破損時の検出は従来どおり残す
+        ## HTTP レスポンスは JSON 文字列を直接返すが、10秒に1回は Pydantic で検証して既存の失敗挙動を保つ
+        TypeAdapter(list[ChannelResponse]).validate_json(cached_channels)
+        return cached_channels
+
+    # 万が一キャッシュが存在しない場合のみ、直接取得し一時的にキャッシュしてから返す (フェイルセーフ)
+    ## この時に作成される一時キャッシュの有効期限は10秒とし、万が一スケジューラーが動作していない場合でも最新のデータが返されることを保証する
+    channel_responses = await GetChannelResponses()
+    cached_channels_json = TypeAdapter(list[ChannelResponse]).dump_json(channel_responses).decode('utf-8')
+    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, cached_channels_json, ex=10)
+    logging.warning('[GetRedisCachedChannelResponses] Channel responses cache is missing. Temporary cache is created.')
+    return cached_channels_json
+
+
+@alru_cache(maxsize=1, ttl=10)
 async def GetRedisCachedChannelResponses() -> list[ChannelResponse]:
     """
     スケジューラーによって定期的に Redis にキャッシュされた、最新のチャンネル情報リストを取得する
-    /api/v1/channels の負荷軽減のため、実行結果は 10 秒間メモリ上にキャッシュされる (インメモリ -> Redis の多段キャッシュ構成)
+    /api/v1/channels の負荷軽減のため、実行結果は10秒間メモリ上にキャッシュされる (インメモリ -> Redis の多段キャッシュ構成)
 
     Returns:
         list[ChannelResponse]: チャンネル情報リスト
     """
 
-    # Redis からキャッシュを取得
-    ## キャッシュは app.py で定義のスケジューラーで 10 秒おきに定期更新されているので、基本常に新鮮なキャッシュが存在するはず
-    cached_channels = await REDIS_CLIENT.get(REDIS_KEY_CHANNEL_INFOS_CACHE)
-    if cached_channels is not None:
-        return TypeAdapter(list[ChannelResponse]).validate_json(cached_channels)
+    # 内部処理では従来どおり Pydantic モデルとして扱えるよう、JSON キャッシュから復元する
+    cached_channels_json = await GetRedisCachedChannelResponsesJSON()
+    return TypeAdapter(list[ChannelResponse]).validate_json(cached_channels_json)
 
-    # 万が一キャッシュが存在しない場合のみ、直接取得し一時的にキャッシュしてから返す (フェイルセーフ)
-    ## この時に作成される一時キャッシュの有効期限は 10 秒とし、万が一スケジューラーが動作していない場合でも最新のデータが返されることを保証する
-    channel_responses = await GetChannelResponses()
-    await REDIS_CLIENT.set(REDIS_KEY_CHANNEL_INFOS_CACHE, TypeAdapter(list[ChannelResponse]).dump_json(channel_responses).decode('utf-8'), ex=10)
-    logging.warning('[GetRedisCachedChannelResponses] Channel responses cache is missing. Temporary cache is created.')
-    return channel_responses
+
+async def GetRedisCachedChannelResponsesJSONResponse(request: Request) -> Response:
+    """
+    Redis キャッシュ済みチャンネル情報 JSON の HTTP レスポンスを生成する
+
+    Args:
+        request (Request): クライアントの HTTP リクエスト
+
+    Returns:
+        Response: チャンネル情報 JSON の HTTP レスポンス
+    """
+
+    cached_channels_json = await GetRedisCachedChannelResponsesJSON()
+
+    # gzip 対応クライアントには事前圧縮済みレスポンスを返し、TLS 書き込み量を減らす
+    ## KonomiTV の大量ポーリングはリクエスト数を減らせないため、同じ内容を軽く返す方向で負荷を下げる
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+    if 'gzip' in accept_encoding:
+        return Response(
+            content = await GetGzipCompressedChannelResponsesJSON(cached_channels_json),
+            media_type = 'application/json',
+            headers = {
+                'Content-Encoding': 'gzip',
+                'Vary': 'Accept-Encoding',
+            },
+        )
+
+    # gzip 非対応クライアントには従来と同じ JSON 本文をそのまま返す
+    ## Vary を付けておくことで、プロキシやブラウザが圧縮有無の違うレスポンスを混同しないようにする
+    return Response(
+        content = cached_channels_json,
+        media_type = 'application/json',
+        headers = {'Vary': 'Accept-Encoding'},
+    )
 
 
 @alru_cache(maxsize=1, ttl=10)
@@ -253,12 +355,29 @@ async def GetRedisCachedChannelResponsesXML() -> Response:
 
 
 @router.get(
+    '/health',
+    summary = 'ヘルスチェック API',
+    response_class = Response,
+    include_in_schema = False,
+)
+async def HealthCheckAPI():
+    """
+    Caddy のアクティブヘルスチェック用に軽量な空レスポンスを返す
+    """
+
+    # 通常 API の混雑とヘルスチェック判定を切り離すためのエンドポイントなので、
+    # 空のレスポンスのみを返す
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
     '/channels',
     summary = 'チャンネル情報 API',
     response_description = 'チャンネル情報。',
     response_model = list[ChannelResponse],
 )
 async def ChannelsAPI(
+    request: Request,
     full: Annotated[bool, Query(description='チャンネルに紐づく全スレッドの情報を取得するかどうか。省略時は最新4日分のスレッドだけ取得する。')] = False,
 ):
     """
@@ -269,8 +388,8 @@ async def ChannelsAPI(
     if full is True:
         return await GetChannelResponses(full=True)
 
-    # それ以外の場合はメモリ (メモリに存在しない場合は Redis) からチャンネル情報リストを取得する
-    return await GetRedisCachedChannelResponses()
+    # それ以外の場合はメモリ (メモリに存在しない場合は Redis) からチャンネル情報 JSON を取得する
+    return await GetRedisCachedChannelResponsesJSONResponse(request)
 
 
 @router.get(
@@ -425,7 +544,7 @@ async def GetTotalViewers():
     """
     全チャンネルの同時接続数カウント・実況勢い (コメント数/分) の合計を返す。ほぼデバッグ&負荷検証用。
     """
-    channels = await ChannelsAPI()
+    channels = await GetRedisCachedChannelResponses()
     total_viewers = 0
     total_jikkyo_force = 0
     for channel in channels:

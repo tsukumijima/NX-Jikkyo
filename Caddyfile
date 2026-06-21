@@ -29,30 +29,55 @@
 	}
 }
 
+# NX-Jikkyo アプリサーバー向けの共通リバースプロキシ設定
+## WebSocket と通常 HTTP で同じ upstream 判定・タイムアウト・ヘルスチェックを使い、片方だけ更新漏れする状態を避ける
+(nx_jikkyo_reverse_proxy_common) {
+	# ロードバランシングポリシー (weighted_round_robin: 5611/5612/5613 にフル、5614 に半分のリクエストを割り振る)
+	lb_policy weighted_round_robin 2 2 2 1
+
+	# タイムアウト設定（長時間接続互換）
+	transport http {
+		keepalive 3m # Keep-Alive を有効化 (3分)
+		dial_timeout 5s # 接続タイムアウト (5秒)
+		response_header_timeout 86400s # レスポンスヘッダーの読み取りタイムアウト (24時間)
+		read_timeout 86400s # レスポンスボディの読み取りタイムアウト (24時間)
+	}
+
+	# ヘルスチェック設定
+	health_uri /api/v1/health
+	health_status 2xx
+	health_interval 30s
+	health_timeout 5s
+}
+
 # NX-Jikkyo コンテナへのリバースプロキシ
 nx-jikkyo.tsukumijima.net {
-	# 複数ワーカーへのロードバランシング
-	# メインプロセス (5610) はニコ生コメント取り込み等のバックグラウンドタスク専用とし、Caddy からは除外する
-	# 5614 は MySQL / Redis / メインプロセスの CPU 余力を確保するために weight を半分にしている
-	reverse_proxy nx-jikkyo:5611 nx-jikkyo:5612 nx-jikkyo:5613 nx-jikkyo:5614 {
-		# ロードバランシングポリシー (weighted_round_robin: 5611/5612/5613 にフル、5614 に半分のリクエストを割り振る)
-		lb_policy weighted_round_robin 2 2 2 1
+	# WebSocket はコメント配信の遅延を抑えるため、従来どおりレスポンスバッファリングを無効化する
+	## 通常 HTTP まで flush_interval -1 にすると 90KB 前後の JSON も細かく flush されるため、WebSocket だけ別ルートで扱う
+	@websocket {
+		path_regexp ^/api/v1/channels/[^/]+/ws/[^/]+$
+	}
+	handle @websocket {
+		# 複数ワーカーへのロードバランシング
+		# メインプロセス (5610) はニコ生コメント取り込み等のバックグラウンドタスク専用とし、Caddy からは除外する
+		# 5614 は MySQL / Redis / メインプロセスの CPU 余力を確保するために weight を半分にしている
+		reverse_proxy nx-jikkyo:5611 nx-jikkyo:5612 nx-jikkyo:5613 nx-jikkyo:5614 {
+			import nx_jikkyo_reverse_proxy_common
 
-		# ストリーミングのためにレスポンスのバッファリングを無効化
-		flush_interval -1
-
-		# タイムアウト設定（長時間 WebSocket 対応）
-		transport http {
-			keepalive 3m # Keep-Alive を有効化 (3分)
-			dial_timeout 5s # 接続タイムアウト (5秒)
-			response_header_timeout 86400s # レスポンスヘッダーの読み取りタイムアウト (24時間)
-			read_timeout 86400s # レスポンスボディの読み取りタイムアウト (24時間)
+			# ストリーミングのためにレスポンスのバッファリングを無効化
+			flush_interval -1
 		}
+	}
 
-		# ヘルスチェック設定
-		health_uri /api/v1/channels
-		health_interval 30s
-		health_timeout 5s
+	# 通常 HTTP は Caddy の標準バッファリングを使い、/api/v1/channels の大量ポーリング時の write 回数を抑える
+	## 上流とタイムアウトは WebSocket ルートと同じままにして、既存 API の接続先や失敗判定を変えない
+	handle {
+		# 複数ワーカーへのロードバランシング
+		# メインプロセス (5610) はニコ生コメント取り込み等のバックグラウンドタスク専用とし、Caddy からは除外する
+		# 5614 は MySQL / Redis / メインプロセスの CPU 余力を確保するために weight を半分にしている
+		reverse_proxy nx-jikkyo:5611 nx-jikkyo:5612 nx-jikkyo:5613 nx-jikkyo:5614 {
+			import nx_jikkyo_reverse_proxy_common
+		}
 	}
 
 	# アクセスログ
