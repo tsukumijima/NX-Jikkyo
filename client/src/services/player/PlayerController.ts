@@ -1240,6 +1240,20 @@ class PlayerController {
         assert(this.player !== null);
         const player_store = usePlayerStore();
 
+        // 設定パネルの開閉を把握するためモンキーパッチを追加し、PlayerStore に通知する
+        const original_hide = this.player.setting.hide;
+        const original_show = this.player.setting.show;
+        this.player.setting.hide = () => {
+            if (this.player === null) return;
+            original_hide.call(this.player.setting);
+            player_store.is_player_setting_panel_open = false;
+        };
+        this.player.setting.show = () => {
+            if (this.player === null) return;
+            original_show.call(this.player.setting);
+            player_store.is_player_setting_panel_open = true;
+        };
+
         // 設定パネルにショートカット一覧を表示するボタンを動的に追加する
         // スマホなどのタッチデバイスでは基本キーボードが使えないため、タッチデバイスの場合はボタンを表示しない
         if (Utils.isTouchDevice() === false) {
@@ -1381,6 +1395,14 @@ class PlayerController {
             if (this.player.template.controller.classList.contains('dplayer-controller-comment')) {
                 this.player_control_ui_hide_timer_id =
                     window.setTimeout(player_control_ui_hide_timer, timeout_seconds * 1000);  // 3秒後に再実行
+                return;
+            }
+
+            // 設定パネルが開いている間は、操作中にコントロール UI を閉じない
+            // 画質や音声などの設定パネルはマウス移動やタッチ操作が止まっても、ユーザーが閉じるまで表示を続ける
+            if (player_store.is_player_setting_panel_open === true) {
+                this.player_control_ui_hide_timer_id =
+                    window.setTimeout(player_control_ui_hide_timer, timeout_seconds * 1000);
                 return;
             }
 

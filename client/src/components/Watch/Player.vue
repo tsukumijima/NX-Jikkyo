@@ -21,6 +21,9 @@
             :class="{'watch-player__buffering--display': playerStore.is_video_buffering}">
         </v-progress-circular>
         <div class="watch-player__dplayer"></div>
+        <div class="watch-player__dplayer-setting-cover"
+            :class="{'watch-player__dplayer-setting-cover--display': playerStore.is_player_setting_panel_open}"
+            @click="handleSettingCoverClick"></div>
         <div class="watch-player__button"
                 @mousemove="playerStore.event_emitter.emit('SetControlDisplayTimer', {event: $event})"
                 @touchmove="playerStore.event_emitter.emit('SetControlDisplayTimer', {event: $event})"
@@ -100,6 +103,16 @@ export default defineComponent({
     beforeUnmount() {
         // インターバルをクリア
         window.clearInterval(this.time_interval_id);
+    },
+    methods: {
+        // watch-player__dplayer-setting-cover がクリックされたとき、設定パネルを閉じる
+        handleSettingCoverClick() {
+            const dplayer_mask = document.querySelector<HTMLDivElement>('.dplayer-mask');
+            if (dplayer_mask) {
+                // dplayer-mask をクリックすることで、player.setting.hide() が内部的に呼び出され、設定パネルが閉じられる
+                dplayer_mask.click();
+            }
+        },
     },
 });
 
@@ -490,6 +503,12 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
     opacity: 0.8 !important;
 }
 
+// Safari では上の hover 補正が DPlayer の字幕オフ表示より強く効き、オフ状態でも字幕アイコンが明るく見えてしまう
+// DPlayer は字幕オフ時にボタンの aria-label も切り替えるため、style 属性の文字列表現には依存しない
+_::-webkit-full-page-media, _:future, :root .dplayer-subtitle-icon[aria-label='字幕を表示する']:hover .dplayer-icon-content {
+    opacity: 0.4 !important;
+}
+
 </style>
 <style lang="scss" scoped>
 
@@ -516,6 +535,29 @@ _::-webkit-full-page-media, _:future, :root .dplayer-icon:hover .dplayer-icon-co
             .switch-button {
                 border-top-right-radius: 0px;
                 border-bottom-right-radius: 0px;
+            }
+        }
+    }
+
+    .watch-player__dplayer-setting-cover {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+        z-index: 50;
+
+        &--display {
+            // タッチデバイスかつスマホ縦画面のみ、設定パネルを開いた時にカバーを表示する
+            @media (hover: none) {
+                @include smartphone-vertical {
+                    opacity: 1;
+                    visibility: visible;
+                }
             }
         }
     }

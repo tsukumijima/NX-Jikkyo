@@ -112,6 +112,9 @@ const usePlayerStore = defineStore('player', {
         // ザッピング（「前/次のチャンネル」ボタン or 上下キーショートカット）によるチャンネル移動かどうか
         is_zapping: false,
 
+        // DPlayer の設定パネルが開いているか
+        is_player_setting_panel_open: false,
+
         // プレイヤーのローディング状態
         // 既定でローディングとする
         is_loading: true,
@@ -194,6 +197,7 @@ const usePlayerStore = defineStore('player', {
             this.video_panel_active_tab = useSettingsStore().settings.video_panel_active_tab;
             this.is_remocon_display = false;
             this.is_zapping = false;
+            this.is_player_setting_panel_open = false;
             this.is_loading = true;
             this.is_video_buffering = true;
             this.is_video_paused = false;
