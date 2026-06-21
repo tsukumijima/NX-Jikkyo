@@ -25,7 +25,8 @@
                     <template #item="{ element }: { element: ILiveChannel }">
                         <div class="pinned-channel">
                             <!-- 以下では Icon コンポーネントを使うと個数が多いときに高負荷になるため、意図的に SVG を直書きしている -->
-                            <img class="pinned-channel__icon" :src="`${Utils.api_base_url}/channels/${element.id}/logo`" loading="lazy" decoding="async">
+                            <img class="pinned-channel__icon" :src="`/assets/images/channel-logos/${element.id}.png`" loading="lazy" decoding="async"
+                                @error="($event.target as HTMLImageElement).src = '/assets/images/channel-logos/default.png'">
                             <span class="pinned-channel__name">Ch: {{element.channel_number}} {{element.name}}</span>
                             <button class="pinned-channel__sort-handle">
                                 <svg class="iconify iconify--material-symbols" width="20px" height="20px" viewBox="0 0 24 24">

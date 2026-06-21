@@ -1,7 +1,8 @@
 <template>
     <div class="program-container">
         <section class="program-broadcaster">
-            <img class="program-broadcaster__icon" :src="`${Utils.api_base_url}/channels/${channelsStore.channel.current.id}/logo`">
+            <img class="program-broadcaster__icon" :src="`/assets/images/channel-logos/${channelsStore.channel.current.id}.png`"
+                @error="($event.target as HTMLImageElement).src = '/assets/images/channel-logos/default.png'">
             <div class="program-broadcaster__number">Ch: {{channelsStore.channel.current.channel_number}}</div>
             <div class="program-broadcaster__name">{{channelsStore.channel.current.name}}</div>
         </section>

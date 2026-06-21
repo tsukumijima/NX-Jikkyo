@@ -139,7 +139,6 @@ WebSocket API は 2 つの独立したエンドポイントで構成されてい
 |:--|:--|
 | `GET /api/v1/channels` | チャンネル一覧取得 (`full=True` で全スレッド取得) |
 | `GET /api/v1/channels/xml` | XML 互換チャンネル情報 (NicoJK.ini 対応) |
-| `GET /api/v1/channels/{channel_id}/logo` | チャンネルロゴ (PNG) |
 | `GET /api/v1/channels/{channel_id}/threads` | チャンネルのスレッド履歴 |
 | `GET /api/v1/channels/{channel_id}/jikkyo` | ニコニコ実況 WebSocket 情報 |
 | `WS  /api/v1/channels/{channel_id}/ws/watch` | 視聴セッション WebSocket |

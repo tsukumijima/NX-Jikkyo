@@ -185,3 +185,20 @@ NX-Jikkyo は KonomiTV のフォークだが、以下の機能を意図的に削
 
 KonomiTV の最新機能を NX-Jikkyo にバックポートする際は、
 削除済み機能との依存関係に注意が必要（`/konomitv-to-nx-jikkyo-porter` スキルを参照）。
+
+**コードを変更したあとは、必ず KonomiTV 同様に server/ 以下で `poetry run task lint` を実行すること。**
+
+### チャンネルロゴ配信方式の違い（NX-Jikkyo 独自仕様）
+
+KonomiTV ではユーザー環境によって視聴可能なチャンネルが変わるため、
+`GET /api/v1/channels/{channel_id}/logo` のサーバー API がロゴを動的に配信している。
+
+NX-Jikkyo はチャンネル構成が `jk1`〜`jk999` の固定セットで、
+配信局の変更以外で増減することがないため、ロゴは [client/public/assets/images/channel-logos/](client/public/assets/images/channel-logos/) に
+`{channel_id}.png` (例: `jk1.png`) として配置した static アセットとして配信している。
+
+- サーバーには `ChannelLogoAPI` も `LOGO_DIR` も存在しない（廃止済み）
+- クライアント側の `<img>` は `src="/assets/images/channel-logos/{channel_id}.png"` を直接参照
+- ロゴが存在しないチャンネルへの対策として、各 `<img>` には
+  `@error="($event.target as HTMLImageElement).src = '/assets/images/channel-logos/default.png'"` でデフォルトロゴへのフォールバックを設定
+- 新規チャンネル追加時は `client/public/assets/images/channel-logos/jkXXX.png` を手動で配置する

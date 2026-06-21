@@ -51,7 +51,8 @@
                                 <!-- 以下では Icon コンポーネントを使うとチャンネルが多いときに高負荷になるため、意図的に SVG を直書きしている -->
                                 <div class="channel__broadcaster">
                                     <img class="channel__broadcaster-icon" loading="lazy" decoding="async"
-                                        :src="`${Utils.api_base_url}/channels/${channel.id}/logo`">
+                                        :src="`/assets/images/channel-logos/${channel.id}.png`"
+                                        @error="($event.target as HTMLImageElement).src = '/assets/images/channel-logos/default.png'">
                                     <div class="channel__broadcaster-content">
                                         <span class="channel__broadcaster-name">Ch: {{channel.channel_number}} {{channel.name}}</span>
                                         <div class="channel__broadcaster-status">

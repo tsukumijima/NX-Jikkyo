@@ -1,7 +1,5 @@
 
 import base64
-import hashlib
-import pathlib
 import time
 import xml.etree.ElementTree as ET
 from typing import Annotated, Literal, cast
@@ -17,18 +15,16 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from pydantic import TypeAdapter
 from tortoise import connections, timezone
 
 from app import logging, schemas
 from app.constants import (
-    LOGO_DIR,
     REDIS_CLIENT,
     REDIS_KEY_CHANNEL_INFOS_CACHE,
     REDIS_KEY_JIKKYO_FORCE_COUNT,
     REDIS_KEY_VIEWER_COUNT,
-    VERSION,
 )
 from app.models.comment import (
     ChannelResponse,
@@ -366,67 +362,8 @@ async def ChannelThreadsAPI(
     return thread_responses
 
 
-@router.get(
-    '/channels/{channel_id}/logo',
-    summary = 'チャンネルロゴ API',
-    response_class = Response,
-    responses = {
-        status.HTTP_200_OK: {
-            'description': 'チャンネルロゴ。',
-            'content': {'image/png': {}},
-        }
-    }
-)
-def ChannelLogoAPI(
-    request: Request,
-    channel_id: Annotated[str, Path(description='チャンネル ID 。ex: jk101')],
-):
-    """
-    指定されたチャンネルに紐づくロゴを取得する。
-    """
-
-    def GetETag(logo_data: bytes) -> str:
-        """ ロゴデータのバイナリから ETag を生成する """
-        return hashlib.sha256(logo_data).hexdigest()
-
-    # HTTP レスポンスヘッダーの Cache-Control の設定
-    ## 1ヶ月キャッシュする
-    CACHE_CONTROL = 'public, no-transform, immutable, max-age=2592000'
-
-    # ***** 同梱のロゴを利用（存在する場合）*****
-
-    def ValidateAndResolvePath(base_dir: pathlib.Path, relative_path: str) -> pathlib.Path:
-        """ ベースディレクトリ内の相対パスを検証し、正規化されたパスを返す """
-        resolved_path = (base_dir / relative_path).resolve()
-        if not resolved_path.is_relative_to(base_dir):
-            raise HTTPException(status_code=400, detail='Invalid path traversal attempt.')
-        return resolved_path
-
-    # 同梱されているロゴがあれば取得する
-    logo_path = ValidateAndResolvePath(LOGO_DIR, f'{channel_id}.png')
-
-    # Path.exists() が同期的なので、あえて同期 API で実装している
-    if logo_path.exists():
-
-        # リクエストに If-None-Match ヘッダが存在し、ETag が一致する場合は 304 を返す
-        ## ETag はロゴファイルのパスとバージョン情報のハッシュから生成する
-        etag = GetETag(f'{logo_path}{VERSION}'.encode())
-        if request.headers.get('If-None-Match') == etag:
-            return Response(status_code=304)
-
-        # ロゴデータを返す
-        return FileResponse(logo_path, headers={
-            'Cache-Control': CACHE_CONTROL,
-            'ETag': etag,
-        })
-
-    # ***** デフォルトのロゴ画像を利用 *****
-
-    # 同梱のロゴファイルも Mirakurun や EDCB からのロゴもない場合は、デフォルトのロゴ画像を返す
-    return FileResponse(LOGO_DIR / 'default.png', headers={
-        'Cache-Control': CACHE_CONTROL,
-        'ETag': GetETag(b'default'),
-    })
+# チャンネルロゴはサーバー API ではなく、フロントエンドの static アセット (client/public/assets/images/channel-logos/) として配信している
+# NX-Jikkyo は KonomiTV と異なりチャンネル構成が固定で、ユーザー環境ごとにロゴが変わることもないため、サーバー負荷を下げる目的で API を廃止した
 
 
 @router.get(

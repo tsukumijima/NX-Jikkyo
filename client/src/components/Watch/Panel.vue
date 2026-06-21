@@ -8,7 +8,8 @@
             </div>
             <v-spacer></v-spacer>
             <div class="panel-broadcaster" v-if="playback_mode === 'Live'">
-                <img class="panel-broadcaster__icon" :src="`${Utils.api_base_url}/channels/${channelsStore.channel.current.id}/logo`">
+                <img class="panel-broadcaster__icon" :src="`/assets/images/channel-logos/${channelsStore.channel.current.id}.png`"
+                    @error="($event.target as HTMLImageElement).src = '/assets/images/channel-logos/default.png'">
                 <div class="panel-broadcaster__number">{{channelsStore.channel.current.channel_number}}</div>
                 <div class="panel-broadcaster__name">{{channelsStore.channel.current.name}}</div>
             </div>
