@@ -145,6 +145,7 @@ cython_debug/
 # user files
 server/data/*.*
 websocket_*
+integration-docs/
 
 # ignore .gitkeep
 !.gitkeep
