@@ -15,6 +15,15 @@
                 <v-select class="mt-8 datetime-field" color="primary" variant="outlined" hide-details label="実況チャンネル"
                     :items="jikkyo_channel_items" v-model="jikkyo_channel_id">
                 </v-select>
+                <div class="mt-3 d-flex align-center justify-space-between">
+                    <span v-if="is_restored_from_local_storage" class="text-text-darken-1" style="font-size: 14px;">
+                        前回の設定を復元しています
+                    </span>
+                    <span v-else></span>
+                    <v-btn variant="text" color="primary" size="small" @click="resetToCurrentDateTime()">
+                        現在日時にリセット
+                    </v-btn>
+                </div>
                 <div class="mt-8" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px;">
                     <v-text-field type="date" class="datetime-field" color="primary" variant="outlined" label="開始日付"
                         min="2009-11-26" :max="dayjs().format('YYYY-MM-DD')" v-model="start_date">
@@ -78,7 +87,11 @@ import Navigation from '@/components/Navigation.vue';
 import Message from '@/message';
 import useChannelsStore from '@/stores/ChannelsStore';
 import { dayjs } from '@/utils';
-import { useKakologState } from '@/views/Kakolog/KakologState';
+import {
+    resetKakologFormStateToCurrentDateTime,
+    useKakologState,
+    validateKakologFormState,
+} from '@/views/Kakolog/KakologState';
 
 const router = useRouter();
 
@@ -94,13 +107,20 @@ channels_store.update().then(() => {
 });
 
 // useKakologState から状態を取得
+const kakolog_state = useKakologState();
 const {
     jikkyo_channel_id,
     start_date,
     start_time,
     end_date,
     end_time,
-} = useKakologState();
+    is_restored_from_local_storage,
+} = kakolog_state;
+
+// フォームを現在日時ベースのデフォルト値に戻す
+function resetToCurrentDateTime() {
+    resetKakologFormStateToCurrentDateTime(kakolog_state);
+}
 
 // -30分/-5分/+5分/+30分 を終了日時両方に反映する
 // もちろん日付の繰り上がり/繰り下がりに対応する
@@ -124,38 +144,22 @@ function addMinutes(minutes: number) {
 
 function playKakolog() {
 
-    const start_datetime = dayjs(`${start_date.value} ${start_time.value}`);
-    const end_datetime = dayjs(`${end_date.value} ${end_time.value}`);
+    const form = {
+        jikkyo_channel_id: jikkyo_channel_id.value,
+        start_date: start_date.value,
+        start_time: start_time.value,
+        end_date: end_date.value,
+        end_time: end_time.value,
+    };
 
-    // Invalid Date の場合はエラー
-    if (!start_datetime.isValid() || !end_datetime.isValid()) {
-        Message.error('開始日時または終了日時が無効です。');
+    const validation_error = validateKakologFormState(form);
+    if (validation_error !== null) {
+        Message.error(validation_error);
         return;
     }
 
-    // 12時間以上の場合はエラー
-    if (end_datetime.diff(start_datetime, 'hour') >= 12) {
-        Message.error('一度に再生できる過去ログは12時間以内です。');
-        return;
-    }
-
-    // 終了日時が開始日時より前の場合はエラー
-    if (end_datetime < start_datetime) {
-        Message.error('指定された終了日時が開始日時より前です。');
-        return;
-    }
-
-    // 終了日時が未来の日付の場合はエラー
-    if (end_datetime > dayjs()) {
-        Message.error('指定された終了日時が未来の日付です。');
-        return;
-    }
-
-    // 開始日時と終了日時が同じ場合はエラー
-    if (start_datetime.isSame(end_datetime)) {
-        Message.error('指定された開始日時と終了日時が同じです。');
-        return;
-    }
+    const start_datetime = dayjs(`${form.start_date} ${form.start_time}`);
+    const end_datetime = dayjs(`${form.end_date} ${form.end_time}`);
 
     // 開始日時-終了日時の ID を 20191002213500-20191002215600 のようなフォーマットで組み立てる
     const id = `${start_datetime.format('YYYYMMDDHHmmss')}-${end_datetime.format('YYYYMMDDHHmmss')}`;
