@@ -81,13 +81,13 @@ files = [
 
 [[package]]
 name = "anyio"
-version = "4.14.0"
+version = "4.14.1"
 description = "High-level concurrency and networking framework on top of asyncio or Trio"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "anyio-4.14.0-py3-none-any.whl", hash = "sha256:dd9b7a2a9799ed6552fde617b2c5df02b7fdd7d88392fc48101e51bae46164d9"},
-    {file = "anyio-4.14.0.tar.gz", hash = "sha256:b47c1f9ccf73e67021df785332508f99379c68fa7d0684e8e3492cb1d4b23f89"},
+    {file = "anyio-4.14.1-py3-none-any.whl", hash = "sha256:4e5533c5b8ff0a24f5d7a176cbe6877129cd183893f66b537f8f227d10527d72"},
+    {file = "anyio-4.14.1.tar.gz", hash = "sha256:8d648a3544c1a700e3ff78615cd679e4c5c3f149904287e73687b2596963629e"},
 ]
 
 [package.dependencies]
@@ -98,13 +98,13 @@ trio = ["trio (>=0.32.0)"]
 
 [[package]]
 name = "apscheduler"
-version = "3.11.2"
+version = "3.11.3"
 description = "In-process task scheduler with Cron-like capabilities"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "apscheduler-3.11.2-py3-none-any.whl", hash = "sha256:ce005177f741409db4e4dd40a7431b76feb856b9dd69d57e0da49d6715bfd26d"},
-    {file = "apscheduler-3.11.2.tar.gz", hash = "sha256:2a9966b052ec805f020c8c4c3ae6e6a06e24b1bf19f2e11d91d8cca0473eef41"},
+    {file = "apscheduler-3.11.3-py3-none-any.whl", hash = "sha256:bbeb2ec02d23d3c06a6c07ed7f0f3939ada6680eb121fae809a69bb42c537a30"},
+    {file = "apscheduler-3.11.3.tar.gz", hash = "sha256:cd2fcc9330039a81a5893472ad49facf23a6d5604cbe1d918c835c6de7834d5a"},
 ]
 
 [package.dependencies]
@@ -136,13 +136,13 @@ files = [
 
 [[package]]
 name = "asyncclick"
-version = "8.3.0.7"
+version = "8.4.2.1"
 description = "Composable command line interface toolkit, async fork"
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "asyncclick-8.3.0.7-py3-none-any.whl", hash = "sha256:7607046de39a3f315867cad818849f973e29d350c10d92f251db3ff7600c6c7d"},
-    {file = "asyncclick-8.3.0.7.tar.gz", hash = "sha256:8a80d8ac613098ee6a9a8f0248f60c66c273e22402cf3f115ed7f071acfc71d3"},
+    {file = "asyncclick-8.4.2.1-py3-none-any.whl", hash = "sha256:dbd533769c4e3ce831c05394027ea1cd606c09688e18abab13dbcfbf7dc5a142"},
+    {file = "asyncclick-8.4.2.1.tar.gz", hash = "sha256:8f259376ae8d4fcd91961c8ad3e85e9b63c9cf181a122201c7dfed3d7f6024b8"},
 ]
 
 [package.dependencies]
@@ -279,13 +279,13 @@ pycparser = {version = "*", markers = "implementation_name != \"PyPy\""}
 
 [[package]]
 name = "click"
-version = "8.4.1"
+version = "8.4.2"
 description = "Composable command line interface toolkit"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "click-8.4.1-py3-none-any.whl", hash = "sha256:482be17c6991b8c19c5429a1e995d9b0efdbb63172824c41f99965dc0ade8ec2"},
-    {file = "click-8.4.1.tar.gz", hash = "sha256:918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96"},
+    {file = "click-8.4.2-py3-none-any.whl", hash = "sha256:e6f9f66136c816745b9d65817da91d61d957fb16e02e4dcd0552553c5a197b76"},
+    {file = "click-8.4.2.tar.gz", hash = "sha256:9a6cea6e60b17ebe0a44c5cc636d94f09bd66142c1cd7d8b4cd731c4917a15f6"},
 ]
 
 [package.dependencies]
@@ -475,13 +475,13 @@ hyperframe = ">=6.1,<7"
 
 [[package]]
 name = "hpack"
-version = "4.1.0"
+version = "4.2.0"
 description = "Pure-Python HPACK header encoding"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 files = [
-    {file = "hpack-4.1.0-py3-none-any.whl", hash = "sha256:157ac792668d995c657d93111f46b4535ed114f0c9c8d672271bbec7eae1b496"},
-    {file = "hpack-4.1.0.tar.gz", hash = "sha256:ec5eca154f7056aa06f196a557655c5b009b382873ac8d1e66e79e87535f1dca"},
+    {file = "hpack-4.2.0-py3-none-any.whl", hash = "sha256:858ac0b02280fa582b5080d68db0899c62a80375e0e5413a74970c5e518b6986"},
+    {file = "hpack-4.2.0.tar.gz", hash = "sha256:0895cfa3b5531fc65fe439c05eb65144f123bf7a394fcaa56aa423548d8e45c0"},
 ]
 
 [[package]]
@@ -846,7 +846,7 @@ files = [
 
 [[package]]
 name = "ndgr-client"
-version = "1.1.6"
+version = "1.1.7"
 description = "NDGRClient: Nicolive NDGR Message Server Client Library"
 optional = false
 python-versions = ">=3.11,<4.0"
@@ -868,8 +868,8 @@ websockets = ">=12.0"
 [package.source]
 type = "git"
 url = "https://github.com/tsukumijima/NDGRClient"
-reference = "7b8aece281d41a5161027fe0cb38dfea21d6cc54"
-resolved_reference = "7b8aece281d41a5161027fe0cb38dfea21d6cc54"
+reference = "c135027e9666621d18101db978f3309cf111a412"
+resolved_reference = "c135027e9666621d18101db978f3309cf111a412"
 
 [[package]]
 name = "nodeenv"
@@ -1166,13 +1166,13 @@ files = [
 
 [[package]]
 name = "pyright"
-version = "1.1.410"
+version = "1.1.411"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyright-1.1.410-py3-none-any.whl", hash = "sha256:5e961bed37cacf96b3f7cd7b1da39b350a9239aa2e69138d0e88f728cfaf296c"},
-    {file = "pyright-1.1.410.tar.gz", hash = "sha256:07a073b8ba6749826773c1269773efa11b93440d9a6aa60419d9a3172d6dc488"},
+    {file = "pyright-1.1.411-py3-none-any.whl", hash = "sha256:dc7c72a8e2700c55baa127554040e067041ea53ccfd50bf96308cc4291c7d5d9"},
+    {file = "pyright-1.1.411.tar.gz", hash = "sha256:d885a0551f2e763b089a02702174e7f4ba77548cddabc972ab86d1f7f1b0f998"},
 ]
 
 [package.dependencies]
@@ -1373,29 +1373,29 @@ pyasn1 = ">=0.1.3"
 
 [[package]]
 name = "ruff"
-version = "0.15.18"
+version = "0.15.20"
 description = "An extremely fast Python linter and code formatter, written in Rust."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "ruff-0.15.18-py3-none-linux_armv6l.whl", hash = "sha256:8b6850172348c8381b8b3084c5915a4393c2373b9b54cd5b5e1ea15812bc10df"},
-    {file = "ruff-0.15.18-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:3fccc153a85417dcd976883160cacce486997b0a0058dd18f54b8aaaac7d1ce2"},
-    {file = "ruff-0.15.18-py3-none-macosx_11_0_arm64.whl", hash = "sha256:08d4c86a68f2c3ec2c9d56380a71fb4a4f65373055cbb8caabd645e9102f38d4"},
-    {file = "ruff-0.15.18-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:37e5108745c2c0705da916d7d4de533ddf547051ef45f62888c31bae73f66318"},
-    {file = "ruff-0.15.18-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:56949a6ce8b3abde54c0bcb22cebfe57e8771cadc84b407ae8b8eaf67ebdcd43"},
-    {file = "ruff-0.15.18-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:01a754cd6a1b630d3f97e33eb452cf7a98040482318e870f8bc52a5a30e62657"},
-    {file = "ruff-0.15.18-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:6ba7a07e03a44dbf10bb086ee06705b173625014ec99f73a7e6836a5e5590a0c"},
-    {file = "ruff-0.15.18-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:5a2c40a41a4cadbcf5897b548ab29dfe248b20c540961c0247d98a3973c70403"},
-    {file = "ruff-0.15.18-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5f0480ce690cbb6c4db6e5d08f19fce98e10ba131a8b60c1bcdac42771e3ae2d"},
-    {file = "ruff-0.15.18-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:2330215f1f393fa8733f55edce04fcf94c36a2c460fcde31f78cc84e4951e9b1"},
-    {file = "ruff-0.15.18-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:a6aa6a3d979e48ae617578183674bf264fbe7d0114a796a26bd678d67963c7ff"},
-    {file = "ruff-0.15.18-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:a81beadbbff2c9c245561ae3f77b16709d87f35eec650d0501679239d3449b22"},
-    {file = "ruff-0.15.18-py3-none-musllinux_1_2_i686.whl", hash = "sha256:2186d9e940ae332ab293623a75b5f4fe49565f449954d50a72a046683aa6b809"},
-    {file = "ruff-0.15.18-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:5c2abf140438032bc77b2284a6c9944ecd8a19e5f1c7b52b1b8e4a0a80d19a7a"},
-    {file = "ruff-0.15.18-py3-none-win32.whl", hash = "sha256:02299e6e9fa5b297a3f6d5d10d7bcd655c925b028bb8b9d4588214549c6b9ec4"},
-    {file = "ruff-0.15.18-py3-none-win_amd64.whl", hash = "sha256:dac80dc8d26b2257dbefabed62f5d255c3937b4ccb122da1fc634794fa3578b3"},
-    {file = "ruff-0.15.18-py3-none-win_arm64.whl", hash = "sha256:b2c9257fcbd4a3e5b977a1904e6facca016bafe2edc17df24db67cfaee03b4e4"},
-    {file = "ruff-0.15.18.tar.gz", hash = "sha256:2698a964c70e8bf402dcb99c8810472d270d141e7aa8c4e13599fd52033a2f33"},
+    {file = "ruff-0.15.20-py3-none-linux_armv6l.whl", hash = "sha256:00e188c53e499c3c1637f73c91dcf2fb56d576cab76ce1be50a27c4e80e37078"},
+    {file = "ruff-0.15.20-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:9ebd1fd9b9c95fc0bd7b2761aebec1f030013d2e193a2901b224af68fe47251b"},
+    {file = "ruff-0.15.20-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c5b16cdd67ca108185cd36dce98c576350c03b1660a751de725fb049193a0632"},
+    {file = "ruff-0.15.20-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3413bb3c3d2ca6a8208f1f4809cd2dca3c6de6d0b491c0e70847672bde6e6efd"},
+    {file = "ruff-0.15.20-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:bd7ec42b3bb3da066488db093308a69c4ac5ee6d2af333a86ba6e2eb2e7dd44b"},
+    {file = "ruff-0.15.20-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e1a36ad0eb77fba9aabfb69ede54de6f376d04ac18ebea022847046d340a8267"},
+    {file = "ruff-0.15.20-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:b6df3b1e4610432f0386dba04d853b5f08cbbc903410c6fcc02f620f05aff53c"},
+    {file = "ruff-0.15.20-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:e89f198a1ea6ef0d727c1cf16088bc91a6cb0ab947dedc966715691647186eae"},
+    {file = "ruff-0.15.20-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:309809086c2acb67624950a3c8133e80f32d0d3e27106c0cd60ff26657c9f24b"},
+    {file = "ruff-0.15.20-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:2d2374caa2f2c2f9e2b7da0a50802cfb8b79f55a9b5e49379f564544fbf56487"},
+    {file = "ruff-0.15.20-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:a1ed17b65293e0c2f22fc387bc13198a5de94bf4429589b0ff6946b0feaf21a3"},
+    {file = "ruff-0.15.20-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:f701305e66b38ea6c91882490eb73459796808e4c6362a1b765255e0cdcd4053"},
+    {file = "ruff-0.15.20-py3-none-musllinux_1_2_i686.whl", hash = "sha256:5b9c0c367ad8e5d0d5b5b8537864c469a0a0e55417aadfbeca41fa61333be9f4"},
+    {file = "ruff-0.15.20-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:01cc00dd58f0df339d0e902219dd53990ea99996a0344e5d9cc8d45d5307e460"},
+    {file = "ruff-0.15.20-py3-none-win32.whl", hash = "sha256:ed65ef510e43a137207e0f01cfcf998aeddb1aeeda5c9d35023e910284d7cf21"},
+    {file = "ruff-0.15.20-py3-none-win_amd64.whl", hash = "sha256:a525c81c70fb0380344dd1d8745d8cc1c890b7fc94a58d5a07bd8eb9557b8415"},
+    {file = "ruff-0.15.20-py3-none-win_arm64.whl", hash = "sha256:2f5b2a6d614e8700388806a14996c40fab2c47b819ef57d790a34878858ed9ca"},
+    {file = "ruff-0.15.20.tar.gz", hash = "sha256:1416eb04349192646b54de98f146c4f59afe37d0decfc02c3cbbf396f3a28566"},
 ]
 
 [[package]]
@@ -1549,13 +1549,13 @@ psycopg = ["psycopg[binary,pool] (>=3.0.12,<4.0.0)"]
 
 [[package]]
 name = "typer"
-version = "0.26.7"
+version = "0.26.8"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "typer-0.26.7-py3-none-any.whl", hash = "sha256:5c87cfbc5d34491c5346ebf49c23e18d56ccb863268d3a8d592b26087c2f5e58"},
-    {file = "typer-0.26.7.tar.gz", hash = "sha256:e314a34c617e419c091b2830dda3ea1f257134ff593061a8f5b9717ab8dddb3a"},
+    {file = "typer-0.26.8-py3-none-any.whl", hash = "sha256:3512ca79ac5c11113414b36e80281b872884477722440691c89d1112e321a49c"},
+    {file = "typer-0.26.8.tar.gz", hash = "sha256:c244a6bd558886fe3f8780efb6bdd28bb9aff005a94eedebaa5cb32926fe2f7e"},
 ]
 
 [package.dependencies]
@@ -1672,13 +1672,13 @@ files = [
 
 [[package]]
 name = "tzlocal"
-version = "5.4.3"
+version = "5.4.4"
 description = "tzinfo object for the local timezone"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "tzlocal-5.4.3-py3-none-any.whl", hash = "sha256:24ce97bb58e2a973f7640ec2553ab4e6f6d5a0d0d1aa9dc43bca21d89e1feb82"},
-    {file = "tzlocal-5.4.3.tar.gz", hash = "sha256:3a8c9bc18cf47e1dcde252ea0e6a72a6cde320a400b6ac6db1f1f8cccd553c00"},
+    {file = "tzlocal-5.4.4-py3-none-any.whl", hash = "sha256:aae09f0126a8a86fa736be266eb4a471380d26a0de3bc14844e7821fee3e2a15"},
+    {file = "tzlocal-5.4.4.tar.gz", hash = "sha256:8dbb8660838688a7b6ba4fed31d18dedf842afb4d47ca050d6d891c2c15f3be4"},
 ]
 
 [package.dependencies]
@@ -1979,4 +1979,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.13,<3.14"
-content-hash = "aa6d868000361300dc836fa9205fff341ef34eb90affb66d9697d70d22f81509"
+content-hash = "1eb1d312ef6334fcd40a771f0bcea3b210d24a288523c729d1c143a15de76738"
