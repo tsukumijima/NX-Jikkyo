@@ -2260,9 +2260,9 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-"dplayer@github:tsukumijima/DPlayer#v1.32.8":
-  version "1.32.8"
-  resolved "https://codeload.github.com/tsukumijima/DPlayer/tar.gz/32712e60a9eb1ae03963c224344b28f017b67f09"
+"dplayer@github:tsukumijima/DPlayer#v1.33.2":
+  version "1.33.2"
+  resolved "https://codeload.github.com/tsukumijima/DPlayer/tar.gz/e1132aa9bef23013dfd49ea228622daa6aebc0b0"
   dependencies:
     aribb24.js "~1.11.5"
     axios "^1.7.2"
@@ -3550,9 +3550,9 @@ mitt@^3.0.1:
   resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.1.tgz#ea36cf0cc30403601ae074c8f77b7092cdab36d1"
   integrity sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==
 
-"mpegts.js@github:tsukumijima/mpegts.js#cc58169d2b61f0d27588fd31593b8739abe7b0ab":
+"mpegts.js@github:tsukumijima/mpegts.js#bf4e49d0ff004cf7546237393a62c66e4b926dca":
   version "1.8.0"
-  resolved "https://codeload.github.com/tsukumijima/mpegts.js/tar.gz/cc58169d2b61f0d27588fd31593b8739abe7b0ab"
+  resolved "https://codeload.github.com/tsukumijima/mpegts.js/tar.gz/bf4e49d0ff004cf7546237393a62c66e4b926dca"
   dependencies:
     es6-promise "^4.2.5"
 
@@ -3571,7 +3571,7 @@ nanoid@^3.3.20:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.20.tgz#dfd4444d85aa10111ef66ba85ed72e08ba0855d8"
   integrity sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==
 
-nanoid@^5.0.9:
+nanoid@^5.1.16:
   version "5.1.16"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-5.1.16.tgz#fe345c0a1f9007c32fbb5c139e1208bfd3f41ef7"
   integrity sha512-kVrnsrJqMR8+oLJnGEmSWw9BivK5mt7H3FZatVRjrc5wGqFYuBxX1yG7+A7Gi5AefkX6t/oCkizcQgpu0cY1dQ==
