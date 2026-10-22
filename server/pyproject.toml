@@ -1,8 +1,38 @@
-[tool.poetry]
+[project]
 name = "NX-Jikkyo"
 version = "1.14.8"
 description = "NX-Jikkyo: Nico Nico Jikkyo Alternative"
-package-mode = false
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "aerich==0.9.1",
+    "aiomysql>=0.2.0,<1.0.0",
+    "apscheduler>=3.11.0",
+    "async-lru>=2.0.4",
+    "cryptography>=43.0.3",
+    "fastapi~=0.115.3",
+    "httpx[http2]>=0.27.2,<1.0.0",
+    "ndgr-client @ git+https://github.com/tsukumijima/NDGRClient@b7385e5f1949d1840cdcbc2a687efd560c503e9d",
+    "pydantic>=2.9.2",
+    "pydantic-settings>=2.5.2",
+    "python-jose>=3.3.0",
+    "python-multipart>=0.0.12,<1.0.0",
+    "redis==4.6.0",
+    "rich>=13.9.3",
+    "taskipy>=1.14.0",
+    "tortoise-orm>=0.21.7,<1.0.0",
+    "typer>=0.21.0,<1.0.0",
+    "types-redis>=4.6.0.20241004,<5.0.0",
+    "typing-inspect>=0.9.0,<1.0.0",
+    "uvicorn[standard]>=0.32.0,<1.0.0",
+    "uvloop>=0.21.0,<1.0.0 ; sys_platform == 'linux'",
+    "websockets>=12.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.403",
+    "ruff>=0.9.1,<1.0.0",
+]
 
 [tool.taskipy.tasks]
 serve  = "cd ../ && docker compose build && docker compose run --rm --service-ports nx-jikkyo"
@@ -11,38 +41,11 @@ aerich = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose
 lint = "ruff check --fix . ; pyright"
 typecheck = "pyright"
 
-[tool.poetry.dependencies]
-python = ">=3.13,<3.14"
-aerich = "==0.9.1"
-aiomysql = ">=0.2.0,<1.0.0"
-apscheduler = "^3.11.0"
-async-lru = "^2.0.4"
-cryptography = ">=43.0.3,<51.0.0"
-fastapi = "~0.115.3"
-httpx = {version = ">=0.27.2,<1.0.0", extras = ["http2"]}
-ndgr-client = { git = "https://github.com/tsukumijima/NDGRClient", rev = "b7385e5f1949d1840cdcbc2a687efd560c503e9d" }
-pydantic = "^2.9.2"
-pydantic-settings = "~2.5.2"
-python-jose = "^3.3.0"
-python-multipart = ">=0.0.12,<1.0.0"
-redis = "==4.6.0"
-rich = "^13.9.3"
-taskipy = "^1.14.0"
-tortoise-orm = ">=0.21.7,<1.0.0"
-typer = ">=0.21.0,<1.0.0"
-types-redis = "^4.6.0.20241004"
-typing-inspect = ">=0.9.0,<1.0.0"
-uvicorn = {version = ">=0.32.0,<1.0.0", extras = ["standard"]}
-uvloop = {version = ">=0.21.0,<1.0.0", platform = "linux"}
-websockets = "^12.0"
-
-[tool.poetry.group.dev.dependencies]
-pyright = "^1.1.403"
-ruff = ">=0.9.1,<1.0.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+package = false
+# 開発時は uv sync / uv run で dev グループ (Ruff・Pyright) も自動的にインストールする
+## uv の既定値と同じだが、Docker イメージで --no-dev を指定している理由が読み取れるよう明示している
+default-groups = ["dev"]
 
 [tool.aerich]
 tortoise_orm = "app.constants.DATABASE_CONFIG"

@@ -8,15 +8,17 @@ ENV TZ=Asia/Tokyo
 # apt-get に対話的に設定を確認されないための設定
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Poetry をインストール
-RUN python -m pip install poetry
+# uv をインストール
+RUN python -m pip install --no-cache-dir uv
 
-# Poetry の依存パッケージリストだけをコピー
+# uv の依存パッケージリストだけをコピー
 WORKDIR /code/server/
-COPY ./server/pyproject.toml ./server/poetry.lock ./server/poetry.toml /code/server/
+COPY ./server/pyproject.toml ./server/uv.lock /code/server/
 
-# 依存パッケージを poetry でインストール
-RUN python -m poetry install --only main --no-root
+# 依存パッケージを uv でインストール
+## 開発用パッケージを除いて仮想環境 (.venv) を作成し、インストール後にキャッシュを削除する
+RUN python -m uv sync --frozen --no-dev --python /usr/local/bin/python && \
+    python -m uv cache clean
 
 # サーバーのソースコードをコピー
 COPY ./server/ /code/server/

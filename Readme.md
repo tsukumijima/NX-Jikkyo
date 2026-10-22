@@ -152,7 +152,7 @@ WebSocket API は 2 つの独立したエンドポイントで構成されてい
 ### 前提条件
 
 - **Docker** & **Docker Compose**
-- **Python 3.13** + **[Poetry](https://python-poetry.org/)**
+- **Python 3.13** + **[uv](https://docs.astral.sh/uv/)**
 - **Node.js** + **Yarn** (フロントエンド開発時)
 
 ### プロジェクト構成
@@ -197,7 +197,8 @@ NX-Jikkyo/
 │   │   │   ├── comment_counter_cache.py  # コメ番キャッシュ (Redis Lua)
 │   │   │   └── transaction.py    # DB トランザクション (自動リトライ)
 │   │   └── migrations/           # Aerich マイグレーション
-│   ├── pyproject.toml            # Poetry 依存管理・タスク定義
+│   ├── pyproject.toml            # uv 依存管理・タスク定義
+│   ├── uv.lock                   # 依存パッケージのバージョンを固定するロックファイル
 │   └── static/logos/             # チャンネルロゴ
 ├── docker-compose.yaml           # Docker Compose 構成定義
 ├── Dockerfile                    # コンテナビルド定義
@@ -232,11 +233,11 @@ cp .env.example .env
 ### Server
 
 ```bash
-# VSCode 上での Python の補完が効くように、別途ローカルに Poetry で管理している依存ライブラリをインストールする必要がある
+# VSCode 上での Python の補完が効くように、別途ローカルにも uv で依存ライブラリをインストールする必要がある
 ## 実際に NX-Jikkyo サーバーの動作に使われるのは Docker イメージビルド時にインストールされたライブラリの方
-## 両者は同期しないので、Poetry でライブラリを追加・更新した際は忘れずにローカル環境で poetry install --no-root を実行すること
+## 両者は同期しないので、ライブラリを追加・更新した際はローカルで uv sync を実行し、Docker イメージも再ビルドすること
 cd server
-poetry install --no-root
+uv sync --frozen
 ```
 
 以下のコマンドは内部的に Docker Compose 上で実行されます。  
@@ -245,24 +246,24 @@ MySQL / Redis コンテナは NX-Jikkyo (Uvicorn) と同時に起動します (�
 ```bash
 # サーバーを起動
 #  http://localhost:5610 でアクセス可能
-poetry run task serve
+uv run task serve
 
 # サーバーを起動 (ホットリロード)
 # server/app/ 配下のコード変更を検知して自動的にサーバーを再起動する
-poetry run task dev
+uv run task dev
 ```
 
 その他の開発コマンドは以下の通りです。
 
 ```bash
 # Aerich (マイグレーションツール) を使う
-poetry run task aerich --help
+uv run task aerich --help
 
 # コード品質チェック (Ruff + Pyright)
-poetry run task lint
+uv run task lint
 
 # 型チェックのみ (Pyright)
-poetry run task typecheck
+uv run task typecheck
 
 # MySQL のバックアップを取る
 ./mysqldump.sh

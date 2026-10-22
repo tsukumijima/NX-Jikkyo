@@ -186,7 +186,7 @@ NX-Jikkyo は KonomiTV のフォークだが、以下の機能を意図的に削
 KonomiTV の最新機能を NX-Jikkyo にバックポートする際は、
 削除済み機能との依存関係に注意が必要（`/konomitv-to-nx-jikkyo-porter` スキルを参照）。
 
-**コードを変更したあとは、必ず KonomiTV 同様に server/ 以下で `poetry run task lint` を実行すること。**
+**コードを変更したあとは、必ず KonomiTV 同様に server/ 以下で `uv run task lint` を実行すること。**
 
 ### チャンネルロゴ配信方式の違い（NX-Jikkyo 独自仕様）
 
