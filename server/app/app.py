@@ -206,6 +206,9 @@ tortoise.contrib.fastapi.register_tortoise(
 # 以降は指定されたポートが .env に記載の SERVER_PORT と一致する場合 (= メインサーバープロセス) のみ実行
 if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
+    # 起動完了後もコメント取り込みタスクの参照を保持する
+    background_tasks: list[asyncio.Task[None]] = []
+
     # サーバーの初回起動時のみ、チャンネル情報をマスタデータとして登録
     async def RegisterMasterChannels():
 
@@ -257,9 +260,6 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
 
         # 現在アクティブなスレッドの情報を保存する辞書
         active_threads: dict[int, Thread] = {}
-
-        # バックグラウンドタスクの参照を保持する
-        background_tasks: list[asyncio.Task[None]] = []
 
         # ニコニコ実況のコメントをリアルタイムに受信する非同期関数
         async def StreamNicoliveComments(channel_id_int: int) -> None:
