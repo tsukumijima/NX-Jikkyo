@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-import httpx
+import httpx2 as httpx
 from redis.asyncio.client import Redis
 
 from app.config import CONFIG
@@ -165,8 +165,8 @@ API_REQUEST_HEADERS: dict[str, str] = {
     'User-Agent': f'NX-Jikkyo/{VERSION}',
 }
 
-# NX-Jikkyo で利用する httpx.AsyncClient の設定
-## httpx.AsyncClient 自体は一度使ったら再利用できないので、httpx.AsyncClient を返す関数にしている
+# NX-Jikkyo で利用する httpx2.AsyncClient の設定
+## httpx2.AsyncClient 自体は一度使ったら再利用できないので、httpx2.AsyncClient を返す関数にしている
 HTTPX_CLIENT = lambda: httpx.AsyncClient(
     # NX-Jikkyo の User-Agent を指定
     headers = API_REQUEST_HEADERS,

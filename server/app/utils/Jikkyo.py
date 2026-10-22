@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import ClassVar, cast
 
-import httpx
+import httpx2 as httpx
 from bs4 import BeautifulSoup
 from fastapi import Request
 

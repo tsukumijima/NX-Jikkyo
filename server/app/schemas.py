@@ -1,5 +1,5 @@
 
-import httpx
+import httpx2 as httpx
 from pydantic import BaseModel
 
 from app.config import CONFIG
