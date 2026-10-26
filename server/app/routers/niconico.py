@@ -6,7 +6,6 @@ from typing import Annotated
 import httpx2 as httpx
 from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.security.utils import get_authorization_scheme_param
-from jose import jwt
 
 from app import logging, schemas
 from app.config import CONFIG
@@ -175,8 +174,17 @@ async def NiconicoAuthCallbackAPI(
 
     # ニコニコアカウントのユーザー ID を取得
     # ユーザー ID は id_token の JWT の中に含まれている
-    id_token_jwt = jwt.get_unverified_claims(token_api_response_json['id_token'])
-    niconico_user_id = int(id_token_jwt.get('sub', 0))
+    ## トークン API から HTTPS で直接受け取った値で署名を検証する必要はないため、JWT のペイロード部分を Base64URL デコードして読み取る
+    ## JWT は「ヘッダー.ペイロード.署名」の形式で、ユーザー ID はペイロードに含まれている
+    id_token_payload = str(token_api_response_json['id_token']).split('.')[1]
+
+    # JWT の Base64URL は末尾の = を省略しているが、urlsafe_b64decode() は長さが4の倍数でないとデコードできないため、= を補う
+    padding = '=' * (-len(id_token_payload) % 4)
+    id_token_payload_bytes = base64.urlsafe_b64decode(id_token_payload + padding)
+
+    # デコードした JSON からユーザー ID を取り出す
+    id_token_claims = json.loads(id_token_payload_bytes)
+    niconico_user_id = int(id_token_claims.get('sub', 0))
 
     try:
 

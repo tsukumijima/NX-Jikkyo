@@ -14,7 +14,6 @@ dependencies = [
     "ndgr-client @ git+https://github.com/tsukumijima/NDGRClient@21b3e2c361c4d3b856d5ff7bfab5001088f02a15",
     "pydantic>=2.9.2",
     "pydantic-settings>=2.5.2",
-    "python-jose>=3.3.0",
     "python-multipart>=0.0.12,<1.0.0",
     "redis==4.6.0",
     "rich>=13.9.3",
