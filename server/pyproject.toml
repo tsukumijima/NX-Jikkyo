@@ -11,7 +11,7 @@ dependencies = [
     "cryptography>=43.0.3",
     "fastapi>=0.162.0,<1.0.0",
     "httpx2[http2]>=2.13.1,<3.0.0",
-    "ndgr-client @ git+https://github.com/tsukumijima/NDGRClient@b7385e5f1949d1840cdcbc2a687efd560c503e9d",
+    "ndgr-client @ git+https://github.com/tsukumijima/NDGRClient@21b3e2c361c4d3b856d5ff7bfab5001088f02a15",
     "pydantic>=2.9.2",
     "pydantic-settings>=2.5.2",
     "python-jose>=3.3.0",
