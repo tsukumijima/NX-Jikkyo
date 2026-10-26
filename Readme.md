@@ -14,7 +14,8 @@
 
 ### 対応チャンネル
 
-地上波 9 局・BS/CS を含む計 38 チャンネルに対応しています (jk1 〜 jk333) 。
+地上波・BS/CS と WBC・W杯向け特設チャンネルを合わせ、35 チャンネルに対応しています (jk1 〜 jk333, jk991, jk992)。  
+jk263 (旧 BSJapanext) は jk200 (BS10) のエイリアスです。
 
 ### 対応サードパーティーアプリ
 
@@ -58,13 +59,18 @@ PWA (Progressive Web App) にも対応しており、PC のデスクトップや
 バックエンドは **Python 3.13 + FastAPI** で構築された非同期 Web サーバーです。Uvicorn (uvloop) 上で動作し、マルチプロセス構成 (メイン + サブプロセス × N) でリクエストを処理します。  
 こちらのソースコードも、KonomiTV のサーバー API の設計に寄せて開発されています。
 
-Caddy リバースプロキシがラウンドロビン方式で各ワーカープロセス (ポート 5610 〜 5613) にリクエストを分散します。WebSocket の長時間接続に対応するため、タイムアウトは 24 時間に設定されています。
+メインプロセス (ポート 5610) とサブプロセス 4つ (ポート 5611 〜 5614) が起動します。  
+Caddy リバースプロキシは、ニコ生コメント取り込みなどのバックグラウンドタスク専用である 5610 を除外し、5611 〜 5614 にリクエストを分散します。  
+WebSocket は 5611 〜 5614 へ分散し、通常 HTTP は 5614 を優先します。  
+WebSocket の長時間接続に対応するため、タイムアウトは 24 時間に設定されています。
 
 主な依存ライブラリは [server/pyproject.toml](server/pyproject.toml) を参照してください。
 
 ### ニコニコ実況コメントのリアルタイム連携
 
-ニコニコ実況の各チャンネルに投稿されたコメントを NX-Jikkyo のサーバー側で [NDGRClient](https://github.com/tsukumijima/NDGRClient) を使いリアルタイム受信し、NX-Jikkyo のデータベースに通常のコメントとして「投稿」することで、ニコニコ実況のコメントをリアルタイム表示しています。
+ニコニコ実況の公式チャンネル (jk1, jk2, jk4, jk5, jk6, jk7, jk8, jk9, jk101, jk211 など) に投稿されたコメントを、NX-Jikkyo のサーバー側で [NDGRClient](https://github.com/tsukumijima/NDGRClient) を使いリアルタイム受信します。  
+受信したコメントは NX-Jikkyo のデータベースに通常のコメントとして「投稿」され、リアルタイム表示されます。  
+BS 系など NX-Jikkyo 独自チャンネルは、WebSocket 経由のユーザー投稿のみです。
 
 さらに、NX-Jikkyo のフロントエンドには、ニコニコ実況（ニコニコ生放送）とアプリ連携し、直接コメントを投稿する機能もあります。  
 この機能を使えば、NX-Jikkyo を事実上ニコニコ実況の非公式コメントサーバーとして利用できます。
@@ -146,6 +152,7 @@ WebSocket API は 2 つの独立したエンドポイントで構成されてい
 | `GET /api/v1/threads/{thread_id}` | スレッド情報と全コメント取得 |
 | `GET /api/niconico/auth` | ニコニコ OAuth 認証 URL 発行 |
 | `GET /api/niconico/callback` | ニコニコ OAuth コールバック |
+| `DELETE /api/niconico/logout` | ニコニコ OAuth 連携解除 |
 
 ## Development
 
@@ -153,20 +160,23 @@ WebSocket API は 2 つの独立したエンドポイントで構成されてい
 
 - **Docker** & **Docker Compose**
 - **Python 3.13** + **[uv](https://docs.astral.sh/uv/)**
-- **Node.js** + **Yarn** (フロントエンド開発時)
+- **Node.js 22+** + **Yarn** (フロントエンド開発時)
 
 ### プロジェクト構成
 
 ```
 NX-Jikkyo/
 ├── client/                       # フロントエンド (Vue 3 + Vuetify 3 + TypeScript)
+│   ├── public/assets/images/channel-logos/  # チャンネルロゴ (static アセット)
 │   ├── src/
 │   │   ├── components/           # Vue コンポーネント
-│   │   │   └── Watch/            # 視聴画面関連コンポーネント
+│   │   │   ├── Watch/            # 視聴画面関連コンポーネント
+│   │   │   └── Settings/         # 設定画面関連コンポーネント
 │   │   ├── views/                # ページコンポーネント
 │   │   │   ├── TV/               # ライブ実況視聴画面
 │   │   │   ├── Kakolog/          # 過去ログ再生画面
-│   │   │   └── Settings/         # 設定画面
+│   │   │   ├── Settings/         # 設定画面
+│   │   │   └── About.vue         # サイトについて
 │   │   ├── services/             # API 通信層
 │   │   │   └── player/           # プレイヤー関連 (KonomiTV ベース)
 │   │   │       └── managers/     # PlayerManager 群
@@ -174,6 +184,8 @@ NX-Jikkyo/
 │   │   │           ├── KeyboardShortcutManager.ts
 │   │   │           └── DocumentPiPManager.ts
 │   │   ├── stores/               # Pinia ストア (状態管理)
+│   │   ├── router/               # Vue Router
+│   │   ├── styles/               # 共通 SCSS
 │   │   ├── utils/                # ユーティリティ関数
 │   │   └── plugins/              # Vue プラグイン (Vuetify 等)
 │   ├── package.json
@@ -185,8 +197,9 @@ NX-Jikkyo/
 │   │   ├── config.py             # 設定管理 (Pydantic Settings)
 │   │   ├── constants.py          # 定数 (チャンネル情報・Redis キー等)
 │   │   ├── schemas.py            # Pydantic & TypedDict スキーマ定義
+│   │   ├── logging.py            # ロギング設定
 │   │   ├── models/
-│   │   │   └── comment.py        # ORM モデル (Channel, Thread, Comment)
+│   │   │   └── comment.py        # ORM モデル (Channel, Thread, Comment, CommentCounter)
 │   │   ├── routers/
 │   │   │   ├── channels.py       # チャンネル API
 │   │   │   ├── threads.py        # スレッド/コメント API
@@ -194,12 +207,16 @@ NX-Jikkyo/
 │   │   │   └── niconico.py       # ニコニコ OAuth API
 │   │   ├── utils/
 │   │   │   ├── Jikkyo.py         # ニコニコ実況連携 (NDGRClient)
+│   │   │   ├── TVer.py           # TVer 番組情報
 │   │   │   ├── comment_counter_cache.py  # コメ番キャッシュ (Redis Lua)
-│   │   │   └── transaction.py    # DB トランザクション (自動リトライ)
+│   │   │   ├── transaction.py    # DB トランザクション (自動リトライ)
+│   │   │   └── log_rotation.py   # サーバーログの日付分割
 │   │   └── migrations/           # Aerich マイグレーション
+│   ├── data/                     # MySQL / Redis / Caddy のデータ
+│   ├── logs/                     # サーバーログ
+│   ├── misc/                     # 運用補助スクリプト
 │   ├── pyproject.toml            # uv 依存管理・タスク定義
-│   ├── uv.lock                   # 依存パッケージのバージョンを固定するロックファイル
-│   └── static/logos/             # チャンネルロゴ
+│   └── uv.lock                   # 依存パッケージのバージョンを固定するロックファイル
 ├── docker-compose.yaml           # Docker Compose 構成定義
 ├── Dockerfile                    # コンテナビルド定義
 ├── Caddyfile                     # Caddy リバースプロキシ設定
@@ -221,7 +238,7 @@ cp .env.example .env
 |:--|:--|:--|
 | `ENVIRONMENT` | `Develop` | 環境 (`Develop` / `Production`) |
 | `SERVER_PORT` | `5610` | FastAPI メインサーバーポート |
-| `SUB_SERVER_PROCESS_COUNT` | `3` | メインサーバープロセスの他に起動するサブサーバープロセスの個数 |
+| `SUB_SERVER_PROCESS_COUNT` | `4` | メインサーバープロセスの他に起動するサブサーバープロセスの個数 |
 | `CADDY_HTTP_PORT` | `80` | Caddy HTTP ポート |
 | `CADDY_HTTPS_PORT` | `443` | Caddy HTTPS ポート |
 | `MYSQL_USER` | `nx-jikkyo_user` | MySQL ユーザー名 |
