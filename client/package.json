@@ -1,6 +1,6 @@
 {
     "name": "NX-Jikkyo",
-    "version": "1.14.9",
+    "version": "1.15.0",
     "private": true,
     "scripts": {
         "dev": "vite",
