@@ -55,6 +55,9 @@ __active_threads: dict[int, Thread] = {}
 
 # 接続ごとのコメント送信キューの最大サイズ
 COMMENT_QUEUE_MAX_SIZE = 200
+# コメントセッションの thread コマンドで、1回に取得できるコメント数 (res_from の絶対値) の上限
+## 極端に大きい res_from で DB に重いクエリを実行させられないよう、これを超える値は上限に切り詰める
+MAX_COMMENTS_PER_THREAD_COMMAND = 10000
 # unknown channel の拒否ログを集約して出力する間隔 (秒)
 UNKNOWN_CHANNEL_LOG_INTERVAL_SECONDS = 60.0
 # unknown channel ごとの拒否回数
@@ -1466,6 +1469,12 @@ async def CommentSessionAPI(
                             logging.error(f'CommentSessionAPI [{channel_id}]: Invalid res_from: {res_from}')
                             await CloseWebSocketSafely(websocket, code=1008, reason=f'[{channel_id}]: Invalid res_from: {res_from}')
                             return
+
+                        # 上限を超える res_from は、接続を切らずに上限の件数に切り詰める
+                        ## 上限を超える値を送ってくるクライアントも、エラーにせず最新の上限件数分のコメントを受け取れる
+                        if abs(res_from) > MAX_COMMENTS_PER_THREAD_COMMAND:
+                            logging.warning(f'CommentSessionAPI [{channel_id}]: res_from {res_from} exceeds the limit. Clamped to -{MAX_COMMENTS_PER_THREAD_COMMAND}.')
+                            res_from = -MAX_COMMENTS_PER_THREAD_COMMAND
 
                         # threadkey: スレッドキー
                         ## 視聴セッション WebSocket の "room" メッセージから返される yourPostKey と同一
