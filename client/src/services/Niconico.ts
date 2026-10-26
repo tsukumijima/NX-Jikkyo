@@ -40,17 +40,21 @@ class Niconico {
      */
     static async logoutAccount(): Promise<boolean> {
 
-        // // API リクエストを実行
-        // const response = await APIClient.delete('/niconico/logout');
-
-        // // エラー処理
-        // if (response.type === 'error') {
-        //     APIClient.showGenericError(response, 'ニコニコアカウントとの連携を解除できませんでした。');
-        //     return false;
-        // }
+        // API リクエストを実行
+        // トークンを保存している NX-Niconico-Token Cookie は HttpOnly で JavaScript からは削除できないため、サーバーに削除してもらう
+        const response = await APIClient.delete('/niconico/logout', {
+            baseURL: Utils.api_base_url.replace('/v1', ''),
+        });
 
         // NX-Niconico-User Cookie を削除してログアウトとする
+        // API リクエストに失敗した場合でも、NX-Niconico-User Cookie がなければサーバーはトークンを使わないため、連携は解除される
         removeCookie('NX-Niconico-User');
+
+        // エラー処理
+        if (response.type === 'error') {
+            APIClient.showGenericError(response, 'ニコニコアカウントとの連携を解除できませんでした。');
+            return false;
+        }
 
         return true;
     }
