@@ -1,5 +1,10 @@
 
+import base64
+import json
+from typing import ClassVar
+
 import httpx2 as httpx
+from fastapi import Response
 from pydantic import BaseModel
 
 from app.config import CONFIG
@@ -16,6 +21,102 @@ class NiconicoUser(BaseModel):
     niconico_user_premium: bool
     niconico_access_token: str
     niconico_refresh_token: str
+
+    # NX-Jikkyo はユーザーアカウントを持たないため、ニコニコアカウントとの連携情報はブラウザの Cookie に保存する
+    # 表示用の連携情報 (ユーザー ID・ユーザー名・プレミアム会員かどうか) を保存する Cookie の名前
+    ## クライアントの JavaScript から読み取って画面に表示するため、HttpOnly を付けない
+    USER_COOKIE_NAME: ClassVar[str] = 'NX-Niconico-User'
+    # ニコニコのアクセストークン・リフレッシュトークンを保存する Cookie の名前
+    ## サーバー側でしか使わないので、XSS で盗まれないよう HttpOnly を付けて JavaScript から読めないようにする
+    TOKEN_COOKIE_NAME: ClassVar[str] = 'NX-Niconico-Token'
+    # 連携情報を保存する Cookie の有効期限 (10年間、秒単位)
+    COOKIE_MAX_AGE: ClassVar[int] = 315360000
+
+    @classmethod
+    def fromCookies(cls, cookies: dict[str, str]) -> tuple['NiconicoUser | None', bool]:
+        """
+        リクエストの Cookie から、ニコニコアカウントとの連携情報を読み取る
+        以前はトークンも表示用の連携情報と一緒に NX-Niconico-User Cookie (JavaScript から読める) に保存していたため、
+        トークンの Cookie がない場合は、NX-Niconico-User Cookie に含まれているトークンを読み取る
+
+        Args:
+            cookies (dict[str, str]): リクエストの Cookie
+
+        Returns:
+            tuple[NiconicoUser | None, bool]: 連携情報 (未連携の場合は None) と、以前の形式の Cookie から読み取ったかどうか
+
+        Raises:
+            ValueError: Cookie の値が Base64 や JSON として不正な場合や、連携情報として必要な値が欠けている場合
+        """
+
+        # 表示用の連携情報の Cookie がない場合は、未連携として扱う
+        ## 以前のクライアントは連携解除の際に NX-Niconico-User Cookie だけを削除していたため、
+        ## トークンの Cookie だけが残っていても、そのトークンは使わない
+        user_cookie = cookies.get(cls.USER_COOKIE_NAME)
+        if not user_cookie:
+            return None, False
+        user_json = json.loads(base64.b64decode(user_cookie).decode('utf-8'))
+        if not isinstance(user_json, dict):
+            raise ValueError(f'{cls.USER_COOKIE_NAME} cookie is not JSON object.')
+
+        # トークンの Cookie がある場合は、表示用の連携情報と合わせて連携情報とする
+        token_cookie = cookies.get(cls.TOKEN_COOKIE_NAME)
+        if token_cookie:
+            token_json = json.loads(base64.b64decode(token_cookie).decode('utf-8'))
+            if not isinstance(token_json, dict):
+                raise ValueError(f'{cls.TOKEN_COOKIE_NAME} cookie is not JSON object.')
+            niconico_user = cls.model_validate({
+                'niconico_user_id': user_json.get('niconico_user_id'),
+                'niconico_user_name': user_json.get('niconico_user_name'),
+                'niconico_user_premium': user_json.get('niconico_user_premium'),
+                'niconico_access_token': token_json.get('niconico_access_token'),
+                'niconico_refresh_token': token_json.get('niconico_refresh_token'),
+            })
+            return niconico_user, False
+
+        # トークンの Cookie がない場合は、以前の形式の NX-Niconico-User Cookie に含まれているトークンを使う
+        ## 新しい形式の NX-Niconico-User Cookie にはトークンが含まれないため、その場合は ValidationError (ValueError) になる
+        return cls.model_validate(user_json), True
+
+    @classmethod
+    def deleteCookies(cls, response: Response) -> None:
+        """
+        ニコニコアカウントとの連携情報を保存している Cookie をすべて削除する
+
+        Args:
+            response (Response): Cookie を削除するレスポンス
+        """
+
+        response.delete_cookie(key=cls.USER_COOKIE_NAME, samesite='lax')
+        response.delete_cookie(key=cls.TOKEN_COOKIE_NAME, httponly=True, samesite='lax')
+
+    def setCookies(self, response: Response) -> None:
+        """
+        ニコニコアカウントとの連携情報を、表示用の連携情報の Cookie とトークンの Cookie に分けて保存する
+
+        Args:
+            response (Response): Cookie を設定するレスポンス
+        """
+
+        # 表示用の連携情報は、クライアントの JavaScript から読めるように HttpOnly を付けずに保存する
+        user_json = self.model_dump_json(include={'niconico_user_id', 'niconico_user_name', 'niconico_user_premium'})
+        response.set_cookie(
+            key = self.USER_COOKIE_NAME,
+            value = base64.b64encode(user_json.encode('utf-8')).decode('utf-8'),
+            max_age = self.COOKIE_MAX_AGE,
+            httponly = False,  # JavaScript からアクセスできるようにする
+            samesite = 'lax',  # CSRF 攻撃を防ぐ
+        )
+
+        # トークンは、XSS で盗まれないよう HttpOnly を付けて保存する
+        token_json = self.model_dump_json(include={'niconico_access_token', 'niconico_refresh_token'})
+        response.set_cookie(
+            key = self.TOKEN_COOKIE_NAME,
+            value = base64.b64encode(token_json.encode('utf-8')).decode('utf-8'),
+            max_age = self.COOKIE_MAX_AGE,
+            httponly = True,  # JavaScript からアクセスできないようにする
+            samesite = 'lax',  # CSRF 攻撃を防ぐ
+        )
 
     async def refreshNiconicoAccessToken(self) -> None:
         """

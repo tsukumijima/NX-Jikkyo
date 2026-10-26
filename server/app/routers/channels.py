@@ -1,6 +1,5 @@
 
 import asyncio
-import base64
 import gzip
 import time
 import xml.etree.ElementTree as ET
@@ -500,14 +499,13 @@ async def ChannelJikkyoWebSocketInfoAPI(
     """
 
     # Cookie から NiconicoUser を取得
+    ## is_legacy_cookie は、トークンも JavaScript から読める NX-Niconico-User Cookie に入っている以前の形式の Cookie かどうか
     niconico_user = None
-    niconico_user_cookie = request.cookies.get('NX-Niconico-User')
-    if niconico_user_cookie:
-        try:
-            niconico_user_json = base64.b64decode(niconico_user_cookie).decode('utf-8')
-            niconico_user = schemas.NiconicoUser.model_validate_json(niconico_user_json)
-        except Exception:
-            logging.warning('[ChannelJikkyoWebSocketInfoAPI] Failed to parse NX-Niconico-User cookie.')
+    is_legacy_cookie = False
+    try:
+        niconico_user, is_legacy_cookie = schemas.NiconicoUser.fromCookies(request.cookies)
+    except ValueError:
+        logging.warning('[ChannelJikkyoWebSocketInfoAPI] Failed to parse NX-Niconico-User / NX-Niconico-Token cookie.')
 
     # ニコニココメント送受信用 WebSocket API の情報を取得する
     jikkyo = Jikkyo(channel_id)
@@ -518,13 +516,12 @@ async def ChannelJikkyoWebSocketInfoAPI(
 
     # 更新された NiconicoUser が存在する場合、Cookie を更新
     if updated_niconico_user is not None:
-        response.set_cookie(
-            key = 'NX-Niconico-User',
-            value = base64.b64encode(updated_niconico_user.model_dump_json().encode('utf-8')).decode('utf-8'),
-            max_age = 315360000,  # 10年間の有効期限 (秒単位)
-            httponly = False,  # JavaScript からアクセスできるようにする
-            samesite = 'lax',  # CSRF 攻撃を防ぐ
-        )
+        updated_niconico_user.setCookies(response)
+
+    # 以前の形式の Cookie を受け取った場合は、トークンを HttpOnly の Cookie に移した新しい形式に書き直す
+    ## 連携済みのユーザーがチャンネルを開くたびにこの API が呼ばれるため、既存のユーザーも連携を解除させずに新しい形式に移行できる
+    elif niconico_user is not None and is_legacy_cookie is True:
+        niconico_user.setCookies(response)
 
     return response
 

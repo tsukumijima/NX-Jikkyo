@@ -4,7 +4,7 @@ import json
 from typing import Annotated
 
 import httpx2 as httpx
-from fastapi import APIRouter, Query, Request, status
+from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.security.utils import get_authorization_scheme_param
 from jose import jwt
 
@@ -226,13 +226,25 @@ async def NiconicoAuthCallbackAPI(
         redirect_to = redirect_url,
     )
 
-    # Cookie に NX-Niconico-User を設定
-    response.set_cookie(
-        key = 'NX-Niconico-User',
-        value = base64.b64encode(niconico_user.model_dump_json().encode('utf-8')).decode('utf-8'),
-        max_age = 315360000,  # 10年間の有効期限 (秒単位)
-        httponly = False,  # JavaScript からアクセスできるようにする
-        samesite = 'lax',  # CSRF 攻撃を防ぐ
-    )
+    # ニコニコアカウントとの連携情報を Cookie に保存
+    ## 表示用の連携情報は JavaScript から読める NX-Niconico-User Cookie に、トークンは HttpOnly の NX-Niconico-Token Cookie に分けて保存する
+    niconico_user.setCookies(response)
 
+    return response
+
+
+@router.delete(
+    '/logout',
+    summary = 'ニコニコアカウント連携解除 API',
+    status_code = status.HTTP_204_NO_CONTENT,
+)
+async def NiconicoAccountLogoutAPI():
+    """
+    ブラウザの Cookie に保存されている、ニコニコアカウントとの連携情報を削除して連携を解除する。<br>
+    トークンを保存している Cookie は HttpOnly でクライアントの JavaScript からは削除できないため、サーバー側で削除する。
+    """
+
+    # 連携情報を保存している Cookie をすべて削除するレスポンスを返す
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    schemas.NiconicoUser.deleteCookies(response)
     return response
