@@ -18,7 +18,7 @@ dependencies = [
     "redis==4.6.0",
     "rich>=13.9.3",
     "taskipy>=1.14.0",
-    "tortoise-orm>=0.21.7,<1.0.0",
+    "tortoise-orm>=1.1.9",
     "typer>=0.21.0,<1.0.0",
     "types-redis>=4.6.0.20241004,<5.0.0",
     "typing-inspect>=0.9.0,<1.0.0",
