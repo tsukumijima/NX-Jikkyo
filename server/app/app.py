@@ -22,7 +22,6 @@ from pydantic import TypeAdapter
 from rich.rule import Rule
 from rich.style import Style
 from starlette.middleware.base import BaseHTTPMiddleware
-from tortoise import timezone
 from tortoise.backends.base.client import TransactionalDBClient
 
 from app import logging
@@ -30,6 +29,7 @@ from app.config import CONFIG
 from app.constants import (
     CLIENT_DIR,
     DATABASE_CONFIG,
+    JST,
     LOGS_DIR,
     MASTER_CHANNEL_INFOS,
     REDIS_CHANNEL_THREAD_COMMENTS_PREFIX,
@@ -290,7 +290,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                             current_time = time.time()
 
                             # 現在のサーバー時刻 (datetime)
-                            current_time_datetime = timezone.now()
+                            current_time_datetime = datetime.now(JST)
 
                             # 現在アクティブなスレッドの情報が保存されていないか、放送が終了している場合は、
                             # 現在アクティブなスレッドの情報を取得し、active_threads に保存する
@@ -500,7 +500,7 @@ if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
                 continue
 
             # 今日の日付を取得
-            now = timezone.now()
+            now = datetime.now(JST)
             today = now.date()
             start_time_today = datetime.combine(today, datetime.min.time(), ZoneInfo('Asia/Tokyo')) + timedelta(hours=4)
             end_time_today = start_time_today + timedelta(hours=24)

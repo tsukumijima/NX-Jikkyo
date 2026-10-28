@@ -14,12 +14,12 @@ from starlette.websockets import (
     WebSocketDisconnect,
     WebSocketState,
 )
-from tortoise import timezone
 from tortoise.backends.base.client import TransactionalDBClient
 from tortoise.exceptions import DoesNotExist
 
 from app import logging
 from app.constants import (
+    JST,
     KNOWN_JIKKYO_CHANNEL_IDS,
     REDIS_CHANNEL_THREAD_COMMENTS_PREFIX,
     REDIS_CLIENT,
@@ -433,7 +433,7 @@ async def GetActiveThread(channel_id_int: int) -> Thread | None:
     """
 
     # 現在のサーバー時刻 (datetime)
-    current_time_datetime = timezone.now()
+    current_time_datetime = datetime.now(JST)
 
     # 実況チャンネル ID に対応する現在アクティブなスレッド情報が保存されていないか、キャッシュされたスレッド情報がすでに放送を終了している場合は、
     # 実況チャンネル ID に対応する現在アクティブなスレッド情報を取得し、__active_threads に保存する
@@ -695,7 +695,7 @@ async def WatchSessionAPI(
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread not found.')
             await CloseWebSocketSafely(websocket, code=1002, reason=f'[{channel_id}]: Thread not found.')
             return
-        if timezone.now() < thread.start_at:
+        if datetime.now(JST) < thread.start_at:
             logging.error(f'WatchSessionAPI [{channel_id}]: Thread is upcoming.')
             await CloseWebSocketSafely(websocket, code=1002, reason=f'[{channel_id}]: Thread is upcoming.')
             return
@@ -757,7 +757,7 @@ async def WatchSessionAPI(
                 is_sent = await SendJSONSafely(websocket, {
                     'type': 'serverTime',
                     'data': {
-                        'currentMs': timezone.now().isoformat(),
+                        'currentMs': datetime.now(JST).isoformat(),
                     },
                 })
                 if is_sent is False:
@@ -870,7 +870,7 @@ async def WatchSessionAPI(
             elif message_type == 'postComment':
 
                 # 放送が終了したスレッドにはコメントを投稿できない
-                if thread.end_at < timezone.now():
+                if thread.end_at < datetime.now(JST):
                     is_sent = await SendJSONSafely(websocket, {
                         'type': 'error',
                         'data': {
@@ -1070,7 +1070,7 @@ async def WatchSessionAPI(
         next_comment_counter_validation_time = 0.0
 
         # 処理開始時点でスレッドが放送中かどうか
-        is_on_air = thread.start_at < timezone.now() < thread.end_at
+        is_on_air = thread.start_at < datetime.now(JST) < thread.end_at
 
         while True:
 
@@ -1226,7 +1226,7 @@ async def WatchSessionAPI(
                 is_sent = await SendJSONSafely(websocket, {
                     'type': 'serverTime',
                     'data': {
-                        'serverTime': timezone.now().isoformat(),
+                        'serverTime': datetime.now(JST).isoformat(),
                     },
                 })
                 if is_sent is False:
@@ -1242,7 +1242,7 @@ async def WatchSessionAPI(
 
             # 処理開始時点では放送中だった場合のみ、スレッドの放送終了時刻を過ぎたら接続を切断する
             ## 最初から過去のスレッドだった場合は実行しない
-            if is_on_air is True and timezone.now() > thread.end_at:
+            if is_on_air is True and datetime.now(JST) > thread.end_at:
                 logging.info(f'WatchSessionAPI [{channel_id}]: Client {watch_session_client_id} disconnected because the thread ended.')
                 is_sent = await SendJSONSafely(websocket, {
                     'type': 'disconnect',

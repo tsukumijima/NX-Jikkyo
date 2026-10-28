@@ -1,4 +1,5 @@
 
+from datetime import datetime
 from typing import Annotated, Literal
 
 from fastapi import (
@@ -6,8 +7,8 @@ from fastapi import (
     HTTPException,
     Path,
 )
-from tortoise import timezone
 
+from app.constants import JST
 from app.models.comment import (
     Comment,
     CommentResponse,
@@ -40,7 +41,7 @@ async def ThreadAPI(thread_id: Annotated[int, Path(description='スレッド ID 
         raise HTTPException(status_code=404, detail='Thread not found.')
 
     # スレッドの現在のステータスを算出する
-    now = timezone.now()
+    now = datetime.now(JST)
     status: Literal['ACTIVE', 'UPCOMING', 'PAST']
     if thread.start_at <= now <= thread.end_at:
         status = 'ACTIVE'

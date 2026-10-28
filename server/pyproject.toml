@@ -75,6 +75,10 @@ ignore = [
 # インポートブロックの後に2行空ける
 lines-after-imports = 2
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# tortoise.timezone は Tortoise ORM の初期化状態とバージョンによって返すタイムゾーンが変わる (初期化前は UTC) ため、JST を明示した datetime.now(JST) に統一する
+"tortoise.timezone".msg = "Use datetime.now(JST) instead."
+
 [tool.pyright]
 # Python バージョンを指定
 pythonVersion = "3.13"

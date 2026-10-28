@@ -3,6 +3,7 @@ import asyncio
 import gzip
 import time
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from typing import Annotated, Literal, cast
 from zoneinfo import ZoneInfo
 
@@ -18,10 +19,11 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from pydantic import TypeAdapter
-from tortoise import connections, timezone
+from tortoise import connections
 
 from app import logging, schemas
 from app.constants import (
+    JST,
     REDIS_CLIENT,
     REDIS_KEY_CHANNEL_INFOS_CACHE,
     REDIS_KEY_JIKKYO_FORCE_COUNT,
@@ -151,7 +153,7 @@ async def GetChannelResponses(full: bool = False) -> list[ChannelResponse]:
         end_at = row['end_at'].replace(tzinfo=ZoneInfo('Asia/Tokyo'))
 
         # スレッドの現在のステータスを算出する
-        now = timezone.now()
+        now = datetime.now(JST)
         status: Literal['ACTIVE', 'UPCOMING', 'PAST']
         if start_at <= now <= end_at:
             status = 'ACTIVE'
@@ -433,7 +435,7 @@ async def ChannelThreadsAPI(
         raise HTTPException(status_code=400, detail='Invalid channel ID format.')
 
     # 現在時刻を取得
-    now = timezone.now()
+    now = datetime.now(JST)
 
     # SQL クエリを最適化して必要な情報のみを取得
     query = '''
