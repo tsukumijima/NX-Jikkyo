@@ -24,9 +24,11 @@ from app.constants import (
     DATABASE_CONFIG,
     LOGGING_CONFIG,
     NX_JIKKYO_ACCESS_LOG_PATH,
+    NX_JIKKYO_SERVER_LOG_PATH,
+    SERVER_LOG_ARCHIVE_RETENTION_DAYS,
     VERSION,
 )
-from app.utils.log_rotation import SplitServerLogByDate
+from app.utils.log_rotation import SplitLogByDate
 
 
 # aerich テーブルが既に存在する警告を無視
@@ -62,19 +64,13 @@ def main(
             sub_server_port = port + count + 1
             sub_server_processes[sub_server_port] = subprocess.Popen([sys.executable, __file__, '--port', str(sub_server_port)])
 
-        # 前回のアクセスログを削除する
-        ## サーバーログは起動時分割で過去日付をアーカイブ化するため、ここでは削除しない
-        try:
-            if NX_JIKKYO_ACCESS_LOG_PATH.exists():
-                NX_JIKKYO_ACCESS_LOG_PATH.unlink()
-        except PermissionError:
-            pass
-
-    # サーバーログに過去日付のエントリが含まれている場合、日付別アーカイブに分割する
+    # サーバーログとアクセスログに過去日付のエントリが含まれている場合、日付別アーカイブに分割する
     ## DailyRotatingFileHandler がファイルを開く前に分割を完了させるために、ロガーの初期化前に実行する必要がある
+    ## アクセスログも調査のために残すため、以前のように起動のたびに削除はしない
     ## メインサーバープロセスのみで実行し、サブプロセスとの競合を避ける
     if CONFIG.SPECIFIED_SERVER_PORT == CONFIG.SERVER_PORT:
-        SplitServerLogByDate()
+        SplitLogByDate(NX_JIKKYO_SERVER_LOG_PATH, SERVER_LOG_ARCHIVE_RETENTION_DAYS)
+        SplitLogByDate(NX_JIKKYO_ACCESS_LOG_PATH, SERVER_LOG_ARCHIVE_RETENTION_DAYS)
 
     # ここでロガーをインポートする
     ## ローテーション分割を実施した後でないと正しく動作しない
