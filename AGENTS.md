@@ -188,6 +188,11 @@ KonomiTV の最新機能を NX-Jikkyo にバックポートする際は、
 
 **コードを変更したあとは、必ず KonomiTV 同様に server/ 以下で `uv run task lint` を実行すること。**
 
+新しい DB マイグレーションの下書きは、`server/` で `uv run task aerich migrate --offline --name <名前>` を実行して作る。  
+`--offline` は DB を見ずに、直前のマイグレーションファイルの末尾の `MODELS_STATE` と今のモデルを比べる。  
+DB につなぐ形は DB の `aerich` テーブルに記録されたモデルの状態と比べるため、Tortoise ORM 0.25 の頃に記録された DB では、モデルを変えていなくても要らない `ALTER` が下書きに入る。  
+生成されたファイルは、末尾の `MODELS_STATE` を残したまま、SQL の部分だけを手で整える。
+
 ### チャンネルロゴ配信方式の違い（NX-Jikkyo 独自仕様）
 
 KonomiTV ではユーザー環境によって視聴可能なチャンネルが変わるため、
