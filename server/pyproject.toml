@@ -4,7 +4,7 @@ version = "1.15.0"
 description = "NX-Jikkyo: Nico Nico Jikkyo Alternative"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "aerich==0.9.1",
+    "aerich==0.10.1",
     "aiomysql>=0.2.0,<1.0.0",
     "apscheduler>=3.11.0",
     "async-lru>=2.0.4",
