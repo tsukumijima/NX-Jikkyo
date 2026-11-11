@@ -10,14 +10,14 @@ dependencies = [
     "async-lru>=2.0.4",
     "cryptography>=43.0.3",
     "fastapi>=0.162.0,<1.0.0",
-    "httpx2[http2]>=2.13.1,<3.0.0",
+    "httpx2[http2]>=2.13.1",
     "ndgr-client @ git+https://github.com/tsukumijima/NDGRClient@21b3e2c361c4d3b856d5ff7bfab5001088f02a15",
     "pydantic>=2.9.2",
     "pydantic-settings>=2.5.2",
     "python-multipart>=0.0.12,<1.0.0",
     "redis==4.6.0",
     "rich>=13.9.3",
-    "taskipy>=1.14.0",
+    "taskipy>=1.14.1",
     "tortoise-orm>=1.1.9",
     "typer>=0.21.0,<1.0.0",
     "types-redis>=4.6.0.20241004,<5.0.0",
@@ -29,13 +29,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pyright>=1.1.403",
+    "pyright>=1.1.407",
     "ruff>=0.9.1,<1.0.0",
 ]
 
 [tool.taskipy.tasks]
-serve  = "cd ../ && docker compose build && docker compose run --rm --service-ports nx-jikkyo"
-dev    = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose run --rm --service-ports --volume=${PWD}/server/app/:/code/server/app/ nx-jikkyo --reload"
+serve = "cd ../ && docker compose build && docker compose run --rm --service-ports nx-jikkyo"
+dev = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose run --rm --service-ports --volume=${PWD}/server/app/:/code/server/app/ nx-jikkyo --reload"
 aerich = "cd ../ && PWD=$(pwd) docker compose build && PWD=$(pwd) docker compose run --rm --service-ports --volume=${PWD}/server/app/:/code/server/app/ --entrypoint=/code/server/.venv/bin/aerich nx-jikkyo"
 lint = "ruff check --fix . ; pyright"
 typecheck = "pyright"
@@ -82,13 +82,10 @@ lines-after-imports = 2
 [tool.pyright]
 # Python バージョンを指定
 pythonVersion = "3.13"
-# Pyright 実行時に server/.venv/ を確実に参照させる
-# この設定により Codex サンドボックス上から Pyright を実行すると依存関係を解決できない問題を回避できる
+# プロジェクトの仮想環境を参照する
 venvPath = "."
 venv = ".venv"
-# TypeCheckingMode を strict に設定（VSCode の設定と同等）
 typeCheckingMode = "strict"
-# プロジェクトルートを指定
 pythonPlatform = "All"
 # インクルードするパッケージパス
 include = ["app/"]
@@ -100,7 +97,7 @@ exclude = [
     "data/",
     "logs/",
 ]
-# VSCode の settings.json の diagnosticSeverityOverrides に対応する設定
+# Pyright/Pylance の型チェックのうち、いくつかのエラー報告を抑制する
 reportConstantRedefinition = "none"
 reportDeprecated = "warning"
 reportMissingTypeStubs = "none"
