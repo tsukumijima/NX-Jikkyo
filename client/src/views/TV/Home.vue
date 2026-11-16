@@ -6,9 +6,9 @@
             <div class="channels-container channels-container--home" :class="{'channels-container--loading': is_loading}">
                 <div class="mt-5 mb-2 mx-4 text-center font-weight-bold" style="font-size: 15px">
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
-                        📢 <a class="link" href="https://vps.conoha.jp/news/?btn_id=news--news_news&ap=2015054447" target="_blank">NX-Jikkyo で利用している ConoHa VPS で断続的にサーバー障害が発生していた</a> 影響で、<a class="link" href="https://x.com/TVRemotePlus/status/2038486908289024398" target="_blank">3月末は NX-Jikkyo の動作が不安定になっていました。</a>ご不便をおかけしましたことを深くお詫びいたします。<br>
-                        2月上旬に多発していたコメント詰まりの根本原因も、<a class="link" href="https://x.com/TVRemotePlus/status/2038281430720282730" target="_blank">2026年以降 ConoHa のストレージ I/O が不安定になり、結果として断続的にデータベースへのアクセスが詰まったためだと推測しております。</a><br>
-                        今後 XServer VPS あたりへの移行を予定しておりますが、昨今本業が多忙な上、20GB を超える DB を移行する関係でサーバー移行には数時間〜半日以上の停止メンテナンスを要することから、現時点で移行時期は未定です。<br>
+                        📢 NX-Jikkyo で利用している <a class="link" href="https://x.com/TVRemotePlus/status/2122277789718171685" target="_blank">ConoHa VPS (GMO 運営) での緊急メンテ</a> により <a class="link" href="https://x.com/TVRemotePlus/status/2122251875244519688" target="_blank">VPS 上の DB が破壊された影響で、11/16 の日中は NX-Jikkyo にアクセスできなくなっていました。</a>ご不便をおかけしましたことを深くお詫びいたします。<br>
+                        復旧に際し、ext4 の破損により同一 VPS での継続運用が困難な上、<a class="link" href="https://www.nikkei.com/article/DGXZQODL203EH0Q6A021C2000000/" target="_blank">GMO 自体のガバナンスが終わっている</a> 事を鑑み、半年前より計画していた <a class="link" href="https://www.kagoya.jp/vps/" target="_blank">KAGOYA VPS</a> への移行を実施いたしました！🎉 データも復旧済みです。<br>
+                        KAGOYA VPS は既に移行した他プロジェクトでも安定して運用できており、今後は障害発生率を下げられそうです。<br>
                     </blockquote>
                     <blockquote class="text-left mx-auto mt-2" style="max-width: 850px">
                         📢 本家ニコニコ実況にコメントするには <router-link class="link" to="/settings/jikkyo">ニコニコアカウントとの連携が必要</router-link> です。設定でコメント投稿先を切り替えれば、今まで通り NX-Jikkyo のコメントサーバーへのコメント投稿もできます (ログイン不要) 。<br>
